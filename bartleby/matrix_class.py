@@ -83,7 +83,7 @@ class Matrix:
 
         return user_message
 
-    async def parse_command_message(self, llm, document, command_message):
+    async def parse_command_message(self, llm_instance, document, command_message):
         '''Takes a user message that contains a command and runs the 
         command'''
 
@@ -101,37 +101,37 @@ class Matrix:
 
         # Post current prompt to chat
         elif command[0] == '--show-prompt':
-            result = await self.post_message(f'Prompt: {llm.messages[0]["content"]}')
+            result = await self.post_message(f'Prompt: {llm_instance.messages[0]["content"]}')
 
         # Update prompt with user input and reset message chain
         elif command[0] == '--update-prompt':
-            llm.messages = [{'role': 'system', 'content': ' '.join(command[1:])}]
+            llm_instance.messages = [{'role': 'system', 'content': ' '.join(command[1:])}]
             result = await self.post_message('Prompt update complete')
 
         # Generate docx document from document title and last chatbot response.
         # Save to documents and upload to gdrive
         elif command[0] == '--make-docx':
-            result = await document.generate(llm)
+            result = await document.generate(llm_instance)
             result = await self.post_message('Document complete')
         
         # Restart the model, tokenizer and message chain with the default prompt
         elif command[0] == '--restart':
-            llm.initialize_model()
+            llm_instance.initialize_model()
             result = await self.post_message('Model restarted')
 
         # Post non-model default generation configuration options to chat
         elif command[0] == '--show-config':
-            result = await self.post_message(f'{llm.gen_cfg}\n')
+            result = await self.post_message(f'{llm_instance.gen_cfg}\n')
 
         # Post all generation configurations options to chat
         elif command[0] == '--show-config-full':
-            result = await self.post_message(f'{llm.gen_cfg.__dict__}\n')
+            result = await self.post_message(f'{llm_instance.gen_cfg.__dict__}\n')
 
         # Update generation configuration option with user input
         elif command[0] == '--update-config':
 
             # Get the initial value for the parameter specified by user
-            old_value = getattr(llm.gen_cfg, command[1])
+            old_value = getattr(llm_instance.gen_cfg, command[1])
 
             # Handle string to int or float conversion - some generation
             # configuration parameters take ints and some take floats
@@ -141,13 +141,13 @@ class Matrix:
                 val = int(command[2])
 
             # Set and check the new value
-            setattr(llm.gen_cfg, command[1], val)
-            new_value = getattr(llm.gen_cfg, command[1])
+            setattr(llm_instance.gen_cfg, command[1], val)
+            new_value = getattr(llm_instance.gen_cfg, command[1])
             result = await self.post_message(f'Updated {command[1]} from {old_value} to {new_value}')
 
         # Reset generation configuration to model/configuration.py defaults
         elif command[0] == '--reset-config':
-            llm.initialize_model_config()
+            llm_instance.initialize_model_config()
             result = await self.post_message('Model generation configuration reset')
 
         # Post commands to chat

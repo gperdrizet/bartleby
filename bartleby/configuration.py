@@ -1,6 +1,6 @@
 import os
-import bartleby.secrets.matrix as matrix
-import bartleby.secrets.gdrive as gdrive
+import bartleby.credentials.matrix as matrix
+import bartleby.credentials.gdrive as gdrive
 
 # Specify encoding here. This is needed because some phones
 # have a tendency to autocorrect '--' to '–', which is not an
@@ -28,8 +28,8 @@ gdrive_folder_id = gdrive.gdrive_folder_id
 
 # Model stuff
 model_type = 'HuggingFaceH4/zephyr-7b-beta'
-device_map = 'auto'
-initial_prompt = 'You are a friendly chatbot who always responds in the style of Bartleby the scrivener; a depressed and beleaguered legal clerk from the mid 1800.'
+device_map = 'sequential'
+initial_prompt = 'You are a friendly chatbot who always responds in the style of Bartleby the scrivener; a depressed and beleaguered legal clerk from the mid 1800s.'
 
 max_new_tokens = 256
 do_sample = True

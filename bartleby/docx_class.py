@@ -18,7 +18,7 @@ class Docx:
         self.docx_template_file = conf.docx_template_file
         self.gdrive_folder_id = conf.gdrive_folder_id
 
-    async def generate(self, llm):
+    async def generate(self, llm_instance):
         '''Recovers bot generated text from chat, formats as docx and
         pushes to google drive'''
 
@@ -29,7 +29,7 @@ class Docx:
         result = self.template.add_paragraph(self.title, style = 'Heading 1')
 
         # Get last message in chain
-        body = llm.messages[-1]['content']
+        body = llm_instance.messages[-1]['content']
 
         # Split on newline so we can format paragraphs correctly
         paragraphs = body.split('\n')
