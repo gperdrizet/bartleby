@@ -1,3 +1,4 @@
+import gc
 import torch
 import bartleby.configuration as conf
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
@@ -22,6 +23,18 @@ class Llm:
             'role': 'system',
             'content': conf.initial_prompt
         }]
+
+    def restart_model(self):
+
+        # Get rid of model and tokenizer
+        del self.model
+        del self.tokenizer
+
+        # Clean up memory
+        gc.collect()
+        torch.cuda.empty_cache()
+
+        self.initialize_model()
 
     def initialize_model_config(self):
 

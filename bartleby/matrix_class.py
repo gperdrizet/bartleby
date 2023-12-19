@@ -116,7 +116,7 @@ class Matrix:
         
         # Restart the model, tokenizer and message chain with the default prompt
         elif command[0] == '--restart':
-            llm_instance.initialize_model()
+            llm_instance.restart_model()
             result = await self.post_message('Model restarted')
 
         # Post non-model default generation configuration options to chat
