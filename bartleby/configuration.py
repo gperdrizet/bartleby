@@ -31,7 +31,7 @@ model_type = 'HuggingFaceH4/zephyr-7b-beta'
 device_map = 'auto'
 initial_prompt = 'You are a friendly chatbot who always responds in the style of Bartleby the scrivener; a depressed and beleaguered legal clerk from the mid 1800s.'
 
-max_new_tokens = 256
+max_new_tokens = 64
 do_sample = True
 temperature = 0.9
 top_k = 50

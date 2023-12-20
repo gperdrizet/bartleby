@@ -50,10 +50,10 @@ class Llm:
         print(f'\n{self.gen_cfg}')
 
     def prompt_model(self, user_message):
-        
+
         # Format user message as dict
         user_message = {
-            'role': 'user', 
+            'role': 'user',
             'content': user_message
         }
 
@@ -62,17 +62,17 @@ class Llm:
 
         # Tokenize the updated conversation
         prompt = self.tokenizer.apply_chat_template(
-            self.messages, 
-            tokenize = True, 
+            self.messages,
+            tokenize = True,
             add_generation_prompt = True,
             return_tensors = 'pt'
-        ).to('cuda')
+        ) #.to('cuda')
 
         print(f'Model input {type(prompt)}: {prompt.size()}')
 
         # Generate response
         output_ids = self.model.generate(
-            prompt, 
+            prompt,
             generation_config = self.gen_cfg
         )
 
@@ -82,8 +82,8 @@ class Llm:
         # max_new_tokens = 300, output cuts off at 696 in second dimension
         # Un-tokenize response
         model_output = self.tokenizer.batch_decode(
-            output_ids, 
-            skip_special_tokens = True, 
+            output_ids,
+            skip_special_tokens = True,
             clean_up_tokenization_spaces = False
         )
 
@@ -95,7 +95,7 @@ class Llm:
             'role': 'assistant',
             'content': reply
         }
-        
+
         self.messages.append(model_message)
 
         return reply
