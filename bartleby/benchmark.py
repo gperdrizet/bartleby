@@ -1,6 +1,7 @@
 import os
 import time
 import torch
+import tracemalloc
 import pandas as pd
 import bartleby.configuration as conf
 import bartleby.llm_class as llm
@@ -33,9 +34,6 @@ class Results():
                 old_results_df = pd.read_csv(self.output_file)
                 results_df = pd.concat([old_results_df, results_df])
 
-        else:
-            print('Clearing any old results.')
-
         # Save results for run to csv
         results_df.to_csv(self.output_file, index = False)
 
@@ -50,9 +48,10 @@ def run():
         'generated tokens',
         'total generation time (sec.)',
         'generation rate (tokens/sec.)',
-        'model memory footprint (bytes)',
-        'peak memory (bytes)',
-        'data memory footprint (bytes)'
+        'model GPU memory footprint (GB)',
+        'peak GPU memory (GB)',
+        'data GPU memory footprint (GB)'
+        'peak GPU system memory (GB)'
     ]
     results = Results(
         results_dir=conf.DATA_PATH,
@@ -82,6 +81,9 @@ def run():
             # Add new message to conversation
             llm_instance.messages.append(message)
 
+            # Start memory trace
+            tracemalloc.start()
+
             # Start generation timer
             generation_start_time = time.time()
 
@@ -109,6 +111,11 @@ def run():
             # Stop the generation timer
             generation_end_time = time.time()
 
+            # Stop memory trace and collect results
+            system_memory, peak_system_memory = tracemalloc.get_traced_memory()
+            peak_system_memory = peak_system_memory * 1024
+            tracemalloc.stop()
+
             # Get models reply string
             model_output_content = model_output[0]
             reply = model_output_content.split('\n<|assistant|>\n')[-1]
@@ -131,9 +138,13 @@ def run():
 
             generation_rate = generated_tokens / generation_dT
 
-            peak_memory = torch.cuda.max_memory_allocated() // 1024**3
-            model_memory_footprint = llm_instance.model.get_memory_footprint() // 1024**3
-            data_memory_footprint = peak_memory - model_memory_footprint
+            peak_GPU_memory = 0
+
+            for i in range(4):
+                peak_GPU_memory += torch.cuda.max_memory_allocated(i) / 1024**3
+
+            model_GPU_memory_footprint = llm_instance.model.get_memory_footprint() / 1024**3
+            data_GPU_memory_footprint = peak_GPU_memory - model_GPU_memory_footprint
 
             results.data['replicate'].append(replicate)
             results.data['repetition'].append(repetition)
@@ -142,12 +153,13 @@ def run():
             results.data['generated tokens'].append(generated_tokens)
             results.data['total generation time (sec.)'].append(generation_dT)
             results.data['generation rate (tokens/sec.)'].append(generation_rate)
-            results.data['model memory footprint (GB)'].append(model_memory_footprint)
-            results.data['peak memory (GB)'].append(peak_memory)
-            results.data['data memory footprint (GB)'].append(data_memory_footprint)
+            results.data['model GPU memory footprint (GB)'].append(model_GPU_memory_footprint)
+            results.data['peak GPU memory (GB)'].append(peak_GPU_memory)
+            results.data['data GPU memory footprint (GB)'].append(data_GPU_memory_footprint)
+            results.data['peak system memory'].append(peak_system_memory)
 
-        # Save the results from this replicate
-        results.save(overwrite=True)
+            # Save the results from this repetition
+            results.save(overwrite=True)
 
         # Delete and re-initialize the model and tokenizer, clear memory
         llm_instance.restart_model()
