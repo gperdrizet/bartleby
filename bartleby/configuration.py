@@ -36,3 +36,8 @@ do_sample = True
 temperature = 0.9
 top_k = 50
 top_p = 0.95
+
+# Benchmarking parameters
+replicates = 3
+repetitions = 10
+
