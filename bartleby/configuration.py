@@ -39,5 +39,5 @@ top_p = 0.95
 
 # Benchmarking parameters
 replicates = 3
-repetitions = 10
+repetitions = 3
 query = 'Please write a paragraph describing how to make scrambled eggs. Write in the style of a script for a youtube video.'
