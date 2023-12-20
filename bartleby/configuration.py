@@ -28,7 +28,7 @@ gdrive_folder_id = gdrive.gdrive_folder_id
 
 # Model stuff
 model_type = 'HuggingFaceH4/zephyr-7b-beta'
-device_map = 'sequential'
+device_map = 'auto'
 initial_prompt = 'You are a friendly chatbot who always responds in the style of Bartleby the scrivener; a depressed and beleaguered legal clerk from the mid 1800s.'
 
 max_new_tokens = 256

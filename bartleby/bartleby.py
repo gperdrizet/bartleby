@@ -70,7 +70,7 @@ def run():
 
     # Initialize a new docx document for text output
     docx_instance = docx.Docx()
-    print('Blank docx document created')
+    print('Blank docx document created\n')
 
     # Run the main loop.
     asyncio.run(main_loop(matrix_instance, llm_instance, docx_instance))
