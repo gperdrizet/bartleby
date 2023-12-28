@@ -1,4 +1,5 @@
 import gc
+import time
 import torch
 import bartleby.configuration as conf
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
@@ -50,40 +51,47 @@ class Llm:
         print(f'\n{self.gen_cfg}')
 
     def prompt_model(self, user_message):
-        
+
         # Format user message as dict
         user_message = {
-            'role': 'user', 
+            'role': 'user',
             'content': user_message
         }
 
         # Add new message to conversation
         self.messages.append(user_message)
 
+	# Start generation timer
+        generation_start_time = time.time()
+
         # Tokenize the updated conversation
         prompt = self.tokenizer.apply_chat_template(
-            self.messages, 
-            tokenize = True, 
+            self.messages,
+            tokenize = True,
             add_generation_prompt = True,
             return_tensors = 'pt'
-        ).to('cuda')
+        ) #.to('cuda')
 
-        print(f'Model input {type(prompt)}: {prompt.size()}')
+        print(f'Model input shape: {prompt.size()}')
 
         # Generate response
         output_ids = self.model.generate(
-            prompt, 
+            prompt,
             generation_config = self.gen_cfg
         )
 
-        print(f'Model output {type(output_ids)}: {output_ids.size()}')
-        print(f'Apparent output cap: {output_ids.size()[1] - prompt.size()[1]}\n')
-        # max_new_tokens = 256, output cuts off at 350 in second dimension
-        # max_new_tokens = 300, output cuts off at 696 in second dimension
+        # Stop generation timer and calculate total generation time
+        generation_finish_time = time.time()
+        dT = (generation_finish_time - generation_start_time) / 60
+
+        print(f'Model output shape: {output_ids.size()}')
+        print(f'New tokens generated: {output_ids.size()[1] - prompt.size()[1]}')
+        print(f'Generation time (min.): {round(dT, 1)}')
+
         # Un-tokenize response
         model_output = self.tokenizer.batch_decode(
-            output_ids, 
-            skip_special_tokens = True, 
+            output_ids,
+            skip_special_tokens = True,
             clean_up_tokenization_spaces = False
         )
 
