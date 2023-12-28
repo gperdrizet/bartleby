@@ -50,9 +50,10 @@ def run():
         'generation rate (tokens/sec.)',
         'model GPU memory footprint (GB)',
         'peak GPU memory (GB)',
-        'data GPU memory footprint (GB)'
-        'peak GPU system memory (GB)'
+        'data GPU memory footprint (GB)',
+        'peak system memory (GB)'
     ]
+
     results = Results(
         results_dir=conf.DATA_PATH,
         collection_vars=collection_vars
@@ -135,7 +136,6 @@ def run():
             input_tokens = prompt.size(1)
             output_tokens = output_ids.size(1)
             generated_tokens = output_tokens - input_tokens
-
             generation_rate = generated_tokens / generation_dT
 
             peak_GPU_memory = 0
@@ -156,7 +156,7 @@ def run():
             results.data['model GPU memory footprint (GB)'].append(model_GPU_memory_footprint)
             results.data['peak GPU memory (GB)'].append(peak_GPU_memory)
             results.data['data GPU memory footprint (GB)'].append(data_GPU_memory_footprint)
-            results.data['peak system memory'].append(peak_system_memory)
+            results.data['peak system memory (GB)'].append(peak_system_memory)
 
             # Save the results from this repetition
             results.save(overwrite=True)
