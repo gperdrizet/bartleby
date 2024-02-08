@@ -114,7 +114,7 @@ def run():
 
             # Stop memory trace and collect results
             system_memory, peak_system_memory = tracemalloc.get_traced_memory()
-            peak_system_memory = peak_system_memory * 1024
+            peak_system_memory = peak_system_memory / 1024**3
             tracemalloc.stop()
 
             # Get models reply string
