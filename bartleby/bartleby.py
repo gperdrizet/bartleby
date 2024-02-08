@@ -1,11 +1,14 @@
 import asyncio
+import torch
 from nio import RoomMessageText
 
+import bartleby.configuration as config
+import bartleby.helper_functions as helper_funcs
 import bartleby.matrix_class as matrix
 import bartleby.llm_class as llm
 import bartleby.docx_class as docx
 
-async def main_loop(matrix_instance, llm_instance, docx_instance):
+async def main_matrix_loop(matrix_instance, llm_instance, docx_instance):
 
     # Log bot into the matrix server and post a hello
     result = await matrix_instance.async_client.login(matrix_instance.matrix_bot_password)
@@ -53,14 +56,39 @@ async def main_loop(matrix_instance, llm_instance, docx_instance):
                             model_output = llm_instance.prompt_model(user_message)
                             result = await matrix_instance.post_message(model_output)
 
+
+def main_local_text_loop(llm_instance, docx_instance):
+
+    # Post a hello
+    print('Bartleby online. Send "--commands" to see a list of available control commands or just say "Hi!".\n')
+    
+    while True:
+
+        # Wait for user input
+        user_message = input('User: ')
+        print(f'User message: {user_message}')
+
+        # If the message is a command, send it to the command parser
+        if user_message[:2] == '--' or user_message[:1] == '–':
+            result = helper_funcs.parse_command_message(
+                llm_instance, 
+                docx_instance, 
+                user_message
+            )
+
+            print(result)
+
+        # Otherwise, Prompt the model with the user's message and post the
+        # model's response to chat
+        else: 
+            model_output = llm_instance.prompt_model(user_message)
+            print(model_output)
 def run():
 
     print('\nStarting bartleby')
 
-    # Instantiate new matrix chat session.
-    matrix_instance = matrix.Matrix()
-    matrix_instance.start_matrix_client()
-    print('Matrix chat client started successfully\n')
+    # Give torch CPU resources
+    torch.set_num_threads(config.CPU_threads)
 
     # Initialize the model, tokenizer and generation configuration.
     llm_instance = llm.Llm()
@@ -72,5 +100,16 @@ def run():
     docx_instance = docx.Docx()
     print('Blank docx document created\n')
 
-    # Run the main loop.
-    asyncio.run(main_loop(matrix_instance, llm_instance, docx_instance))
+    # Choose the right mode
+    if config.MODE == 'matrix':
+
+        # Instantiate new matrix chat session.
+        matrix_instance = matrix.Matrix()
+        matrix_instance.start_matrix_client()
+        print('Matrix chat client started successfully\n')
+
+        asyncio.run(main_matrix_loop(matrix_instance, llm_instance, docx_instance))
+
+    elif config.MODE == 'local_text':
+
+        main_local_text_loop(llm_instance, docx_instance)
