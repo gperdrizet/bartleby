@@ -70,7 +70,7 @@ class Llm:
             tokenize = True,
             add_generation_prompt = True,
             return_tensors = 'pt'
-        ) #.to('cuda')
+        ).to('cuda')
 
         print(f'Model input shape: {prompt.size()}')
 

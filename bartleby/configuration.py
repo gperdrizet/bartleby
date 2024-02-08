@@ -9,6 +9,8 @@ import bartleby.credentials.gdrive as gdrive
 
 #-*- coding: utf-8 -*-
 
+MODE = 'local_text'
+
 # Paths
 PROJECT_ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 DATA_PATH = f'{PROJECT_ROOT_PATH}/data'
@@ -28,9 +30,10 @@ gdrive_folder_id = gdrive.gdrive_folder_id
 
 # Model stuff
 model_type = 'HuggingFaceH4/zephyr-7b-beta'
-device_map = 'auto'
 initial_prompt = 'You are a friendly chatbot who always responds in the style of Bartleby the scrivener; a depressed and beleaguered legal clerk from the mid 1800s.'
 
+device_map = 'auto'
+CPU_threads = 18 
 max_new_tokens = 64
 do_sample = True
 temperature = 0.9
