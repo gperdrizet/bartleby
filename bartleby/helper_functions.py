@@ -16,17 +16,21 @@ def parse_command_message(llm_instance, document, command_message):
 
     # Post current prompt to chat
     elif command[0] == '--show-prompt':
-        result = f'Prompt: {llm_instance.messages[0]["content"]}'
+        result = f'Prompt:\n{llm_instance.messages[0]["content"]}'
 
     # Update prompt with user input and reset message chain
     elif command[0] == '--update-prompt':
         llm_instance.messages = [{'role': 'system', 'content': ' '.join(command[1:])}]
         result = 'Prompt update complete'
 
-    # Generate docx document from document title and last chatbot response.
+    # Show the current number of messages in the buffer
+    elif command[0] == '--buffer-length':
+        result = f'Chat buffer contains {len(llm_instance.messages)} messages'
+
+    # Generate docx document from document title and last n chatbot responses.
     # Save to documents and upload to gdrive
     elif command[0] == '--make-docx':
-        _ = document.generate(llm_instance)
+        _ = document.generate(llm_instance, int(command[1]))
         result = 'Document complete'
     
     # Restart the model, tokenizer and message chain with the default prompt
@@ -67,20 +71,24 @@ def parse_command_message(llm_instance, document, command_message):
 
     # Post commands to chat
     elif command[0] == '--commands':
-        commands = '''<strong>Available commands:</strong>\n
-        <strong>--commands</strong> Posts this message to chat.\n
-        <strong>--title TITLE</strong> Sets the document title with user input title from chat. The title is used to create the docx output file name: TITLE.docx.\n
-        <strong>--show-prompt</strong> Posts the prompt used to start the current message chain to chat.\n
-        <strong>--update-prompt PROMPT</strong> Updates the prompt with user input PROMPT from chat. Restarts the message chain with new prompt.\n
-        <strong>--make-docx</strong> Generates docx document from bot's last response in chat, uploads to google drive.\n
-        <strong>--restart</strong> Restarts model with defaults from configuration file.\n
-        <strong>--show-config</strong> Posts generation config values that differ from model default configuration to chat.\n
-        <strong>--show-config-full</strong> Posts full generation configuration to chat.\n
-        <strong>--update-config PARAMETER NEW_VALUE</strong> Updates parameter to new value.\n
-        <strong>--reset-config</strong> Resets generation configuration to startup defaults from configuration file.\n
+        
+        commands = '''\nAvailable commands:\n
+        \r  --commands                   Posts this message to chat.
+        \r  --title TITLE                Sets the document title with user input title from chat.
+        \r  --show-prompt                Posts the prompt used to start the current message chain to chat.
+        \r  --update-prompt PROMPT       Updates the prompt with user input PROMPT from chat. 
+        \r                               Restarts the message chain with new prompt.
+        \r  --buffer-length              Prints the number of messages currently in the buffer.
+        \r  --make-docx N                Generates docx document on google drive containing the last N
+        \r                               messages from the buffer.
+        \r  --restart                    Restarts model with defaults from configuration file.
+        \r  --show-config                Posts generation config values that differ from model default 
+        \r                               configuration to chat.
+        \r  --show-config-full           Posts full generation configuration to chat.
+        \r  --update-config PARAM VALUE  Updates parameter to value.
+        \r  --reset-config               Resets generation configuration to startup defaults from 
+        \r                               configuration file.
         '''
-
-        commands = commands.replace('    ', '')
         result = commands
 
     # If we didn't recognize the command, post an error to chat
