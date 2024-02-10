@@ -35,7 +35,7 @@ gdrive_folder_id = gdrive.gdrive_folder_id
 model_type = 'tiiuae/falcon-7b-instruct'
 initial_prompt = 'Continue the story in a surprising and interesting way.\nIt is morning, the sun is rising and it is very quiet.\nThe lamps are on and she rearranges them for hours.\nShe deals a deck of cards in silence.'
 
-device_map = 'auto'
+device_map = 'cpu'
 CPU_threads = 18
 prompt_buffer_size = 3
 max_new_tokens = 64
