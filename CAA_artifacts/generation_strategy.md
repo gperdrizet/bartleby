@@ -9,10 +9,10 @@ Generation is accomplished with an iterative '[exquisite corpse](https://www.mom
 Model is loaded and initial prompt is read into chat buffer:
 
 ```text
-'Continue the story in a surprising and interesting way.
+Continue the story in a surprising and interesting way.
 It is morning, the sun is rising and it is very quiet.
 The lamps are on and she rearranges them for hours.
-She deals a deck of cards in silence.'
+She deals a deck of cards in silence.
 ```
 
 ### 2. User input
@@ -23,7 +23,7 @@ Program waits for input from the human director. Once received, the new directio
 Continue the story in a surprising and interesting way.
 It is morning, the sun is rising and it is very quiet.
 The lamps are on and she rearranges them for hours.
-She deals a deck of cards in silence.'
+She deals a deck of cards in silence.
 
 human_director: She sweeps stage left, ignoring a knock at the door.
 ```
@@ -36,7 +36,7 @@ The contents of the chat buffer are tokenized to numerical inputs and sent to th
 Continue the story in a surprising and interesting way.
 It is morning, the sun is rising and it is very quiet.
 The lamps are on and she rearranges them for hours.
-She deals a deck of cards in silence.'
+She deals a deck of cards in silence.
 
 human_director: She sweeps stage left, ignoring a knock at the door.
 machine_director: As far as I know, she never got to play with dolls.
