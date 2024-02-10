@@ -45,7 +45,7 @@ top_k = 50
 top_p = 0.95
 num_beams = 1
 length_penalty = 0.1 # Only used if num_beams > 1
-exponential_decay_length_penalty = (32, 1)
+exponential_decay_length_penalty = (8, 1)
 truncate_newlines = False # If true, will cut off generated text at newline
 
 # Settings for loop on prompt mode

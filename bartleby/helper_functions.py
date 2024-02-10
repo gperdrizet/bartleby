@@ -27,6 +27,11 @@ def parse_command_message(llm_instance, document, command_message):
     elif command[0] == '--buffer-length':
         result = f'Chat buffer contains {len(llm_instance.messages)} messages'
 
+    # Update how much of the chat buffer we are sending as input
+    elif command[0] == '--update-input-buffer':
+        llm_instance.prompt_buffer_size = int(command[1])
+        result = f'Inputting last {int(command[1])} messages from buffer'
+
     # Generate docx document from document title and last n chatbot responses.
     # Save to documents and upload to gdrive
     elif command[0] == '--make-docx':
@@ -79,6 +84,7 @@ def parse_command_message(llm_instance, document, command_message):
         \r  --update-prompt PROMPT       Updates the prompt with user input PROMPT from chat. 
         \r                               Restarts the message chain with new prompt.
         \r  --buffer-length              Prints the number of messages currently in the buffer.
+        \r  --update-input-buffer N      Send last N messages from chat buffer for generation input.
         \r  --make-docx N                Generates docx document on google drive containing the last N
         \r                               messages from the buffer.
         \r  --restart                    Restarts model with defaults from configuration file.

@@ -152,11 +152,14 @@ class Llm:
 
             reply = self.tokenizer.batch_decode(output_ids)
 
-            if len(reply) > 0:
+            try:
                 reply = reply[0]
                 reply = reply.split('\n')[self.prompt_buffer_size]
 
-            else:
+            except IndexError as e:
+                print(f'Caught index error in reply parse.')
+                print(f'Reply: {reply}')
+
                 reply = ''
 
         model_message = {
