@@ -1,6 +1,6 @@
 # Generation strategy
 
-Generation is accomplished with an iterative '[exquisite corpse](https://www.moma.org/collection/terms/exquisite-corpse)'-style exchange between the human directory and the machine director.
+Generation is accomplished with an iterative '[exquisite corpse](https://www.moma.org/collection/terms/exquisite-corpse)'-style exchange between the human director and the machine director.
 
 ## Algorithm
 
@@ -15,7 +15,7 @@ The lamps are on and she rearranges them for hours.
 She deals a deck of cards in silence.'
 ```
 
-## 2. User input
+### 2. User input
 
 Program waits for input from the human director. Once received, the new direction is appended to the chat buffer e.g.:
 
