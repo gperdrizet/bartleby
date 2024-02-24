@@ -9,9 +9,6 @@ import bartleby.credentials.gdrive as gdrive
 
 #-*- coding: utf-8 -*-
 
-#MODE = 'loop_on_prompt'
-MODE = 'matrix'
-
 # Paths
 PROJECT_ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 DATA_PATH = f'{PROJECT_ROOT_PATH}/data'
@@ -31,22 +28,16 @@ gdrive_folder_id = gdrive.gdrive_folder_id
 
 # Model stuff
 model_type = 'HuggingFaceH4/zephyr-7b-beta'
+device_map = 'auto'
 initial_prompt = 'You are a friendly chatbot who always responds in the style of Bartleby the scrivener; a depressed and beleaguered legal clerk from the mid 1800s.'
 
-#model_type = 'tiiuae/falcon-7b-instruct'
-#initial_prompt = 'Continue the story in a surprising and interesting way.\nIt is morning, the sun is rising and it is very quiet.\nThe lamps are on and she rearranges them for hours.\nShe deals a deck of cards in silence.'
-
-device_map = 'cpu'
-CPU_threads = 18
-prompt_buffer_size = 3
 max_new_tokens = 64
 do_sample = True
-temperature = 1.0
+temperature = 0.9
 top_k = 50
 top_p = 0.95
-num_beams = 1
-length_penalty = 0.1 # Only used if num_beams > 1
-exponential_decay_length_penalty = (8, 1)
-truncate_newlines = False # If true, will cut off generated text at newline
 
-# Settings for loop on prompt mode
+# Benchmarking parameters
+replicates = 3
+repetitions = 20
+query = 'Please write a paragraph describing how to make scrambled eggs. Write in the style of a script for a youtube video.'
