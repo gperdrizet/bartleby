@@ -114,7 +114,3 @@ def run():
     elif config.MODE == 'local_text':
 
         main_local_text_loop(llm_instance, docx_instance)
-
-    elif config.MODE == 'loop_on_prompt':
-
-        main_loop_on_prompt(llm_instance, docx_instance)
