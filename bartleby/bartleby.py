@@ -17,7 +17,7 @@ async def main_matrix_loop(matrix_instance, llm_instance, docx_instance):
     while True:
 
         # Poll the matrix server
-        sync_response = await matrix_instance.async_client.sync(300000)
+        sync_response = await matrix_instance.async_client.sync(30000)
 
         # Write the next-batch token to a file here for the next restart
         with open(matrix_instance.next_batch_token_file, 'w') as next_batch_token:
