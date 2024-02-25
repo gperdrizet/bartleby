@@ -32,29 +32,33 @@ async def main_matrix_loop(matrix_instance, llm_instance, docx_instance):
                 # If the event is a message...
                 if isinstance(event, RoomMessageText) and 'm.mentions' in event.source['content'].keys():
 
-                    # Get the username so we can make sure that the bot does not 
-                    # respond to it's own messages
-                    user = event.sender.split(':')[0][1:]
+                    if 'user_ids' in event.source['content']['m.mentions']:
 
-                    # If the message was sent by a user other than the bot...
-                    if user != matrix_instance.matrix_bot_username:
-                        
-                        # Get body of user message
-                        user_message = await matrix_instance.catch_message(event)
+                        if '@bartleby:perdrizet.org' in event.source['content']['m.mentions']['user_ids']:
 
-                        # If the message is a command, send it to the command parser
-                        if user_message[:2] == '--' or user_message[:1] == '–':
-                            result = await matrix_instance.parse_command_message(
-                                llm_instance, 
-                                docx_instance, 
-                                user_message
-                            )
+                            # Get the username so we can make sure that the bot does not 
+                            # respond to it's own messages
+                            user = event.sender.split(':')[0][1:]
 
-                        # Otherwise, Prompt the model with the user's message and post the
-                        # model's response to chat
-                        else: 
-                            model_output = llm_instance.prompt_model(user_message)
-                            result = await matrix_instance.post_message(model_output)
+                            # If the message was sent by a user other than the bot...
+                            if user != matrix_instance.matrix_bot_username:
+                                
+                                # Get body of user message
+                                user_message = await matrix_instance.catch_message(event)
+
+                                # If the message is a command, send it to the command parser
+                                if user_message[:2] == '--' or user_message[:1] == '–':
+                                    result = await matrix_instance.parse_command_message(
+                                        llm_instance, 
+                                        docx_instance, 
+                                        user_message
+                                    )
+
+                                # Otherwise, Prompt the model with the user's message and post the
+                                # model's response to chat
+                                else: 
+                                    model_output = llm_instance.prompt_model(user_message)
+                                    result = await matrix_instance.post_message(model_output)
 
 
 def main_local_text_loop(llm_instance, docx_instance):
