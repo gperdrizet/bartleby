@@ -83,34 +83,6 @@ def main_local_text_loop(llm_instance, docx_instance):
         else: 
             model_output = llm_instance.prompt_model(user_message)
             print(model_output)
-
-
-def main_loop_on_prompt(llm_instance, docx_instance):
-
-    # Post a hello
-    print('Bartleby online. Send "--commands" to see a list of available control commands.\n')
-    
-    while True:
-
-        # Wait for user input
-        user_message = input('User: ')
-
-        # If the message is a command, send it to the command parser
-        if user_message[:2] == '--' or user_message[:1] == '–':
-            result = helper_funcs.parse_command_message(
-                llm_instance, 
-                docx_instance, 
-                user_message
-            )
-
-            print(f'{result}\n')
-
-        # Otherwise, Prompt the model with the user's message and post the
-        # model's response to chat
-        else: 
-            model_output = llm_instance.prompt_model(user_message)
-            print(f'Bartleby: {model_output}')
-
             
 def run():
 
