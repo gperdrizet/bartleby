@@ -60,21 +60,16 @@ class Llm:
 
         # Read and set generation configuration defaults from config file.
         self.truncate_newlines = conf.truncate_newlines
+
         self.gen_cfg = GenerationConfig.from_model_config(self.model.config)
         self.gen_cfg.max_new_tokens = conf.max_new_tokens
         self.gen_cfg.do_sample = conf.do_sample
         self.gen_cfg.temperature = conf.temperature
         self.gen_cfg.top_k = conf.top_k
         self.gen_cfg.top_p = conf.top_p
-        self.gen_cfg.num_beams = conf.num_beams
-
-        if conf.num_beams > 1:
-            self.gen_cfg.length_penalty = conf.length_penalty
-
-        self.gen_cfg.exponential_decay_length_penalty = conf.exponential_decay_length_penalty
         self.gen_cfg.torch_dtype = torch.bfloat16
 
-        #print(f'\n{self.gen_cfg}')
+        print(f'\n{self.gen_cfg}')
 
     def prompt_model(self, user_message):
 
