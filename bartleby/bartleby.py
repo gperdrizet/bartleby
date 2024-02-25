@@ -66,7 +66,7 @@ def main_local_text_loop(llm_instance, docx_instance):
 
         # Wait for user input
         user_message = input('User: ')
-        print(f'User message: {user_message}')
+        #print(f'User message: {user_message}')
 
         # If the message is a command, send it to the command parser
         if user_message[:2] == '--' or user_message[:1] == '–':

@@ -69,7 +69,7 @@ class Llm:
         self.gen_cfg.top_p = conf.top_p
         self.gen_cfg.torch_dtype = torch.bfloat16
 
-        print(f'\n{self.gen_cfg}')
+        #print(f'\n{self.gen_cfg}')
 
     def prompt_model(self, user_message):
 
