@@ -30,7 +30,7 @@ async def main_matrix_loop(matrix_instance, llm_instance, docx_instance):
             for event in sync_response.rooms.join[matrix_instance.matrix_room_id].timeline.events:
                 
                 # If the event is a message...
-                if isinstance(event, RoomMessageText):
+                if isinstance(event, RoomMessageText) and 'm.mentions' in event.source['content'].keys():
 
                     # Get the username so we can make sure that the bot does not 
                     # respond to it's own messages
