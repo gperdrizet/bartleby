@@ -1,4 +1,9 @@
 import os
+import pathlib
+
+# Set HuggingFace home to ./hf_cache
+os.environ['HF_HOME'] = f'{pathlib.Path(__file__).parent.resolve()}/hf_cache'
+
 import bartleby.credentials.matrix as matrix
 import bartleby.credentials.gdrive as gdrive
 
