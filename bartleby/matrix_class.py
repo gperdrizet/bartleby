@@ -81,6 +81,12 @@ class Matrix:
         # Get body of message.
         user_message = event.body.rstrip()
 
+        # Since bartleby only responds to messages which mention him,
+        # clip the mention off of the start of the message
+        user_message = user_message.replace('bartleby: ', '')
+
+        print(f'User: {user_message}')
+
         return user_message
 
     async def parse_command_message(self, llm_instance, document, command_message):
