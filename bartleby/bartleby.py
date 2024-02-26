@@ -1,6 +1,8 @@
 import asyncio
 import torch
+import logging
 from nio import RoomMessageText
+from logging.handlers import RotatingFileHandler
 
 import bartleby.configuration as config
 import bartleby.helper_functions as helper_funcs
@@ -90,31 +92,47 @@ def main_local_text_loop(llm_instance, docx_instance):
             
 def run():
 
-    print('\nStarting bartleby')
+    # Create logger
+    logger = logging.getLogger(__name__)
+    handler = RotatingFileHandler(f'{config.LOG_PATH}/bartleby.log', maxBytes=2000, backupCount=10)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel('INFO')
+
+    # Run bartleby
+    logger.info('############################################### ')
+    logger.info('############## Starting bartleby ############## ')
+    logger.info('############################################### ')
 
     # Give torch CPU resources
+    logger.info(f'Using {config.CPU_threads} CPU threads')
     torch.set_num_threads(config.CPU_threads)
 
     # Initialize the model, tokenizer and generation configuration.
-    llm_instance = llm.Llm()
+    llm_instance = llm.Llm(logger)
     llm_instance.initialize_model()
     llm_instance.initialize_model_config()
-    print('Model initialized successfully')
+    logger.info('Model initialized successfully')
 
     # Initialize a new docx document for text output
     docx_instance = docx.Docx()
-    print('Blank docx document created\n')
+    logger.info('Blank docx document created')
 
     # Choose the right mode
     if config.MODE == 'matrix':
 
+        logger.info('Running in Matrix mode')
+
         # Instantiate new matrix chat session.
         matrix_instance = matrix.Matrix()
         matrix_instance.start_matrix_client()
-        print('Matrix chat client started successfully\n')
+        logger.info('Matrix chat client started successfully')
 
         asyncio.run(main_matrix_loop(matrix_instance, llm_instance, docx_instance))
 
     elif config.MODE == 'local_text':
+
+        logger.info('Running in local text only mode')
 
         main_local_text_loop(llm_instance, docx_instance)

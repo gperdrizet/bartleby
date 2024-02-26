@@ -21,6 +21,7 @@ PROJECT_ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 DATA_PATH = f'{PROJECT_ROOT_PATH}/data'
 NEXT_BATCH_TOKEN_FILE = f'{DATA_PATH}/next_batch'
 DOCUMENTS_PATH = f'{PROJECT_ROOT_PATH}/documents'
+LOG_PATH = f'{PROJECT_ROOT_PATH}/logs'
 
 # Matrix room parameters
 matrix_room_id = matrix.matrix_room_id

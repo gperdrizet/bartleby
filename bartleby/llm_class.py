@@ -1,18 +1,22 @@
 import gc
 import time
 import torch
+import logging
 import bartleby.configuration as conf
 from transformers import AutoTokenizer, AutoModelForCausalLM, FalconForCausalLM, GenerationConfig
 
 class Llm:
     '''Class to hold object related to the LLM'''
 
-    def __init__(self):
+    def __init__(self, logger):
 
         # Model related stuff
         self.model_type = conf.model_type
         self.device_map = conf.device_map
         self.prompt_buffer_size = conf.prompt_buffer_size
+
+        # Add logger
+        self.logger = logger
 
     def initialize_model(self):
 
@@ -69,7 +73,8 @@ class Llm:
         self.gen_cfg.top_p = conf.top_p
         self.gen_cfg.torch_dtype = torch.bfloat16
 
-        #print(f'\n{self.gen_cfg}')
+        self.logger.info('Generation config:')
+        self.logger.info(f'{self.gen_cfg}')
 
     def prompt_model(self, user_message):
 
