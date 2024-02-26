@@ -14,7 +14,7 @@ import bartleby.credentials.gdrive as gdrive
 
 #-*- coding: utf-8 -*-
 
-MODE = 'local_text'
+MODE = 'matrix'
 
 # Paths
 PROJECT_ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
