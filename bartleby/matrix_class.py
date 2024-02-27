@@ -104,7 +104,7 @@ class Matrix:
 
         return user_message
 
-    async def parse_command_message(self, llm_instance, document, command_message):
+    async def parse_command_message(self, llm_instance, document, command_message, user):
         '''Takes a user message that contains a command and runs the 
         command'''
 
@@ -130,14 +130,14 @@ class Matrix:
 
         # Update prompt with user input and reset message chain
         elif command[0] == '--update-prompt':
-            llm_instance.messages = [{'role': 'system', 'content': ' '.join(command[1:])}]
+            llm_instance.messages[user] = [{'role': 'system', 'content': ' '.join(command[1:])}]
             message = 'Prompt update complete'
             result = await self.post_message(message)
 
         # Generate docx document from document title and last chatbot response.
         # Save to documents and upload to gdrive
         elif command[0] == '--make-docx':
-            result = await document.generate(llm_instance)
+            result = await document.async_generate(llm_instance, user)
             message = 'Document complete'
             result = await self.post_message(message)
         

@@ -50,13 +50,14 @@ async def main_matrix_loop(matrix_instance, llm_instance, docx_instance):
                             result = await matrix_instance.parse_command_message(
                                 llm_instance, 
                                 docx_instance, 
-                                user_message
+                                user_message,
+                                user
                             )
 
                         # Otherwise, Prompt the model with the user's message and post the
                         # model's response to chat
                         else: 
-                            model_output = llm_instance.prompt_model(user_message)
+                            model_output = llm_instance.prompt_model(user_message, user)
                             result = await matrix_instance.post_message(model_output, user)
 
 
