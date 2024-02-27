@@ -57,7 +57,7 @@ async def main_matrix_loop(matrix_instance, llm_instance, docx_instance):
                         # model's response to chat
                         else: 
                             model_output = llm_instance.prompt_model(user_message)
-                            result = await matrix_instance.post_message(model_output)
+                            result = await matrix_instance.post_message(model_output, user)
 
 
 def main_local_text_loop(llm_instance, docx_instance):
