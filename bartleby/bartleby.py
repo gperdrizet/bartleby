@@ -30,6 +30,7 @@ async def main_matrix_loop(matrix_instance, llm_instance, docx_instance):
 
             # Get events in the room
             for event in sync_response.rooms.join[matrix_instance.matrix_room_id].timeline.events:
+                matrix_instance.logger.debug(f'Room event: {event.source}')
                 
                 # If the event is a message...
                 if isinstance(event, RoomMessageText) and 'm.mentions' in event.source['content'].keys():
