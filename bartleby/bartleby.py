@@ -91,16 +91,16 @@ def main_local_text_loop(llm_instance, docx_instance):
             print(model_output)
             
 def run():
+    '''Run bartleby'''
 
     # Create logger
     logger = logging.getLogger(__name__)
-    handler = RotatingFileHandler(f'{config.LOG_PATH}/bartleby.log', maxBytes=2000, backupCount=10)
+    handler = RotatingFileHandler(f'{config.LOG_PATH}/bartleby.log', maxBytes=20000, backupCount=10)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logger.setLevel('INFO')
+    logger.setLevel('DEBUG')
 
-    # Run bartleby
     logger.info('############################################### ')
     logger.info('############## Starting bartleby ############## ')
     logger.info('############################################### ')
@@ -125,7 +125,7 @@ def run():
         logger.info('Running in Matrix mode')
 
         # Instantiate new matrix chat session.
-        matrix_instance = matrix.Matrix()
+        matrix_instance = matrix.Matrix(logger)
         matrix_instance.start_matrix_client()
         logger.info('Matrix chat client started successfully')
 
