@@ -6,7 +6,7 @@ import bartleby.configuration as conf
 class Matrix:
     '''Class to hold session objects related to matrix chat'''
 
-    def __init__(self):
+    def __init__(self, logger):
 
         # Matrix server related stuff.
         self.matrix_server_url = conf.matrix_server_url
@@ -14,6 +14,9 @@ class Matrix:
         self.matrix_bot_username = conf.matrix_bot_username
         self.matrix_bot_password = conf.matrix_bot_password
         self.next_batch_token_file = conf.NEXT_BATCH_TOKEN_FILE
+
+        # Add logger
+        self.logger = logger
 
     def start_matrix_client(self):
 
@@ -58,7 +61,12 @@ class Matrix:
             typing_state = False
         )
 
+        return True
+
     async def catch_message(self, event):
+
+        self.logger.info('Caught user message mentioning bartleby')
+        self.logger.debug(event)
 
         # Get event id for user's message
         user_message_event_id = event.event_id
@@ -85,8 +93,6 @@ class Matrix:
         # clip the mention off of the start of the message
         user_message = user_message.replace('bartleby: ', '')
 
-        print(f'User: {user_message}')
-
         return user_message
 
     async def parse_command_message(self, llm_instance, document, command_message):
@@ -100,38 +106,47 @@ class Matrix:
         # Split the command message into words
         command = formatted_command_message.split(' ')
 
+        self.logger.info(f'Caught user command: {command}')
+
         # Update docx document title
         if command[0] == '--title':
             document.title = ' '.join(command[1:])
-            result = await self.post_message(f'Document title set to: {document.title}')
+            message = f'Document title set to: {document.title}'
+            result = await self.post_message(message)
 
         # Post current prompt to chat
         elif command[0] == '--show-prompt':
-            result = await self.post_message(f'Prompt: {llm_instance.messages[0]["content"]}')
+            message = f'Prompt: {llm_instance.messages[0]["content"]}'
+            result = await self.post_message(message)
 
         # Update prompt with user input and reset message chain
         elif command[0] == '--update-prompt':
             llm_instance.messages = [{'role': 'system', 'content': ' '.join(command[1:])}]
-            result = await self.post_message('Prompt update complete')
+            message = 'Prompt update complete'
+            result = await self.post_message(message)
 
         # Generate docx document from document title and last chatbot response.
         # Save to documents and upload to gdrive
         elif command[0] == '--make-docx':
             result = await document.generate(llm_instance)
-            result = await self.post_message('Document complete')
+            message = 'Document complete'
+            result = await self.post_message(message)
         
         # Restart the model, tokenizer and message chain with the default prompt
         elif command[0] == '--restart':
             llm_instance.restart_model()
-            result = await self.post_message('Model restarted')
+            message = 'Model restarted'
+            result = await self.post_message(message)
 
         # Post non-model default generation configuration options to chat
         elif command[0] == '--show-config':
-            result = await self.post_message(f'{llm_instance.gen_cfg}\n')
+            message = f'{llm_instance.gen_cfg}\n'
+            result = await self.post_message(message)
 
         # Post all generation configurations options to chat
         elif command[0] == '--show-config-full':
-            result = await self.post_message(f'{llm_instance.gen_cfg.__dict__}\n')
+            message = f'{llm_instance.gen_cfg.__dict__}\n'
+            result = await self.post_message(message)
 
         # Update generation configuration option with user input
         elif command[0] == '--update-config':
@@ -149,31 +164,36 @@ class Matrix:
             # Set and check the new value
             setattr(llm_instance.gen_cfg, command[1], val)
             new_value = getattr(llm_instance.gen_cfg, command[1])
-            result = await self.post_message(f'Updated {command[1]} from {old_value} to {new_value}')
+            message = f'Updated {command[1]} from {old_value} to {new_value}'
+            result = await self.post_message(message)
 
         # Reset generation configuration to model/configuration.py defaults
         elif command[0] == '--reset-config':
             llm_instance.initialize_model_config()
-            result = await self.post_message('Model generation configuration reset')
+            message = 'Model generation configuration reset'
+            result = await self.post_message(message)
 
         # Post commands to chat
         elif command[0] == '--commands':
-            commands = '''<strong>Available commands:</strong>\n
-            <strong>--commands</strong> Posts this message to chat.\n
-            <strong>--title TITLE</strong> Sets the document title with user input title from chat. The title is used to create the docx output file name: TITLE.docx.\n
-            <strong>--show-prompt</strong> Posts the prompt used to start the current message chain to chat.\n
-            <strong>--update-prompt PROMPT</strong> Updates the prompt with user input PROMPT from chat. Restarts the message chain with new prompt.\n
-            <strong>--make-docx</strong> Generates docx document from bot's last response in chat, uploads to google drive.\n
-            <strong>--restart</strong> Restarts model with defaults from configuration file.\n
-            <strong>--show-config</strong> Posts generation config values that differ from model default configuration to chat.\n
-            <strong>--show-config-full</strong> Posts full generation configuration to chat.\n
-            <strong>--update-config PARAMETER NEW_VALUE</strong> Updates parameter to new value.\n
-            <strong>--reset-config</strong> Resets generation configuration to startup defaults from configuration file.\n
+            message = '''<strong>Available commands:</strong>\n
+            <strong>--commands</strong> Posts this message to chat.
+            <strong>--title TITLE</strong> Sets the document title with user input title from chat. The title is used to create the docx output file name: TITLE.docx.
+            <strong>--show-prompt</strong> Posts the prompt used to start the current message chain to chat.
+            <strong>--update-prompt PROMPT</strong> Updates the prompt with user input PROMPT from chat. Restarts the message chain with new prompt.
+            <strong>--make-docx</strong> Generates docx document from bot's last response in chat, uploads to google drive.
+            <strong>--restart</strong> Restarts model with defaults from configuration file.
+            <strong>--show-config</strong> Posts generation config values that differ from model default configuration to chat.
+            <strong>--show-config-full</strong> Posts full generation configuration to chat.
+            <strong>--update-config PARAMETER NEW_VALUE</strong> Updates parameter to new value.
+            <strong>--reset-config</strong> Resets generation configuration to startup defaults from configuration file.
             '''
 
-            commands = commands.replace('    ', '')
-            result = await self.post_message(commands)
+            message = message.replace('    ', '')
+            result = await self.post_message(message)
 
         # If we didn't recognize the command, post an error to chat
         else:
-            result = await self.post_message(f'Unrecognized command: {command[0]}')
+            message = f'Unrecognized command: {command[0]}'
+            result = await self.post_message(message)
+
+        self.logger.info(f'{message}')

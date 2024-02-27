@@ -1,18 +1,22 @@
 import gc
 import time
 import torch
+import logging
 import bartleby.configuration as conf
 from transformers import AutoTokenizer, AutoModelForCausalLM, FalconForCausalLM, GenerationConfig
 
 class Llm:
     '''Class to hold object related to the LLM'''
 
-    def __init__(self):
+    def __init__(self, logger):
 
         # Model related stuff
         self.model_type = conf.model_type
         self.device_map = conf.device_map
         self.prompt_buffer_size = conf.prompt_buffer_size
+
+        # Add logger
+        self.logger = logger
 
     def initialize_model(self):
 
@@ -69,9 +73,11 @@ class Llm:
         self.gen_cfg.top_p = conf.top_p
         self.gen_cfg.torch_dtype = torch.bfloat16
 
-        #print(f'\n{self.gen_cfg}')
+        self.logger.info(f'\n{str(self.gen_cfg).rstrip()}')
 
     def prompt_model(self, user_message):
+
+        self.logger.info('Prompting model')
 
         # Format user message as dict
         user_message = {
@@ -98,8 +104,6 @@ class Llm:
             if self.device_map != 'cpu':
                 prompt=prompt.to('cuda')
 
-            #print(f'Model input shape: {prompt.size()}')
-
             # Generate response
             output_ids = self.model.generate(
                 prompt,
@@ -109,10 +113,7 @@ class Llm:
             # Stop generation timer and calculate total generation time
             generation_finish_time = time.time()
             dT = (generation_finish_time - generation_start_time) / 60
-
-            #print(f'Model output shape: {output_ids.size()}')
-            #print(f'New tokens generated: {output_ids.size()[1] - prompt.size()[1]}')
-            #print(f'Generation time (min.): {round(dT, 1)}')
+            self.logger.info(f'{output_ids.size()[1] - prompt.size()[1]} tokens generated in {round(dT, 1)} seconds')
 
             # Un-tokenize response
             model_output = self.tokenizer.batch_decode(
@@ -132,9 +133,7 @@ class Llm:
             for message in self.messages:
                 messages.append(message["content"])
 
-            #print(f'Messages: {messages}')
             input = "\n".join(messages[-self.prompt_buffer_size:])
-            #print(f'Input:\n{input}\n')
 
             inputs = self.tokenizer(input, return_tensors='pt')
 
@@ -144,6 +143,11 @@ class Llm:
                 pad_token_id=self.tokenizer.eos_token_id,
                 generation_config = self.gen_cfg
             )
+
+            # Stop generation timer and calculate total generation time
+            generation_finish_time = time.time()
+            dT = (generation_finish_time - generation_start_time) / 60
+            self.logger.info(f'{output_ids.size()[1]} tokens generated in {round(dT, 1)} seconds')
 
             reply = self.tokenizer.batch_decode(output_ids)
 
@@ -161,6 +165,8 @@ class Llm:
             'role': 'assistant',
             'content': reply
         }
+
+        self.logger.debug(model_message)
         
         self.messages.append(model_message)
 
