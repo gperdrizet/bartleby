@@ -32,7 +32,7 @@ class Matrix:
             with open (self.next_batch_token_file,'r') as next_batch_token:
                 self.async_client.next_batch = next_batch_token.read()
 
-    async def post_message(self, message):
+    async def post_message(self, message, recipient='None'):
 
         # Get rid of any <strong> tags in message for unformatted body
         body = message.replace('<strong>', '').replace('</strong>', '')
@@ -43,11 +43,20 @@ class Matrix:
         # Format output as matrix message
         content = {
             'msgtype': 'm.text',
-            'format': 'org.matrix.custom.html',
-            'body': body,
-            'formatted_body': formatted_body
+            'format': 'org.matrix.custom.html'
         }
 
+        # Add mention for recipient if we have one, if not just
+        # add the message
+        if recipient == 'None':
+            content['body'] = body
+            content['formatted_body'] = formatted_body
+
+        elif recipient != 'None':
+            content['body'] = f'{recipient}: {body}'
+            content['formatted_body'] = f'<a href="https://matrix.to/#/@{recipient}:perdrizet.org">{recipient}</a>: {formatted_body}'
+            content['m.mentions'] = {'user_ids': [f'@{recipient}:perdrizet.org']}
+        
         # Post message to room
         result = await self.async_client.room_send(
             self.matrix_room_id, 
@@ -95,7 +104,7 @@ class Matrix:
 
         return user_message
 
-    async def parse_command_message(self, llm_instance, document, command_message):
+    async def parse_command_message(self, llm_instance, document, command_message, user):
         '''Takes a user message that contains a command and runs the 
         command'''
 
@@ -121,14 +130,14 @@ class Matrix:
 
         # Update prompt with user input and reset message chain
         elif command[0] == '--update-prompt':
-            llm_instance.messages = [{'role': 'system', 'content': ' '.join(command[1:])}]
+            llm_instance.messages[user] = [{'role': 'system', 'content': ' '.join(command[1:])}]
             message = 'Prompt update complete'
             result = await self.post_message(message)
 
         # Generate docx document from document title and last chatbot response.
         # Save to documents and upload to gdrive
         elif command[0] == '--make-docx':
-            result = await document.generate(llm_instance)
+            result = await document.async_generate(llm_instance, user)
             message = 'Document complete'
             result = await self.post_message(message)
         

@@ -18,6 +18,9 @@ class Llm:
         # Add logger
         self.logger = logger
 
+        # Empty dict to hold conversations
+        self.messages = {}
+
     def initialize_model(self):
 
         if self.model_type == 'HuggingFaceH4/zephyr-7b-beta':
@@ -26,27 +29,32 @@ class Llm:
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
             self.model = AutoModelForCausalLM.from_pretrained(self.model_type, device_map = self.device_map)
 
-            # Load default prompt
-            self.messages = [{
-                'role': 'system',
-                'content': conf.initial_prompt
-            }]
-
         elif self.model_type == 'tiiuae/falcon-7b-instruct':
 
             # Fire up the model and tokenizer
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
             self.model = AutoModelForCausalLM.from_pretrained(self.model_type)
 
-            self.messages = []
+    def add_conversation(self, user):
+
+        if self.model_type == 'HuggingFaceH4/zephyr-7b-beta':
+
+            # Load default prompt
+            self.messages[user] = [{
+                'role': 'system',
+                'content': conf.initial_prompt
+            }]
+
+        elif self.model_type == 'tiiuae/falcon-7b-instruct':
+
+            self.messages[user] = []
 
             for instruction in conf.initial_prompt.split('\n'):
 
-                self.messages.append({
+                self.messages[user].append({
                     'role': 'system',
                     'content': instruction
                 })
-
 
     def restart_model(self):
 
@@ -75,9 +83,14 @@ class Llm:
 
         self.logger.info(f'\n{str(self.gen_cfg).rstrip()}')
 
-    def prompt_model(self, user_message):
+    def prompt_model(self, user_message, user):
 
         self.logger.info('Prompting model')
+
+        # Check to see if we already have a running conversation
+        # with this user, if not start one
+        if user not in self.messages.keys():
+            self.add_conversation(user)
 
         # Format user message as dict
         user_message = {
@@ -86,7 +99,7 @@ class Llm:
         }
 
         # Add new message to conversation
-        self.messages.append(user_message)
+        self.messages[user].append(user_message)
 
         # Start generation timer
         generation_start_time = time.time()
@@ -95,7 +108,7 @@ class Llm:
 
             # Tokenize the updated conversation
             prompt = self.tokenizer.apply_chat_template(
-                self.messages[-self.prompt_buffer_size:],
+                self.messages[user][-self.prompt_buffer_size:],
                 tokenize = True,
                 add_generation_prompt = True,
                 return_tensors = 'pt'
@@ -130,7 +143,7 @@ class Llm:
 
             messages = []
 
-            for message in self.messages:
+            for message in self.messages[user]:
                 messages.append(message["content"])
 
             input = "\n".join(messages[-self.prompt_buffer_size:])
@@ -168,6 +181,6 @@ class Llm:
 
         self.logger.debug(model_message)
         
-        self.messages.append(model_message)
+        self.messages[user].append(model_message)
 
         return reply
