@@ -35,6 +35,13 @@ class Llm:
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
             self.model = AutoModelForCausalLM.from_pretrained(self.model_type)
 
+        elif self.model_type == 'microsoft/DialoGPT-small':
+
+            # Fire up the model and tokenizer
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_type, padding_side='left')
+            self.model = AutoModelForCausalLM.from_pretrained(self.model_type)
+            
+
     def add_conversation(self, user):
 
         if self.model_type == 'HuggingFaceH4/zephyr-7b-beta':
@@ -55,6 +62,10 @@ class Llm:
                     'role': 'system',
                     'content': instruction
                 })
+
+        elif self.model_type == 'microsoft/DialoGPT-small':
+
+            self.messages[user] = []
 
     def restart_model(self):
 
@@ -80,8 +91,6 @@ class Llm:
         self.gen_cfg.top_k = conf.top_k
         self.gen_cfg.top_p = conf.top_p
         self.gen_cfg.torch_dtype = torch.bfloat16
-
-        self.logger.info(f'\n{str(self.gen_cfg).rstrip()}')
 
     def prompt_model(self, user_message, user):
 
@@ -174,12 +183,37 @@ class Llm:
 
                 reply = ''
 
+        elif self.model_type == 'microsoft/DialoGPT-small':
+
+            self.logger.debug(f'Chat buffer: {self.messages}')
+            self.logger.debug(f'Prompt input buffer size: {self.prompt_buffer_size}')
+
+            # Collect and encode chat history
+            tokenized_messages = []
+            input_messages = self.messages[user][-self.prompt_buffer_size:]
+
+            for message in input_messages:
+                self.logger.debug(f'Message to be tokenized: {message}')
+                tokenized_message = self.tokenizer.encode(message['content'] + self.tokenizer.eos_token, return_tensors='pt')
+                tokenized_messages.append(tokenized_message)
+
+            self.logger.debug(f'Have {len(tokenized_message)} tokenized message to torch concat.')
+
+            # append the new user input tokens to the chat history
+            inputs = torch.cat(tokenized_messages, dim=-1)
+
+            # generated a response while limiting the total chat history to 1000 tokens, 
+            chat_history_ids = self.model.generate(inputs, max_length=1000, pad_token_id=self.tokenizer.eos_token_id)
+
+            # pretty print last output tokens from bot
+            reply = self.tokenizer.decode(chat_history_ids[:, inputs.shape[-1]:][0], skip_special_tokens=True)
+
         model_message = {
             'role': 'assistant',
             'content': reply
         }
 
-        self.logger.debug(model_message)
+        self.logger.debug(f'Model reply: {model_message}')
         
         self.messages[user].append(model_message)
 
