@@ -16,6 +16,8 @@ import bartleby.credentials.gdrive as gdrive
 
 MODE = 'matrix'
 
+CLEAR_LOGS = True
+
 # Paths
 PROJECT_ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 DATA_PATH = f'{PROJECT_ROOT_PATH}/data'

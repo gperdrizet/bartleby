@@ -1,3 +1,5 @@
+import os
+import glob
 import asyncio
 import torch
 import logging
@@ -90,6 +92,11 @@ def main_local_text_loop(llm_instance, docx_instance):
             
 def run():
     '''Run bartleby'''
+
+    # Clear logs if asked
+    if config.CLEAR_LOGS == True:
+        for file in glob.glob(f'{config.LOG_PATH}/*.log'):
+            os.remove(file)
 
     # Create logger
     logger = logging.getLogger(__name__)
