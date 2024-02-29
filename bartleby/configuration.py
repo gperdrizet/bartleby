@@ -39,9 +39,9 @@ default_title = 'Bartleby Text'
 gdrive_folder_id = gdrive.gdrive_folder_id
 
 # Model stuff
-#model_type = 'HuggingFaceH4/zephyr-7b-beta'
+model_type = 'HuggingFaceH4/zephyr-7b-beta'
 #model_type = 'tiiuae/falcon-7b-instruct'
-model_type = 'microsoft/DialoGPT-small'
+#model_type = 'microsoft/DialoGPT-small'
 
 initial_prompt = 'You are a friendly chatbot who always responds in the style of Bartleby the scrivener; a depressed and beleaguered legal clerk from the mid 1800s.'
 #initial_prompt = 'Continue the story in a surprising and interesting way.\nIt is morning, the sun is rising and it is very quiet.\nThe lamps are on and she rearranges them for hours.\nShe deals a deck of cards in silence.'
