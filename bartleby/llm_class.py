@@ -65,7 +65,13 @@ class Llm:
 
         elif self.model_type == 'microsoft/DialoGPT-small':
 
-            self.messages[user] = []
+            #self.messages[user] = []
+
+            # Load default prompt
+            self.messages[user] = [{
+                'role': 'system',
+                'content': conf.initial_prompt
+            }]
 
     def restart_model(self):
 
@@ -110,6 +116,23 @@ class Llm:
         # Add new message to conversation
         self.messages[user].append(user_message)
 
+        # Select last n messages for input to the model.
+        input_messages = self.messages[user][-self.prompt_buffer_size:]
+
+        i = 0
+
+        for message in self.messages[user]:
+            self.logger.debug(f'User chat buffer message {i}: {message}')
+            i += 1
+
+        self.logger.debug(f'Model input size: {self.prompt_buffer_size} most recent messages')
+
+        i = 0
+
+        for message in input_messages:
+            self.logger.debug(f'Model input {i}: {message}')
+            i += 1
+
         # Start generation timer
         generation_start_time = time.time()
 
@@ -132,11 +155,6 @@ class Llm:
                 generation_config = self.gen_cfg
             )
 
-            # Stop generation timer and calculate total generation time
-            generation_finish_time = time.time()
-            dT = (generation_finish_time - generation_start_time) / 60
-            self.logger.info(f'{output_ids.size()[1] - prompt.size()[1]} tokens generated in {round(dT, 1)} seconds')
-
             # Un-tokenize response
             model_output = self.tokenizer.batch_decode(
                 output_ids,
@@ -144,8 +162,12 @@ class Llm:
                 clean_up_tokenization_spaces = False
             )
 
-            model_output_content = model_output[0]
+            # Stop generation timer and calculate total generation time
+            generation_finish_time = time.time()
+            dT = (generation_finish_time - generation_start_time) / 60
+            self.logger.info(f'{output_ids.size()[1] - prompt.size()[1]} tokens generated in {round(dT, 1)} seconds')
 
+            model_output_content = model_output[0]
             reply = model_output_content.split('\n<|assistant|>\n')[-1]
         
         elif self.model_type == 'tiiuae/falcon-7b-instruct':
@@ -156,7 +178,6 @@ class Llm:
                 messages.append(message["content"])
 
             input = "\n".join(messages[-self.prompt_buffer_size:])
-
             inputs = self.tokenizer(input, return_tensors='pt')
 
             output_ids = self.model.generate(
@@ -166,38 +187,31 @@ class Llm:
                 generation_config = self.gen_cfg
             )
 
+            reply = self.tokenizer.batch_decode(output_ids)
+
             # Stop generation timer and calculate total generation time
             generation_finish_time = time.time()
             dT = (generation_finish_time - generation_start_time) / 60
             self.logger.info(f'{output_ids.size()[1]} tokens generated in {round(dT, 1)} seconds')
-
-            reply = self.tokenizer.batch_decode(output_ids)
 
             try:
                 reply = reply[0]
                 reply = reply.split('\n')[self.prompt_buffer_size]
 
             except IndexError as e:
-                print(f'Caught index error in reply parse.')
-                print(f'Reply: {reply}')
+                self.logger.error(f'Caught index error in reply parse.')
+                self.logger.error(f'Reply: {reply}')
 
                 reply = ''
 
         elif self.model_type == 'microsoft/DialoGPT-small':
 
-            self.logger.debug(f'Chat buffer: {self.messages}')
-            self.logger.debug(f'Prompt input buffer size: {self.prompt_buffer_size}')
-
             # Collect and encode chat history
             tokenized_messages = []
-            input_messages = self.messages[user][-self.prompt_buffer_size:]
 
             for message in input_messages:
-                self.logger.debug(f'Message to be tokenized: {message}')
                 tokenized_message = self.tokenizer.encode(message['content'] + self.tokenizer.eos_token, return_tensors='pt')
                 tokenized_messages.append(tokenized_message)
-
-            self.logger.debug(f'Have {len(tokenized_message)} tokenized message to torch concat.')
 
             # append the new user input tokens to the chat history
             inputs = torch.cat(tokenized_messages, dim=-1)
@@ -205,8 +219,13 @@ class Llm:
             # generated a response while limiting the total chat history to 1000 tokens, 
             chat_history_ids = self.model.generate(inputs, max_length=1000, pad_token_id=self.tokenizer.eos_token_id)
 
-            # pretty print last output tokens from bot
+            # get last output tokens from bot
             reply = self.tokenizer.decode(chat_history_ids[:, inputs.shape[-1]:][0], skip_special_tokens=True)
+
+            # Stop generation timer and calculate total generation time
+            generation_finish_time = time.time()
+            dT = (generation_finish_time - generation_start_time) / 60
+            self.logger.info(f'{len(chat_history_ids[:, inputs.shape[-1]:][0])} tokens generated in {round(dT*1000, 0)} milliseconds')
 
         model_message = {
             'role': 'assistant',
@@ -214,7 +233,6 @@ class Llm:
         }
 
         self.logger.debug(f'Model reply: {model_message}')
-        
         self.messages[user].append(model_message)
 
         return reply

@@ -12,7 +12,7 @@ import bartleby.matrix_class as matrix
 import bartleby.llm_class as llm
 import bartleby.docx_class as docx
 
-async def main_matrix_loop(matrix_instance, llm_instance, docx_instance):
+async def main_matrix_loop(matrix_instance, llm_instance, docx_instance, logger):
 
     # Log bot into the matrix server and post a hello
     result = await matrix_instance.async_client.login(matrix_instance.matrix_bot_password)
@@ -49,7 +49,7 @@ async def main_matrix_loop(matrix_instance, llm_instance, docx_instance):
 
                         # If the message is a command, send it to the command parser
                         if user_message[:2] == '--' or user_message[:1] == '–':
-                            result = await matrix_instance.parse_command_message(
+                            _ = await matrix_instance.parse_command_message(
                                 llm_instance, 
                                 docx_instance, 
                                 user_message,
@@ -61,6 +61,7 @@ async def main_matrix_loop(matrix_instance, llm_instance, docx_instance):
                         else: 
                             model_output = llm_instance.prompt_model(user_message, user)
                             result = await matrix_instance.post_message(model_output, user)
+                            logger.info('Bot reply posted to chat')
 
 
 def main_local_text_loop(llm_instance, docx_instance):
@@ -101,10 +102,10 @@ def run():
     # Create logger
     logger = logging.getLogger(__name__)
     handler = RotatingFileHandler(f'{config.LOG_PATH}/bartleby.log', maxBytes=20000, backupCount=10)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
+    formatter = logging.Formatter(config.LOG_PREFIX, datefmt='%Y-%m-%d %I:%M:%S %p')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logger.setLevel('DEBUG')
+    logger.setLevel(config.LOG_LEVEL)
 
     logger.info('############################################### ')
     logger.info('############## Starting bartleby ############## ')
@@ -134,7 +135,7 @@ def run():
         matrix_instance.start_matrix_client()
         logger.info('Matrix chat client started successfully')
 
-        asyncio.run(main_matrix_loop(matrix_instance, llm_instance, docx_instance))
+        asyncio.run(main_matrix_loop(matrix_instance, llm_instance, docx_instance, logger))
 
     elif config.MODE == 'local_text':
 

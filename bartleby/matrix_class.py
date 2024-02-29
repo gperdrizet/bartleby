@@ -75,7 +75,6 @@ class Matrix:
     async def catch_message(self, event):
 
         self.logger.info('Caught user message mentioning bartleby')
-        self.logger.debug(event)
 
         # Get event id for user's message
         user_message_event_id = event.event_id
@@ -121,41 +120,41 @@ class Matrix:
         if command[0] == '--title':
             document.title = ' '.join(command[1:])
             message = f'Document title set to: {document.title}'
-            result = await self.post_message(message)
+            _ = await self.post_message(message)
 
         # Post current prompt to chat
         elif command[0] == '--show-prompt':
-            message = f'Prompt: {llm_instance.messages[0]["content"]}'
-            result = await self.post_message(message)
+            message = f"Prompt: {llm_instance.messages['system'][0]['content']}"
+            _ = await self.post_message(message)
 
         # Update prompt with user input and reset message chain
         elif command[0] == '--update-prompt':
             llm_instance.messages[user] = [{'role': 'system', 'content': ' '.join(command[1:])}]
             message = 'Prompt update complete'
-            result = await self.post_message(message)
+            _ = await self.post_message(message)
 
         # Generate docx document from document title and last chatbot response.
         # Save to documents and upload to gdrive
         elif command[0] == '--make-docx':
-            result = await document.async_generate(llm_instance, user)
+            _ = await document.async_generate(llm_instance, user)
             message = 'Document complete'
-            result = await self.post_message(message)
+            _ = await self.post_message(message)
         
         # Restart the model, tokenizer and message chain with the default prompt
         elif command[0] == '--restart':
             llm_instance.restart_model()
             message = 'Model restarted'
-            result = await self.post_message(message)
+            _ = await self.post_message(message)
 
         # Post non-model default generation configuration options to chat
         elif command[0] == '--show-config':
             message = f'{llm_instance.gen_cfg}\n'
-            result = await self.post_message(message)
+            _ = await self.post_message(message)
 
         # Post all generation configurations options to chat
         elif command[0] == '--show-config-full':
             message = f'{llm_instance.gen_cfg.__dict__}\n'
-            result = await self.post_message(message)
+            _ = await self.post_message(message)
 
         # Update generation configuration option with user input
         elif command[0] == '--update-config':
@@ -174,13 +173,13 @@ class Matrix:
             setattr(llm_instance.gen_cfg, command[1], val)
             new_value = getattr(llm_instance.gen_cfg, command[1])
             message = f'Updated {command[1]} from {old_value} to {new_value}'
-            result = await self.post_message(message)
+            _ = await self.post_message(message)
 
         # Reset generation configuration to model/configuration.py defaults
         elif command[0] == '--reset-config':
             llm_instance.initialize_model_config()
             message = 'Model generation configuration reset'
-            result = await self.post_message(message)
+            _ = await self.post_message(message)
 
         # Post commands to chat
         elif command[0] == '--commands':
@@ -198,11 +197,12 @@ class Matrix:
             '''
 
             message = message.replace('    ', '')
-            result = await self.post_message(message)
+            _ = await self.post_message(message)
 
         # If we didn't recognize the command, post an error to chat
         else:
             message = f'Unrecognized command: {command[0]}'
-            result = await self.post_message(message)
+            _ = await self.post_message(message)
 
-        self.logger.info(f'{message}')
+        log_message = message.replace('<strong>', '').replace('</strong>', '\t').rstrip()
+        self.logger.info(f'{log_message}')
