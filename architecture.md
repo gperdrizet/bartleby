@@ -65,4 +65,11 @@
 | .catch_message()         |
 | .parse_command_message() |
 +--------------------------+ 
+
+
+ +------------------+       +--------------------------+
+ | configuration.py |       | helper_functions.py      |
+ +------------------+       |                          |
+                            | .parse_command_message() |
+                            +--------------------------+
 ```
