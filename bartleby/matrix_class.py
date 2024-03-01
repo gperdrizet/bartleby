@@ -74,8 +74,6 @@ class Matrix:
 
     async def catch_message(self, event):
 
-        self.logger.info('Caught user message mentioning bartleby')
-
         # Get event id for user's message
         user_message_event_id = event.event_id
 
