@@ -9,7 +9,7 @@ def start_logger():
 
     # Clear logs if asked
     if conf.CLEAR_LOGS == True:
-        for file in glob.glob(f'{conf.LOG_PATH}/*.log'):
+        for file in glob.glob(f'{conf.LOG_PATH}/*.log*'):
             os.remove(file)
 
     # Create logger
