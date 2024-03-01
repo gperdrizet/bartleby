@@ -16,8 +16,8 @@ import bartleby.docx_class as docx
 async def main_matrix_loop(matrix_instance, users, llms, docx_instance, logger):
 
     # Log bot into the matrix server and post a hello
-    result = await matrix_instance.async_client.login(matrix_instance.matrix_bot_password)
-    result = await matrix_instance.post_message('Bartleby online. Send "--commands" to see a list of available control commands or just say "Hi!".')
+    _ = await matrix_instance.async_client.login(matrix_instance.matrix_bot_password)
+    _ = await matrix_instance.post_message('Bartleby online. Send "--commands" to see a list of available control commands or just say "Hi!".')
     
     while True:
 
@@ -94,64 +94,17 @@ async def main_matrix_loop(matrix_instance, users, llms, docx_instance, logger):
                     model_output, users = llms[users[user]['model_type']].prompt_model(users, user)
                     result = await matrix_instance.post_message(model_output, user)
                     logger.info('Bot reply posted to chat')
-
-
-def main_local_text_loop(llm_instance, docx_instance):
-
-    # Post a hello
-    print('Bartleby online. Send "--commands" to see a list of available control commands or just say "Hi!".\n')
-    
-    while True:
-
-        # Wait for user input
-        user_message = input('User: ')
-        #print(f'User message: {user_message}')
-
-        # If the message is a command, send it to the command parser
-        if user_message[:2] == '--' or user_message[:1] == '–':
-            result = helper_funcs.parse_command_message(
-                llm_instance, 
-                docx_instance, 
-                user_message
-            )
-
-            print(result)
-
-        # Otherwise, Prompt the model with the user's message and post the
-        # model's response to chat
-        else: 
-            model_output = llm_instance.prompt_model(user_message)
-            print(model_output)
             
 def run():
     '''Run bartleby'''
 
-    # Clear logs if asked
-    if config.CLEAR_LOGS == True:
-        for file in glob.glob(f'{config.LOG_PATH}/*.log'):
-            os.remove(file)
-
-    # Create logger
-    logger = logging.getLogger(__name__)
-    handler = RotatingFileHandler(f'{config.LOG_PATH}/bartleby.log', maxBytes=20000, backupCount=10)
-    formatter = logging.Formatter(config.LOG_PREFIX, datefmt='%Y-%m-%d %I:%M:%S %p')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(config.LOG_LEVEL)
-
-    logger.info('############################################### ')
-    logger.info('############## Starting bartleby ############## ')
-    logger.info('############################################### ')
+    # Fire up a logger
+    logger = helper_funcs.start_logger()
+    logger.info(f'Running in {config.MODE} mode')
+    logger.info(f'Using {config.CPU_threads} CPU threads')
 
     # Give torch CPU resources
-    logger.info(f'Using {config.CPU_threads} CPU threads')
     torch.set_num_threads(config.CPU_threads)
-
-    # # Initialize the model, tokenizer and generation configuration.
-    # llm_instance = llm.Llm(logger)
-    # llm_instance.initialize_model()
-    # llm_instance.initialize_model_config()
-    # logger.info('Model initialized successfully')
 
     # Initialize a new docx document for text output
     docx_instance = docx.Docx()
@@ -160,23 +113,13 @@ def run():
     # Choose the right mode
     if config.MODE == 'matrix':
 
-        logger.info('Running in Matrix mode')
-
-        # Instantiate new matrix chat session.
+        # Instantiate new matrix chat session
         matrix_instance = matrix.Matrix(logger)
         matrix_instance.start_matrix_client()
         logger.info('Matrix chat client started successfully')
 
-        # Make empty dict. hold user data
-        users = {}
-        
-        # Make empty dict. to hold LLM instances
-        llms = {}
+        # Make empty dictionaries to hold user and llm class instances
+        users, llms = {}
 
+        # Start the main loop
         asyncio.run(main_matrix_loop(matrix_instance, users, llms, docx_instance, logger))
-
-    # elif config.MODE == 'local_text':
-
-    #     logger.info('Running in local text only mode')
-
-    #     main_local_text_loop(llm_instance, docx_instance)
