@@ -48,7 +48,7 @@ initial_prompt = 'You are a friendly chatbot who always responds in the style of
 
 device_map = 'cpu'
 CPU_threads = 9
-prompt_buffer_size = 3
+model_input_buffer_size = 3
 max_new_tokens = 16
 do_sample = True
 temperature = 1.0

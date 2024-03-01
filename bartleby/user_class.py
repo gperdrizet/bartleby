@@ -1,6 +1,6 @@
 import bartleby.configuration as conf
 
-class Matrix:
+class User:
     '''Class to hold data specific to a user'''
 
     def __init__(self, user_name):
@@ -19,5 +19,11 @@ class Matrix:
         
         # Start messages list with default prompt
         self.messages = [{'role': 'system', 'content': self.initial_prompt}]
+
+        # Empty dict. to hold model generation configurations
+        self.generation_configurations = {}
+
+        # N most recent messages to include when prompting the model
+        self.model_input_buffer_size = conf.model_input_buffer_size
 
 #############################################################################79
