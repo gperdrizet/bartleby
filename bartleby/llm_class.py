@@ -78,20 +78,6 @@ class Llm:
 
         self.logger.info('Prompting model')
 
-        # # Check to see if we already have a running conversation
-        # # with this user, if not start one
-        # if user not in self.messages.keys():
-        #     self.add_conversation(user)
-
-        # # Format user message as dict
-        # user_message = {
-        #     'role': 'user',
-        #     'content': user_message
-        # }
-
-        # # Add new message to conversation
-        # self.messages[user].append(user_message)
-
         # Log user's chat buffer and input messages for debug
         i = 0
 

@@ -1,32 +1,6 @@
 # Project architecture
 
-## 1. Planned
-
-```text
-        +--------------+         +--------------+
-        |              |         |              |
-        |     LLM      |         | Google Docs  |
-        |              |         |              |
-        +--------------+         +--------------+
-                |                       |
-                |                       |
-                |                       |                       
-        ######################################### 
-        #                                       #
-        #             Communicator              #
-        #                                       #
-        ######################################### 
-            |               |               |
-            |               |               |
-            |               |               |
-+---------------+   +---------------+   +--------------+
-|               |   |               |   |              |
-|    Matrix     |   |    Discord    |   |     Shell    |
-|               |   |               |   |              |
-+---------------+   +---------------+   +--------------+
-```
-
-## 2. Current
+## 1. Current Set-up
 
 ```text
 +----------------------------+      +-------------------+
@@ -120,3 +94,52 @@ Let's stash the login concerns for now, we can just go around them if we run out
 1. Start an llm instance
 2. Prompt an llm instance
 3. Interact with Google Drive
+
+## 4. Version 2 Set-up
+
+After some heavy rewiring inspired by the above brainstorming discussion and re-writing almost everything here is the new architecture:
+
+```text
++----------------------------+
+|            LLM             |
+|----------------------------|
+| llm_class.py               | 
+|                            |
+| .initialize_model()        |
+| .restart_model()           |
+| .prompt_model()            |
++----------------------------+ 
+                |
+                |
+                |
+        #########################################
+        #             Communicator              #
+        #########################################       +--------------------------+ 
+        # bartleby.py                           #       |          User            | 
+        #                                       #-------|--------------------------| 
+        # .run()                                #       | user_class.py            |
+        # .main_matrix_loop()                   #       +--------------------------+ 
+        ######################################### 
+            | 
+            |
+            | 
++--------------------------+ 
+|          Matrix          | 
+|--------------------------| 
+| matrix_class.py          |
+|                          |
+| .start_matrix_client()   | 
+| .post_message()          |
+| .post_system_message()   |
+| .catch_message()         |
+| .parse_command_message() |
++--------------------------+ 
+
+
+ +------------------+       +--------------------------+
+ | configuration.py |       | helper_functions.py      |
+ +------------------+       |                          |
+                            | .parse_command_message() |
+                            | .start_logger()          |
+                            +--------------------------+
+```
