@@ -32,7 +32,39 @@ class Matrix:
             with open (self.next_batch_token_file,'r') as next_batch_token:
                 self.async_client.next_batch = next_batch_token.read()
 
-    async def post_message(self, message, recipient='None'):
+    async def post_message(self, user):
+
+        # Get rid of any <strong> tags in message for unformatted body
+        body = user.messages[-1]['content'].replace('<strong>', '').replace('</strong>', '')
+
+        # Replace \n with html <br> for formatted body
+        formatted_body = user.messages[-1]['content'].replace('\n', '<br>')
+
+        # Format output as matrix message
+        content = {
+            'msgtype': 'm.text',
+            'format': 'org.matrix.custom.html',
+            'body': f'{user.user_name}: {body}',
+            'formatted_body': f'<a href="https://matrix.to/#/@{user.user_name}:perdrizet.org">{user.user_name}</a>: {formatted_body}',
+            'm.mentions': {'user_ids': [f'@{user.user_name}:perdrizet.org']}
+        }
+
+        # Post message to room
+        _ = await self.async_client.room_send(
+            self.matrix_room_id, 
+            'm.room.message', 
+            content
+        )
+
+        # Then set lavern's state to 'not typing'..
+        _ = await self.async_client.room_typing(
+            self.matrix_room_id,
+            typing_state = False
+        )
+
+        return True
+    
+    async def post_system_message(self, message, user_name):
 
         # Get rid of any <strong> tags in message for unformatted body
         body = message.replace('<strong>', '').replace('</strong>', '')
@@ -43,29 +75,21 @@ class Matrix:
         # Format output as matrix message
         content = {
             'msgtype': 'm.text',
-            'format': 'org.matrix.custom.html'
+            'format': 'org.matrix.custom.html',
+            'body': f'{user_name}: {body}',
+            'formatted_body': f'<a href="https://matrix.to/#/@{user_name}:perdrizet.org">{user_name}</a>: {formatted_body}',
+            'm.mentions': {'user_ids': [f'@{user_name}:perdrizet.org']}
         }
 
-        # Add mention for recipient if we have one, if not just
-        # add the message
-        if recipient == 'None':
-            content['body'] = body
-            content['formatted_body'] = formatted_body
-
-        elif recipient != 'None':
-            content['body'] = f'{recipient}: {body}'
-            content['formatted_body'] = f'<a href="https://matrix.to/#/@{recipient}:perdrizet.org">{recipient}</a>: {formatted_body}'
-            content['m.mentions'] = {'user_ids': [f'@{recipient}:perdrizet.org']}
-        
         # Post message to room
-        result = await self.async_client.room_send(
+        _ = await self.async_client.room_send(
             self.matrix_room_id, 
             'm.room.message', 
             content
         )
 
         # Then set lavern's state to 'not typing'..
-        result = await self.async_client.room_typing(
+        _ = await self.async_client.room_typing(
             self.matrix_room_id,
             typing_state = False
         )
@@ -73,8 +97,6 @@ class Matrix:
         return True
 
     async def catch_message(self, event):
-
-        self.logger.info('Caught user message mentioning bartleby')
 
         # Get event id for user's message
         user_message_event_id = event.event_id

@@ -1,79 +1,69 @@
 import gc
 import time
 import torch
-import logging
+#import logging
+import queue
 import bartleby.configuration as conf
-from transformers import AutoTokenizer, AutoModelForCausalLM, FalconForCausalLM, GenerationConfig
+from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig #, FalconForCausalLM
 
 class Llm:
     '''Class to hold object related to the LLM'''
 
     def __init__(self, logger):
 
-        # Model related stuff
-        self.model_type = conf.model_type
+        # Set device map
         self.device_map = conf.device_map
-        self.prompt_buffer_size = conf.prompt_buffer_size
+
+        # Set newline truncation
+        self.truncate_newlines = conf.truncate_newlines
 
         # Add logger
         self.logger = logger
 
-        # Empty dict to hold conversations
-        self.messages = {}
+    def initialize_model(self, model_type):
+        '''Fire up a model'''
 
-    def initialize_model(self):
+        # Set model type
+        self.model_type = model_type
 
+        # Fire up the model and tokenizer based on model type
         if self.model_type == 'HuggingFaceH4/zephyr-7b-beta':
 
-            # Fire up the model and tokenizer
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
-            self.model = AutoModelForCausalLM.from_pretrained(self.model_type, device_map = self.device_map)
+
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_type,
+                device_map = self.device_map
+            )
 
         elif self.model_type == 'tiiuae/falcon-7b-instruct':
 
-            # Fire up the model and tokenizer
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
             self.model = AutoModelForCausalLM.from_pretrained(self.model_type)
 
         elif self.model_type == 'microsoft/DialoGPT-small':
 
-            # Fire up the model and tokenizer
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_type, padding_side='left')
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                self.model_type,
+                padding_side='left'
+            )
+
             self.model = AutoModelForCausalLM.from_pretrained(self.model_type)
-            
 
-    def add_conversation(self, user):
+        # Read the default generation config from the model
+        self.default_generation_configuration = GenerationConfig.from_model_config(
+            self.model.config
+        )
 
-        if self.model_type == 'HuggingFaceH4/zephyr-7b-beta':
+        # Replace some stock values with new defaults from configuration file
+        self.default_generation_configuration.max_new_tokens = conf.max_new_tokens
+        self.default_generation_configuration.do_sample = conf.do_sample
+        self.default_generation_configuration.temperature = conf.temperature
+        self.default_generation_configuration.top_k = conf.top_k
+        self.default_generation_configuration.top_p = conf.top_p
+        #self.default_generation_configuration.torch_dtype = torch.bfloat16
 
-            # Load default prompt
-            self.messages[user] = [{
-                'role': 'system',
-                'content': conf.initial_prompt
-            }]
-
-        elif self.model_type == 'tiiuae/falcon-7b-instruct':
-
-            self.messages[user] = []
-
-            for instruction in conf.initial_prompt.split('\n'):
-
-                self.messages[user].append({
-                    'role': 'system',
-                    'content': instruction
-                })
-
-        elif self.model_type == 'microsoft/DialoGPT-small':
-
-            #self.messages[user] = []
-
-            # Load default prompt
-            self.messages[user] = [{
-                'role': 'system',
-                'content': conf.initial_prompt
-            }]
-
-    def restart_model(self):
+    def restart_model(self, model_type):
 
         # Get rid of model and tokenizer
         del self.model
@@ -83,49 +73,23 @@ class Llm:
         gc.collect()
         torch.cuda.empty_cache()
 
-        self.initialize_model()
+        self.initialize_model(model_type)
 
-    def initialize_model_config(self):
-
-        # Read and set generation configuration defaults from config file.
-        self.truncate_newlines = conf.truncate_newlines
-
-        self.gen_cfg = GenerationConfig.from_model_config(self.model.config)
-        self.gen_cfg.max_new_tokens = conf.max_new_tokens
-        self.gen_cfg.do_sample = conf.do_sample
-        self.gen_cfg.temperature = conf.temperature
-        self.gen_cfg.top_k = conf.top_k
-        self.gen_cfg.top_p = conf.top_p
-        self.gen_cfg.torch_dtype = torch.bfloat16
-
-    def prompt_model(self, user_message, user):
+    def prompt_model(self, user):
 
         self.logger.info('Prompting model')
 
-        # Check to see if we already have a running conversation
-        # with this user, if not start one
-        if user not in self.messages.keys():
-            self.add_conversation(user)
-
-        # Format user message as dict
-        user_message = {
-            'role': 'user',
-            'content': user_message
-        }
-
-        # Add new message to conversation
-        self.messages[user].append(user_message)
-
-        # Select last n messages for input to the model.
-        input_messages = self.messages[user][-self.prompt_buffer_size:]
-
+        # Log user's chat buffer and input messages for debug
         i = 0
 
-        for message in self.messages[user]:
-            self.logger.debug(f'User chat buffer message {i}: {message}')
+        for message in user.messages:
+            self.logger.debug(f'{user.user_name}\'s chat buffer message {i}: {message}')
             i += 1
 
-        self.logger.debug(f'Model input size: {self.prompt_buffer_size} most recent messages')
+        self.logger.debug(f'Model input size: {user.model_input_buffer_size} most recent messages')
+
+        # Select last n messages for input to the model
+        input_messages = user.messages[-user.model_input_buffer_size:]
 
         i = 0
 
@@ -136,11 +100,12 @@ class Llm:
         # Start generation timer
         generation_start_time = time.time()
 
-        if self.model_type == 'HuggingFaceH4/zephyr-7b-beta':
+        #if user.model_type == 'HuggingFaceH4/zephyr-7b-beta':
+        if 'zephyr' in user.model_type:
 
             # Tokenize the updated conversation
             prompt = self.tokenizer.apply_chat_template(
-                self.messages[user][-self.prompt_buffer_size:],
+                input_messages,
                 tokenize = True,
                 add_generation_prompt = True,
                 return_tensors = 'pt'
@@ -152,7 +117,7 @@ class Llm:
             # Generate response
             output_ids = self.model.generate(
                 prompt,
-                generation_config = self.gen_cfg
+                generation_config = user.generation_configurations[user.model_type]
             )
 
             # Un-tokenize response
@@ -170,21 +135,21 @@ class Llm:
             model_output_content = model_output[0]
             reply = model_output_content.split('\n<|assistant|>\n')[-1]
         
-        elif self.model_type == 'tiiuae/falcon-7b-instruct':
+        elif user.model_type == 'tiiuae/falcon-7b-instruct':
 
             messages = []
 
-            for message in self.messages[user]:
-                messages.append(message["content"])
+            for message in user.messages[-user.model_input_buffer_size:]:
+                messages.append(message['content'])
 
-            input = "\n".join(messages[-self.prompt_buffer_size:])
+            input = "\n".join(messages[-user.model_input_buffer_size:])
             inputs = self.tokenizer(input, return_tensors='pt')
 
             output_ids = self.model.generate(
                 **inputs, 
                 eos_token_id=self.tokenizer.eos_token_id,
                 pad_token_id=self.tokenizer.eos_token_id,
-                generation_config = self.gen_cfg
+                generation_config = user.generation_configurations[user.model_type]
             )
 
             reply = self.tokenizer.batch_decode(output_ids)
@@ -196,7 +161,7 @@ class Llm:
 
             try:
                 reply = reply[0]
-                reply = reply.split('\n')[self.prompt_buffer_size]
+                reply = reply.split('\n')[user.model_input_buffer_size]
 
             except IndexError as e:
                 self.logger.error(f'Caught index error in reply parse.')
@@ -204,7 +169,7 @@ class Llm:
 
                 reply = ''
 
-        elif self.model_type == 'microsoft/DialoGPT-small':
+        elif user.model_type == 'microsoft/DialoGPT-small':
 
             # Collect and encode chat history
             tokenized_messages = []
@@ -227,12 +192,14 @@ class Llm:
             dT = (generation_finish_time - generation_start_time) / 60
             self.logger.info(f'{len(chat_history_ids[:, inputs.shape[-1]:][0])} tokens generated in {round(dT*1000, 0)} milliseconds')
 
+        # Format and add the model's reply to the users message history
         model_message = {
             'role': 'assistant',
             'content': reply
         }
 
+        user.messages.append(model_message)
         self.logger.debug(f'Model reply: {model_message}')
-        self.messages[user].append(model_message)
 
-        return reply
+        # Done
+        return True

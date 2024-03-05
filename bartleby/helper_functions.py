@@ -1,4 +1,32 @@
-def parse_command_message(llm_instance, document, command_message):
+import glob
+import logging
+import os
+import bartleby.configuration as conf
+from logging.handlers import RotatingFileHandler
+
+def start_logger():
+    '''Sets up logging, returns logger'''
+
+    # Clear logs if asked
+    if conf.CLEAR_LOGS == True:
+        for file in glob.glob(f'{conf.LOG_PATH}/*.log*'):
+            os.remove(file)
+
+    # Create logger
+    logger = logging.getLogger(__name__)
+    handler = RotatingFileHandler(f'{conf.LOG_PATH}/bartleby.log', maxBytes=20000, backupCount=10)
+    formatter = logging.Formatter(conf.LOG_PREFIX, datefmt='%Y-%m-%d %I:%M:%S %p')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(conf.LOG_LEVEL)
+
+    logger.info('############################################### ')
+    logger.info('############## Starting bartleby ############## ')
+    logger.info('############################################### ')
+
+    return logger
+
+def parse_command_message(user, command_message):
     '''Takes a user message that contains a command and runs the 
     command'''
 
@@ -9,96 +37,222 @@ def parse_command_message(llm_instance, document, command_message):
     # Split the command message into words
     command = formatted_command_message.split(' ')
 
-    # Update docx document title
-    if command[0] == '--title':
-        document.title = ' '.join(command[1:])
-        result = f'Document title set to: {document.title}'
+    # Post commands to chat
+    if command[0] == '--commands':
+        
+        commands = '''\n<b>Available commands:</b>\n
+        \r  <b>--commands</b>                      Posts this message to chat.
+        \r  <b>--input-buffer-size</b>             Post size of LLM input buffer.
+        \r  <b>--update-input-buffer N</b>         Updates LLM input buffer to last N messages.
+        \r  <b>--show-input-messages</b>           Posts current content of LLM input buffer.
+        \r  <b>--show-prompt</b>                   Post the current system prompt to chat.
+        \r  <b>--update-prompt PROMPT</b>          Updates the system prompt to PROMPT and restarts chat history.
+        \r  <b>--restart-chat</b>                  Clears and restarts chat history.
+        \r  <b>--show-config</b>                   Post generation configuration parameters not set to model default.
+        \r  <b>--show-config-full</b>              Show all available generation configuration parameters.
+        \r  <b>--show-config-value PARAMETER</b>   Show the value of generation configuration PARAMETER.
+        \r  <b>--update-config PARAMETER VALUE</b> Updates generation configuration PARAMETER to VALUE.
+        \r  <b>--swap-model MODEL                  Change the model type used for generation.
+        '''
+        # \r  --title TITLE                Sets the document title with user input title from chat.
+        # \r  --show-prompt                Posts the prompt used to start the current message chain to chat.
+        # \r  --update-prompt PROMPT       Updates the prompt with user input PROMPT from chat. 
+        # \r                               Restarts the message chain with new prompt.
+        # \r  --buffer-length              Prints the number of messages currently in the buffer.
+        # \r  --update-input-buffer N      Send last N messages from chat buffer for generation input.
+        # \r  --make-docx N                Generates docx document on google drive containing the last N
+        # \r                               messages from the buffer.
+        # \r  --restart                    Restarts model with defaults from configuration file.
+        # \r  --show-config                Posts generation config values that differ from model default 
+        # \r                               configuration to chat.
+        # \r  --show-config-full           Posts full generation configuration to chat.
+        # \r  --update-config PARAM VALUE  Updates parameter to value.
+        # \r  --reset-config               Resets generation configuration to startup defaults from 
+        # \r                               configuration file.
+        # '''
+        result = commands
+
+    # Show the current LLM input buffer size
+    elif command[0] == '--input-buffer-size':
+        result = f'LLM input buffer size: last {user.model_input_buffer_size} messages'
+
+    # Set the LLM input buffer size
+    elif command[0] == '--update-input-buffer':
+        if len(command) == 2:
+
+            user.model_input_buffer_size = int(command[1])
+            result = f'LLM input buffer updated to last {user.model_input_buffer_size} messages'
+
+        else:
+            result = f'Failed to parse buffer size update command'
+
+    # Post current contents of LLM input buffer
+    elif command[0] == '--show-input-messages':
+
+        # Select last n messages for input to the model
+        messages = []
+
+        for message in user.messages[-user.model_input_buffer_size:]:
+            messages.append(f"{message['role']}: {message['content']}")
+
+        result = '\n' + '\n'.join(messages)
 
     # Post current prompt to chat
     elif command[0] == '--show-prompt':
-        result = f'Prompt:\n{llm_instance.messages[0]["content"]}'
+        result = f'Prompt: {user.initial_prompt}'
 
     # Update prompt with user input and reset message chain
     elif command[0] == '--update-prompt':
-        llm_instance.messages = [{'role': 'system', 'content': ' '.join(command[1:])}]
-        result = 'Prompt update complete'
+        user.initial_prompt = ' '.join(command[1:])
+        user.restart_conversation()
+        result = 'Prompt update complete, conversation reset'
 
-    # Show the current number of messages in the buffer
-    elif command[0] == '--buffer-length':
-        result = f'Chat buffer contains {len(llm_instance.messages)} messages'
-
-    # Update how much of the chat buffer we are sending as input
-    elif command[0] == '--update-input-buffer':
-        llm_instance.prompt_buffer_size = int(command[1])
-        result = f'Inputting last {int(command[1])} messages from buffer'
-
-    # Generate docx document from document title and last n chatbot responses.
-    # Save to documents and upload to gdrive
-    elif command[0] == '--make-docx':
-        _ = document.generate(llm_instance, int(command[1]))
-        result = 'Document complete'
-    
-    # Restart the model, tokenizer and message chain with the default prompt
-    elif command[0] == '--restart':
-        llm_instance.restart_model()
-        result = 'Model restarted'
+    # Clear chat history and reinitialize with current initial prompt
+    elif command[0] == '--restart-chat':
+        user.restart_conversation()
+        result = 'Chat history cleared and conversation reset'
 
     # Post non-model default generation configuration options to chat
     elif command[0] == '--show-config':
-        result = f'{llm_instance.gen_cfg}\n'
+        result = f'{user.generation_configurations[user.model_type]}\n'
 
     # Post all generation configurations options to chat
     elif command[0] == '--show-config-full':
-        result = f'{llm_instance.gen_cfg.__dict__}\n'
+        result = f'{user.generation_configurations[user.model_type].__dict__}\n'
+
+    # Post value of specific generation configuration command to output
+    elif command[0] == '--show-config-value':
+        if len(command) == 2:
+            value = getattr(user.generation_configurations[user.model_type], command[1])
+            result = f'{command[1]}: {value}'
 
     # Update generation configuration option with user input
     elif command[0] == '--update-config':
+        if len(command) == 3:
 
-        # Get the initial value for the parameter specified by user
-        old_value = getattr(llm_instance.gen_cfg, command[1])
+            # Get the initial value for the parameter specified by user
+            old_value = getattr(user.generation_configurations[user.model_type], command[1])
 
-        # Handle string to int or float conversion - some generation
-        # configuration parameters take ints and some take floats
-        if '.' in command[2]:
-            val = float(command[2])
+            # Handle string to int or float conversion - some generation
+            # configuration parameters take ints and some take floats
+            if '.' in command[2]:
+                val = float(command[2])
+            else:
+                val = int(command[2])
+
+            # Set and check the new value
+            setattr(user.generation_configurations[user.model_type], command[1], val)
+            new_value = getattr(user.generation_configurations[user.model_type], command[1])
+            result = f'Updated {command[1]} from {old_value} to {new_value}'
+
         else:
-            val = int(command[2])
+            result = f'Failed to parse generation configuration update command'
 
-        # Set and check the new value
-        setattr(llm_instance.gen_cfg, command[1], val)
-        new_value = getattr(llm_instance.gen_cfg, command[1])
-        result = f'Updated {command[1]} from {old_value} to {new_value}'
+    # Update model used for generation
+    elif command[0] == '--swap-model':
+        if len(command) == 2:
+            user.model_type = command[1]
+            result = f'Switched to {command[1]} model. Next response may be slow if this model type is not already running or in the cache.'
 
-    # Reset generation configuration to model/configuration.py defaults
-    elif command[0] == '--reset-config':
-        llm_instance.initialize_model_config()
-        result = 'Model generation configuration reset'
-
-    # Post commands to chat
-    elif command[0] == '--commands':
+        else:
+            result = 'Failed to parse model update command'
         
-        commands = '''\nAvailable commands:\n
-        \r  --commands                   Posts this message to chat.
-        \r  --title TITLE                Sets the document title with user input title from chat.
-        \r  --show-prompt                Posts the prompt used to start the current message chain to chat.
-        \r  --update-prompt PROMPT       Updates the prompt with user input PROMPT from chat. 
-        \r                               Restarts the message chain with new prompt.
-        \r  --buffer-length              Prints the number of messages currently in the buffer.
-        \r  --update-input-buffer N      Send last N messages from chat buffer for generation input.
-        \r  --make-docx N                Generates docx document on google drive containing the last N
-        \r                               messages from the buffer.
-        \r  --restart                    Restarts model with defaults from configuration file.
-        \r  --show-config                Posts generation config values that differ from model default 
-        \r                               configuration to chat.
-        \r  --show-config-full           Posts full generation configuration to chat.
-        \r  --update-config PARAM VALUE  Updates parameter to value.
-        \r  --reset-config               Resets generation configuration to startup defaults from 
-        \r                               configuration file.
-        '''
-        result = commands
-
     # If we didn't recognize the command, post an error to chat
     else:
         result = f'Unrecognized command: {command[0]}'
 
     return result
+
+    # # Update docx document title
+    # if command[0] == '--title':
+    #     document.title = ' '.join(command[1:])
+    #     result = f'Document title set to: {document.title}'
+
+    # # Post current prompt to chat
+    # elif command[0] == '--show-prompt':
+    #     result = f'Prompt:\n{llm_instance.messages[0]["content"]}'
+
+    # # Update prompt with user input and reset message chain
+    # elif command[0] == '--update-prompt':
+    #     llm_instance.messages = [{'role': 'system', 'content': ' '.join(command[1:])}]
+    #     result = 'Prompt update complete'
+
+    # # Show the current number of messages in the buffer
+    # elif command[0] == '--buffer-length':
+    #     result = f'Chat buffer contains {len(llm_instance.messages)} messages'
+
+    # # Update how much of the chat buffer we are sending as input
+    # elif command[0] == '--update-input-buffer':
+    #     llm_instance.prompt_buffer_size = int(command[1])
+    #     result = f'Inputting last {int(command[1])} messages from buffer'
+
+    # # Generate docx document from document title and last n chatbot responses.
+    # # Save to documents and upload to gdrive
+    # elif command[0] == '--make-docx':
+    #     _ = document.generate(llm_instance, int(command[1]))
+    #     result = 'Document complete'
+    
+    # # Restart the model, tokenizer and message chain with the default prompt
+    # elif command[0] == '--restart':
+    #     llm_instance.restart_model()
+    #     result = 'Model restarted'
+
+    # # Post non-model default generation configuration options to chat
+    # elif command[0] == '--show-config':
+    #     result = f'{llm_instance.gen_cfg}\n'
+
+    # # Post all generation configurations options to chat
+    # elif command[0] == '--show-config-full':
+    #     result = f'{llm_instance.gen_cfg.__dict__}\n'
+
+    # # Update generation configuration option with user input
+    # elif command[0] == '--update-config':
+
+    #     # Get the initial value for the parameter specified by user
+    #     old_value = getattr(llm_instance.gen_cfg, command[1])
+
+    #     # Handle string to int or float conversion - some generation
+    #     # configuration parameters take ints and some take floats
+    #     if '.' in command[2]:
+    #         val = float(command[2])
+    #     else:
+    #         val = int(command[2])
+
+    #     # Set and check the new value
+    #     setattr(llm_instance.gen_cfg, command[1], val)
+    #     new_value = getattr(llm_instance.gen_cfg, command[1])
+    #     result = f'Updated {command[1]} from {old_value} to {new_value}'
+
+    # # Reset generation configuration to model/configuration.py defaults
+    # elif command[0] == '--reset-config':
+    #     llm_instance.initialize_model_config()
+    #     result = 'Model generation configuration reset'
+
+    # # Post commands to chat
+    # if command[0] == '--commands':
+        
+    #     commands = '''\nAvailable commands:\n
+    #     \r  --commands                   Posts this message to chat.
+    #     \r  --title TITLE                Sets the document title with user input title from chat.
+    #     \r  --show-prompt                Posts the prompt used to start the current message chain to chat.
+    #     \r  --update-prompt PROMPT       Updates the prompt with user input PROMPT from chat. 
+    #     \r                               Restarts the message chain with new prompt.
+    #     \r  --buffer-length              Prints the number of messages currently in the buffer.
+    #     \r  --update-input-buffer N      Send last N messages from chat buffer for generation input.
+    #     \r  --make-docx N                Generates docx document on google drive containing the last N
+    #     \r                               messages from the buffer.
+    #     \r  --restart                    Restarts model with defaults from configuration file.
+    #     \r  --show-config                Posts generation config values that differ from model default 
+    #     \r                               configuration to chat.
+    #     \r  --show-config-full           Posts full generation configuration to chat.
+    #     \r  --update-config PARAM VALUE  Updates parameter to value.
+    #     \r  --reset-config               Resets generation configuration to startup defaults from 
+    #     \r                               configuration file.
+    #     '''
+    #     result = commands
+
+    # # If we didn't recognize the command, post an error to chat
+    # else:
+    #     result = f'Unrecognized command: {command[0]}'
+
+    # return result
