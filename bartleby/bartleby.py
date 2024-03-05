@@ -13,10 +13,10 @@ import bartleby.configuration as config
 import bartleby.helper_functions as helper_funcs
 import bartleby.matrix_class as matrix
 import bartleby.llm_class as llm
-# import bartleby.docx_class as docx
+import bartleby.docx_class as docx
 import bartleby.user_class as user
 
-async def matrix_listener_loop(matrix_instance, users, llms, generation_queue, response_queue, logger):
+async def matrix_listener_loop(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger):
     '''Watches for messages from users in the matrix room, when it finds
     one, handles routing that user to an LLM'''
 
@@ -85,7 +85,7 @@ async def matrix_listener_loop(matrix_instance, users, llms, generation_queue, r
                     # Check to see if it's a command message, if so, send it to the command parser
                     if user_message[:2] == '--' or user_message[:1] == '–':
 
-                        result = helper_funcs.parse_command_message(users[user_name], user_message)
+                        result = helper_funcs.parse_command_message(docx_instance, users[user_name], user_message)
                         _ = await matrix_instance.post_system_message(result, user_name)
 
                     # If it's not a command, add it to the user's conversation and 
@@ -140,8 +140,8 @@ def generator(llms, generation_queue, response_queue, logger):
 
 
 # Wrapper function to start the matrix listener loop via asyncIO in a thread
-def matrix_listener(matrix_instance, users, llms, generation_queue, response_queue, logger):
-    asyncio.run(matrix_listener_loop(matrix_instance, users, llms, generation_queue, response_queue, logger))
+def matrix_listener(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger):
+    asyncio.run(matrix_listener_loop(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger))
 
 def run():
     '''Run bartleby'''
@@ -164,6 +164,10 @@ def run():
     generation_queue = queue.Queue()
     response_queue = queue.Queue()
     logger.info('Created queues for LLM IO.')
+    
+    # Make instance of docx class to generate and upload documents
+    docx_instance = docx.Docx()
+    logger.info('Docx instance started successfully')
 
     # Instantiate new matrix chat session
     matrix_instance = matrix.Matrix(logger)
@@ -171,7 +175,16 @@ def run():
     logger.info('Matrix chat client started successfully')
 
     # Start the matrix listener
-    matrix_listener_thread = Thread(target=matrix_listener, args=[matrix_instance, users, llms, generation_queue, response_queue, logger])
+    matrix_listener_thread = Thread(target=matrix_listener, args=[
+        docx_instance,
+        matrix_instance, 
+        users, 
+        llms, 
+        generation_queue, 
+        response_queue, 
+        logger
+    ])
+
     matrix_listener_thread.start()
     logger.info('Started matrix listener thread')
 

@@ -13,12 +13,10 @@ class Docx:
     def __init__(self):
 
         # Document generation stuff.
-        self.title = conf.default_title
         self.document_output_path = conf.DOCUMENTS_PATH
         self.docx_template_file = conf.docx_template_file
-        self.gdrive_folder_id = conf.gdrive_folder_id
 
-    async def async_generate(self, llm_instance, user):
+    async def async_generate(self, user, message_number):
         '''Recovers bot generated text from chat, formats as docx and
         pushes to google drive'''
 
@@ -26,10 +24,10 @@ class Docx:
         self.load_template()
 
         # Add heading 
-        result = self.template.add_paragraph(self.title, style = 'Heading 1')
+        result = self.template.add_paragraph(user.document_title, style = 'Heading 1')
 
         # Get last message in chain
-        body = llm_instance.messages[user][-1]['content']
+        body = user.messages[-message_number]['content']
 
         # Split on newline so we can format paragraphs correctly
         paragraphs = body.split('\n')
@@ -53,7 +51,7 @@ class Docx:
                     result.paragraph_format.space_after = Pt(6)
 
         # Format output file name for docx file
-        output_filename = f'{self.title.replace(" ", "_")}.docx'
+        output_filename = f'{user.document_title.replace(" ", "_")}.docx'
 
         # Save the docx
         self.template.save(f'{self.document_output_path}/{output_filename}')
@@ -61,30 +59,21 @@ class Docx:
         # Upload the docx to gdrive
         result = self.upload(output_filename)
 
-    def generate(self, llm_instance, n_messages):
-        '''Recovers bot generated text from chat, formats as docx and
+    def generate(self, user, message_number):
+        '''Recovers text from chat, formats as docx and
         pushes to google drive'''
+
+        # Set gdrive folder id from user
+        self.gdrive_folder_id = user.gdrive_folder_id
 
         # Load docx template
         self.load_template()
 
         # Add heading 
-        result = self.template.add_paragraph(self.title, style = 'Heading 1')
+        result = self.template.add_paragraph(user.document_title, style = 'Heading 1')
 
-        # Get last n messages in chain
-        body = []
-        messages = llm_instance.messages[-n_messages:]
-
-        print(f'Last n messages: {messages}')
-
-        for message in messages:
-            body.append(message['content'])
-
-        body = '\n'.join(body)
-
-        print(f'Extracted body: {body}')
-
-        #body = llm_instance.messages[-n_messages:]['content']
+        # Get last message in chain
+        body = user.messages[-message_number]['content']
 
         # Split on newline so we can format paragraphs correctly
         paragraphs = body.split('\n')
@@ -108,14 +97,13 @@ class Docx:
                     result.paragraph_format.space_after = Pt(6)
 
         # Format output file name for docx file
-        output_filename = f'{self.title.replace(" ", "_")}.docx'
+        output_filename = f'{user.document_title.replace(" ", "_")}.docx'
 
         # Save the docx
         self.template.save(f'{self.document_output_path}/{output_filename}')
 
         # Upload the docx to gdrive
         result = self.upload(output_filename)
-
 
     def load_template(self):
         '''Loads and returns empty docx document
