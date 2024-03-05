@@ -16,50 +16,50 @@ class Docx:
         self.document_output_path = conf.DOCUMENTS_PATH
         self.docx_template_file = conf.docx_template_file
 
-    async def async_generate(self, user, message_number):
-        '''Recovers bot generated text from chat, formats as docx and
-        pushes to google drive'''
+    # async def async_generate(self, user, message_number):
+    #     '''Recovers bot generated text from chat, formats as docx and
+    #     pushes to google drive'''
 
-        # Load docx template
-        self.load_template()
+    #     # Load docx template
+    #     self.load_template()
 
-        # Add heading 
-        result = self.template.add_paragraph(user.document_title, style = 'Heading 1')
+    #     # Add heading 
+    #     result = self.template.add_paragraph(user.document_title, style = 'Heading 1')
 
-        # Get last message in chain
-        body = user.messages[-message_number]['content']
+    #     # Get last message in chain
+    #     body = user.messages[-message_number]['content']
 
-        # Split on newline so we can format paragraphs correctly
-        paragraphs = body.split('\n')
+    #     # Split on newline so we can format paragraphs correctly
+    #     paragraphs = body.split('\n')
 
-        paragraph_count = 0
+    #     paragraph_count = 0
 
-        for paragraph in paragraphs:
+    #     for paragraph in paragraphs:
 
-            # Make sure this 'paragraph' has content, i.e. it wasn't
-            # the result of splitting a multiple newline
-            if len(paragraph) > 0:
+    #         # Make sure this 'paragraph' has content, i.e. it wasn't
+    #         # the result of splitting a multiple newline
+    #         if len(paragraph) > 0:
 
-                # Add the paragraph to the document
-                paragraph_count += 1
-                result = self.template.add_paragraph(paragraph)
+    #             # Add the paragraph to the document
+    #             paragraph_count += 1
+    #             result = self.template.add_paragraph(paragraph)
 
-                # Deal with spacing between paragraphs. If the body contains
-                # multiple paragraphs and this is not the last one, add some
-                # space after it.
-                if (len(paragraphs) > 1) and (paragraph_count < len(body)):
-                    result.paragraph_format.space_after = Pt(6)
+    #             # Deal with spacing between paragraphs. If the body contains
+    #             # multiple paragraphs and this is not the last one, add some
+    #             # space after it.
+    #             if (len(paragraphs) > 1) and (paragraph_count < len(body)):
+    #                 result.paragraph_format.space_after = Pt(6)
 
-        # Format output file name for docx file
-        output_filename = f'{user.document_title.replace(" ", "_")}.docx'
+    #     # Format output file name for docx file
+    #     output_filename = f'{user.document_title.replace(" ", "_")}.docx'
 
-        # Save the docx
-        self.template.save(f'{self.document_output_path}/{output_filename}')
+    #     # Save the docx
+    #     self.template.save(f'{self.document_output_path}/{output_filename}')
 
-        # Upload the docx to gdrive
-        result = self.upload(output_filename)
+    #     # Upload the docx to gdrive
+    #     result = self.upload(output_filename)
 
-    def generate(self, user, message_number):
+    def generate(self, user, first_message_number, last_message_number):
         '''Recovers text from chat, formats as docx and
         pushes to google drive'''
 
@@ -72,14 +72,38 @@ class Docx:
         # Add heading 
         result = self.template.add_paragraph(user.document_title, style = 'Heading 1')
 
-        # Get last message in chain
-        body = user.messages[-message_number]['content']
+        # Decide how to select message from the chat history
 
-        # Split on newline so we can format paragraphs correctly
-        paragraphs = body.split('\n')
+        # If there is no second message range parameter, just get
+        # the message specified by the first message range parameter
+        if last_message_number == None:
+            body = user.messages[-first_message_number]['content']
+
+            # Split on newline so we can format paragraphs correctly
+            paragraphs = body.split('\n')
+
+        else:
+            # Empty holder for paragraphs
+            paragraphs = []
+            body = []
+
+            # Loop on messages in range
+            while last_message_number >= first_message_number:
+                #for message in user.messages[-last_message_number:-first_message_number]:
+                
+                # Get message content
+                content = user.messages[-last_message_number]['content']
+                last_message_number -= 1
+
+                # Spit on any newlines and add to paragraphs list 
+                paragraphs.extend(content.split('\n'))
+                body.append(content)
+
+            body = ' '.join(body)
 
         paragraph_count = 0
 
+        # Loop on paragraphs and add them to doc
         for paragraph in paragraphs:
 
             # Make sure this 'paragraph' has content, i.e. it wasn't

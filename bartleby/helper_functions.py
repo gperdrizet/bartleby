@@ -178,12 +178,17 @@ def parse_command_message(docx_instance, user, command_message):
             # If it's a bare generate command with no argument, make the
             # document from the last message in the users chant history
             if len(command) == 1:
-                _ = docx_instance.generate(user, 1)
+                docx_instance.generate(user, 1, None)
 
             # If the generate command is followed by an argument, use that
             # to select the message to convert into docx
             elif len(command) == 2:
-                _ = docx_instance.generate(user, int(command[1]))
+                docx_instance.generate(user, int(command[1]), None)
+
+            # If the generation command is followed by two arguments
+            # select a message range to convert to docx
+            elif len(command) == 3:
+                docx_instance.generate(user, int(command[1]), int(command[2]))
 
             else:
                 result = 'Failed to parse document generation command'
