@@ -61,7 +61,7 @@ class Llm:
         self.default_generation_configuration.temperature = conf.temperature
         self.default_generation_configuration.top_k = conf.top_k
         self.default_generation_configuration.top_p = conf.top_p
-        self.default_generation_configuration.torch_dtype = torch.bfloat16
+        #self.default_generation_configuration.torch_dtype = torch.bfloat16
 
     def restart_model(self, model_type):
 
@@ -88,7 +88,7 @@ class Llm:
 
         self.logger.debug(f'Model input size: {user.model_input_buffer_size} most recent messages')
 
-        # Select last n messages for input to the model.
+        # Select last n messages for input to the model
         input_messages = user.messages[-user.model_input_buffer_size:]
 
         i = 0
@@ -100,7 +100,8 @@ class Llm:
         # Start generation timer
         generation_start_time = time.time()
 
-        if user.model_type == 'HuggingFaceH4/zephyr-7b-beta':
+        #if user.model_type == 'HuggingFaceH4/zephyr-7b-beta':
+        if 'zephyr' in user.model_type:
 
             # Tokenize the updated conversation
             prompt = self.tokenizer.apply_chat_template(

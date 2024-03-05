@@ -26,4 +26,10 @@ class User:
         # N most recent messages to include when prompting the model
         self.model_input_buffer_size = conf.model_input_buffer_size
 
+    def restart_conversation(self):
+        
+        # Start messages list with default prompt
+        self.messages = [{'role': 'system', 'content': self.initial_prompt}]
+
+
 #############################################################################79

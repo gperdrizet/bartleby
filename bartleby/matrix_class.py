@@ -64,7 +64,7 @@ class Matrix:
 
         return True
     
-    async def post_system_message(self, message):
+    async def post_system_message(self, message, user_name):
 
         # Get rid of any <strong> tags in message for unformatted body
         body = message.replace('<strong>', '').replace('</strong>', '')
@@ -76,8 +76,10 @@ class Matrix:
         content = {
             'msgtype': 'm.text',
             'format': 'org.matrix.custom.html',
-            'body': body,
-            'formatted_body': formatted_body}
+            'body': f'{user_name}: {body}',
+            'formatted_body': f'<a href="https://matrix.to/#/@{user_name}:perdrizet.org">{user_name}</a>: {formatted_body}',
+            'm.mentions': {'user_ids': [f'@{user_name}:perdrizet.org']}
+        }
 
         # Post message to room
         _ = await self.async_client.room_send(

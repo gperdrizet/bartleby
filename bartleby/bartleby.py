@@ -22,7 +22,7 @@ async def matrix_listener_loop(matrix_instance, users, llms, generation_queue, r
 
     # Log bot into the matrix server and post a hello
     _ = await matrix_instance.async_client.login(matrix_instance.matrix_bot_password)
-    _ = await matrix_instance.post_system_message('Bartleby online. Send "--commands" to see a list of available control commands or just say "Hi!".')
+    _ = await matrix_instance.post_system_message('Bartleby online. Send "--commands" to see a list of available control commands or just say "Hi!".', '')
     
     # Loop like this forever
     while True:
@@ -55,14 +55,6 @@ async def matrix_listener_loop(matrix_instance, users, llms, generation_queue, r
                         users[user_name] = user.User(user_name)
                         logger.info(f'New user: {user_name}')
 
-                    # Get body of user message and add it to the user's conversation
-                    user_message = await matrix_instance.catch_message(event)
-
-                    users[user_name].messages.append({
-                        'role': 'user',
-                        'content': user_message
-                    })
-
                     # Then check to see if we have a running instance of the user's model type,
                     # if we don't spin one up
                     if users[user_name].model_type not in llms.keys():
@@ -86,12 +78,32 @@ async def matrix_listener_loop(matrix_instance, users, llms, generation_queue, r
                         users[user_name].generation_configurations[users[user_name].model_type] = model_default_generation_configuration
                         logger.info(f'Set generation configuration for {user_name} from model defaults')
 
-                    # Put the user into the llm's queue
-                    generation_queue.put(users[user_name])
-                    logger.info(f'Added {user_name} to generation queue')
+                    # Get body of user message
+                    user_message = await matrix_instance.catch_message(event)
+                    logger.debug(f'User message: {user_message}')
+
+                    # Check to see if it's a command message, if so, send it to the command parser
+                    if user_message[:2] == '--' or user_message[:1] == '–':
+
+                        result = helper_funcs.parse_command_message(users[user_name], user_message)
+                        _ = await matrix_instance.post_system_message(result, user_name)
+
+                    # If it's not a command, add it to the user's conversation and 
+                    # send them to the LLM for a response
+                    else:
+
+                        users[user_name].messages.append({
+                            'role': 'user',
+                            'content': user_message
+                        })
+
+                        # Put the user into the llm's queue
+                        generation_queue.put(users[user_name])
+                        logger.info(f'Added {user_name} to generation queue')
 
         # Check to see if there are any users with generated responses in the
         # Response queue, if so, post to chat.
+        #
         # NOTE: documentation says, "Similarly, if empty() returns False it doesn’t 
         # guarantee that a subsequent call to get() will not block."
         # Not sure when/why that would happen...
@@ -127,11 +139,9 @@ def generator(llms, generation_queue, response_queue, logger):
         response_queue.put(queued_user)
 
 
-
+# Wrapper function to start the matrix listener loop via asyncIO in a thread
 def matrix_listener(matrix_instance, users, llms, generation_queue, response_queue, logger):
     asyncio.run(matrix_listener_loop(matrix_instance, users, llms, generation_queue, response_queue, logger))
-
-
 
 def run():
     '''Run bartleby'''
@@ -141,21 +151,24 @@ def run():
     logger.info(f'Running in {config.MODE} mode')
     logger.info(f'Using {config.CPU_threads} CPU threads')
 
-    # Give torch CPU resources
+    # Give torch the requested CPU resources
     torch.set_num_threads(config.CPU_threads)
-
-    # Instantiate new matrix chat session
-    matrix_instance = matrix.Matrix(logger)
-    matrix_instance.start_matrix_client()
-    logger.info('Matrix chat client started successfully')
+    logger.info(f'Assigned {config.CPU_threads} CPU threads')
 
     # Make empty dictionaries to hold user and llm class instances
     users, llms = {}, {}
+    logger.info(f'Initialized empty data structures for users and LLMs')
 
     # Make generation queue to take users from the listener
     # and send them to the LLM when the need a response
     generation_queue = queue.Queue()
     response_queue = queue.Queue()
+    logger.info('Created queues for LLM IO.')
+
+    # Instantiate new matrix chat session
+    matrix_instance = matrix.Matrix(logger)
+    matrix_instance.start_matrix_client()
+    logger.info('Matrix chat client started successfully')
 
     # Start the matrix listener
     matrix_listener_thread = Thread(target=matrix_listener, args=[matrix_instance, users, llms, generation_queue, response_queue, logger])
