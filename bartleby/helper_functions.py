@@ -26,7 +26,7 @@ def start_logger():
 
     return logger
 
-def parse_command_message(user, command_message):
+def parse_command_message(docx_instance, user, command_message):
     '''Takes a user message that contains a command and runs the 
     command'''
 
@@ -52,24 +52,13 @@ def parse_command_message(user, command_message):
         \r  <b>--show-config-full</b>              Show all available generation configuration parameters.
         \r  <b>--show-config-value PARAMETER</b>   Show the value of generation configuration PARAMETER.
         \r  <b>--update-config PARAMETER VALUE</b> Updates generation configuration PARAMETER to VALUE.
-        \r  <b>--swap-model MODEL                  Change the model type used for generation.
+        \r  <b>--swap-model MODEL</b>              Change the model type used for generation.
+        \r  <b>--document-title</b>                Posts current Google Doc document title to chat.
+        \r  <b>--set-document-title</b>            Updates Google Doc document title.
+        \r  <b>--set-gdrive-folder FOLDER</b>      Set Google Drive folder ID for document upload. 
+        \r  <b>--make-docx N</b>                   Makes and uploads docx document to Google Drive where N is the reverse index in chat history, e.g. 1 is the last message, 2 the second to last etc. If N is omitted, defaults to last message.
         '''
-        # \r  --title TITLE                Sets the document title with user input title from chat.
-        # \r  --show-prompt                Posts the prompt used to start the current message chain to chat.
-        # \r  --update-prompt PROMPT       Updates the prompt with user input PROMPT from chat. 
-        # \r                               Restarts the message chain with new prompt.
-        # \r  --buffer-length              Prints the number of messages currently in the buffer.
-        # \r  --update-input-buffer N      Send last N messages from chat buffer for generation input.
-        # \r  --make-docx N                Generates docx document on google drive containing the last N
-        # \r                               messages from the buffer.
-        # \r  --restart                    Restarts model with defaults from configuration file.
-        # \r  --show-config                Posts generation config values that differ from model default 
-        # \r                               configuration to chat.
-        # \r  --show-config-full           Posts full generation configuration to chat.
-        # \r  --update-config PARAM VALUE  Updates parameter to value.
-        # \r  --reset-config               Resets generation configuration to startup defaults from 
-        # \r                               configuration file.
-        # '''
+
         result = commands
 
     # Show the current LLM input buffer size
@@ -156,103 +145,64 @@ def parse_command_message(user, command_message):
 
         else:
             result = 'Failed to parse model update command'
+
+    # Posts current Google Docs document title to chat
+    elif command[0] == '--document-title':
+        result = f'Document title: {user.document_title}'
+
+    # Sets document title
+    elif command[0] == '--set-document-title':
+        if len(command) == 2:
+            user.document_title = command[1]
+            result = f'Document title updated'
+
+        else:
+            result = 'Failed to parse document title update command'
+
+    # Sets Google Drive folder ID for document upload
+    elif command[0] == '--set-gdrive-folder':
+        if len(command) == 2:
+            user.gdrive_folder_id = command[1]
+            result = 'Gdrive folder updated'
+
+        else:
+            result = 'Failed to parse Google Drive folder ID update command'
+
+    # Makes and uploads docx document to Google Drive 
+    elif command[0] == '--make-docx':
+
+        # Check to see that the user has set a gdrive folder id
+        # If they have, make the document
+        if user.gdrive_folder_id != None:
+
+            # If it's a bare generate command with no argument, make the
+            # document from the last message in the users chant history
+            if len(command) == 1:
+                docx_instance.generate(user, 1, None)
+
+            # If the generate command is followed by an argument, use that
+            # to select the message to convert into docx
+            elif len(command) == 2:
+                docx_instance.generate(user, int(command[1]), None)
+
+            # If the generation command is followed by two arguments
+            # select a message range to convert to docx
+            elif len(command) == 3:
+                docx_instance.generate(user, int(command[1]), int(command[2]))
+
+            else:
+                result = 'Failed to parse document generation command'
+
+            result = 'Document generated'
+
+        # If they have not set a gdrive folder id, ask them to set one
+        # before generating a document
+        elif user.gdrive_folder_id == None:
+            result = 'Please set a Google Drive folder ID before generating a document for upload'
+
         
     # If we didn't recognize the command, post an error to chat
     else:
         result = f'Unrecognized command: {command[0]}'
 
     return result
-
-    # # Update docx document title
-    # if command[0] == '--title':
-    #     document.title = ' '.join(command[1:])
-    #     result = f'Document title set to: {document.title}'
-
-    # # Post current prompt to chat
-    # elif command[0] == '--show-prompt':
-    #     result = f'Prompt:\n{llm_instance.messages[0]["content"]}'
-
-    # # Update prompt with user input and reset message chain
-    # elif command[0] == '--update-prompt':
-    #     llm_instance.messages = [{'role': 'system', 'content': ' '.join(command[1:])}]
-    #     result = 'Prompt update complete'
-
-    # # Show the current number of messages in the buffer
-    # elif command[0] == '--buffer-length':
-    #     result = f'Chat buffer contains {len(llm_instance.messages)} messages'
-
-    # # Update how much of the chat buffer we are sending as input
-    # elif command[0] == '--update-input-buffer':
-    #     llm_instance.prompt_buffer_size = int(command[1])
-    #     result = f'Inputting last {int(command[1])} messages from buffer'
-
-    # # Generate docx document from document title and last n chatbot responses.
-    # # Save to documents and upload to gdrive
-    # elif command[0] == '--make-docx':
-    #     _ = document.generate(llm_instance, int(command[1]))
-    #     result = 'Document complete'
-    
-    # # Restart the model, tokenizer and message chain with the default prompt
-    # elif command[0] == '--restart':
-    #     llm_instance.restart_model()
-    #     result = 'Model restarted'
-
-    # # Post non-model default generation configuration options to chat
-    # elif command[0] == '--show-config':
-    #     result = f'{llm_instance.gen_cfg}\n'
-
-    # # Post all generation configurations options to chat
-    # elif command[0] == '--show-config-full':
-    #     result = f'{llm_instance.gen_cfg.__dict__}\n'
-
-    # # Update generation configuration option with user input
-    # elif command[0] == '--update-config':
-
-    #     # Get the initial value for the parameter specified by user
-    #     old_value = getattr(llm_instance.gen_cfg, command[1])
-
-    #     # Handle string to int or float conversion - some generation
-    #     # configuration parameters take ints and some take floats
-    #     if '.' in command[2]:
-    #         val = float(command[2])
-    #     else:
-    #         val = int(command[2])
-
-    #     # Set and check the new value
-    #     setattr(llm_instance.gen_cfg, command[1], val)
-    #     new_value = getattr(llm_instance.gen_cfg, command[1])
-    #     result = f'Updated {command[1]} from {old_value} to {new_value}'
-
-    # # Reset generation configuration to model/configuration.py defaults
-    # elif command[0] == '--reset-config':
-    #     llm_instance.initialize_model_config()
-    #     result = 'Model generation configuration reset'
-
-    # # Post commands to chat
-    # if command[0] == '--commands':
-        
-    #     commands = '''\nAvailable commands:\n
-    #     \r  --commands                   Posts this message to chat.
-    #     \r  --title TITLE                Sets the document title with user input title from chat.
-    #     \r  --show-prompt                Posts the prompt used to start the current message chain to chat.
-    #     \r  --update-prompt PROMPT       Updates the prompt with user input PROMPT from chat. 
-    #     \r                               Restarts the message chain with new prompt.
-    #     \r  --buffer-length              Prints the number of messages currently in the buffer.
-    #     \r  --update-input-buffer N      Send last N messages from chat buffer for generation input.
-    #     \r  --make-docx N                Generates docx document on google drive containing the last N
-    #     \r                               messages from the buffer.
-    #     \r  --restart                    Restarts model with defaults from configuration file.
-    #     \r  --show-config                Posts generation config values that differ from model default 
-    #     \r                               configuration to chat.
-    #     \r  --show-config-full           Posts full generation configuration to chat.
-    #     \r  --update-config PARAM VALUE  Updates parameter to value.
-    #     \r  --reset-config               Resets generation configuration to startup defaults from 
-    #     \r                               configuration file.
-    #     '''
-    #     result = commands
-
-    # # If we didn't recognize the command, post an error to chat
-    # else:
-    #     result = f'Unrecognized command: {command[0]}'
-
-    # return result

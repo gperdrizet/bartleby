@@ -13,29 +13,57 @@ class Docx:
     def __init__(self):
 
         # Document generation stuff.
-        self.title = conf.default_title
-        self.document_output_path = conf.DOCUMENTS_PATH
-        self.docx_template_file = conf.docx_template_file
-        self.gdrive_folder_id = conf.gdrive_folder_id
+        self.document_path = conf.DOCUMENTS_PATH
+        self.template = Document(f'{conf.DATA_PATH}/{conf.docx_template_file}')
 
-    async def async_generate(self, llm_instance, user):
-        '''Recovers bot generated text from chat, formats as docx and
+        # Google API service account credentials set via venv
+        self.service_account_credentials, _ = google.auth.default()
+
+    def generate(self, user, first_message_number, last_message_number):
+        '''Recovers text from chat, formats as docx and
         pushes to google drive'''
+
+        # Set gdrive folder id from user
+        self.gdrive_folder_id = user.gdrive_folder_id
 
         # Load docx template
         self.load_template()
 
         # Add heading 
-        result = self.template.add_paragraph(self.title, style = 'Heading 1')
+        result = self.template.add_paragraph(user.document_title, style = 'Heading 1')
 
-        # Get last message in chain
-        body = llm_instance.messages[user][-1]['content']
+        # Decide how to select message from the chat history
 
-        # Split on newline so we can format paragraphs correctly
-        paragraphs = body.split('\n')
+        # If there is no second message range parameter, just get
+        # the message specified by the first message range parameter
+        if last_message_number == None:
+            body = user.messages[-first_message_number]['content']
+
+            # Split on newline so we can format paragraphs correctly
+            paragraphs = body.split('\n')
+
+        else:
+            # Empty holder for paragraphs
+            paragraphs = []
+            body = []
+
+            # Loop on messages in range
+            while last_message_number >= first_message_number:
+                #for message in user.messages[-last_message_number:-first_message_number]:
+                
+                # Get message content
+                content = user.messages[-last_message_number]['content']
+                last_message_number -= 1
+
+                # Spit on any newlines and add to paragraphs list 
+                paragraphs.extend(content.split('\n'))
+                body.append(content)
+
+            body = ' '.join(body)
 
         paragraph_count = 0
 
+        # Loop on paragraphs and add them to doc
         for paragraph in paragraphs:
 
             # Make sure this 'paragraph' has content, i.e. it wasn't
@@ -53,76 +81,17 @@ class Docx:
                     result.paragraph_format.space_after = Pt(6)
 
         # Format output file name for docx file
-        output_filename = f'{self.title.replace(" ", "_")}.docx'
+        output_filename = f'{user.document_title.replace(" ", "_")}.docx'
 
         # Save the docx
-        self.template.save(f'{self.document_output_path}/{output_filename}')
+        self.template.save(f'{self.document_path}/{output_filename}')
 
         # Upload the docx to gdrive
         result = self.upload(output_filename)
-
-    def generate(self, llm_instance, n_messages):
-        '''Recovers bot generated text from chat, formats as docx and
-        pushes to google drive'''
-
-        # Load docx template
-        self.load_template()
-
-        # Add heading 
-        result = self.template.add_paragraph(self.title, style = 'Heading 1')
-
-        # Get last n messages in chain
-        body = []
-        messages = llm_instance.messages[-n_messages:]
-
-        print(f'Last n messages: {messages}')
-
-        for message in messages:
-            body.append(message['content'])
-
-        body = '\n'.join(body)
-
-        print(f'Extracted body: {body}')
-
-        #body = llm_instance.messages[-n_messages:]['content']
-
-        # Split on newline so we can format paragraphs correctly
-        paragraphs = body.split('\n')
-
-        paragraph_count = 0
-
-        for paragraph in paragraphs:
-
-            # Make sure this 'paragraph' has content, i.e. it wasn't
-            # the result of splitting a multiple newline
-            if len(paragraph) > 0:
-
-                # Add the paragraph to the document
-                paragraph_count += 1
-                result = self.template.add_paragraph(paragraph)
-
-                # Deal with spacing between paragraphs. If the body contains
-                # multiple paragraphs and this is not the last one, add some
-                # space after it.
-                if (len(paragraphs) > 1) and (paragraph_count < len(body)):
-                    result.paragraph_format.space_after = Pt(6)
-
-        # Format output file name for docx file
-        output_filename = f'{self.title.replace(" ", "_")}.docx'
-
-        # Save the docx
-        self.template.save(f'{self.document_output_path}/{output_filename}')
-
-        # Upload the docx to gdrive
-        result = self.upload(output_filename)
-
 
     def load_template(self):
         '''Loads and returns empty docx document
         with some pre-defined styles'''
-
-        # Load docx template
-        self.template = Document(f'{conf.DATA_PATH}/{self.docx_template_file}')
 
         # Empty out template
         lines = self.template.paragraphs
@@ -136,15 +105,12 @@ class Docx:
         '''Takes file name as string. uploads to google drive
         Returns : Id's of the file uploaded'''
 
-        # Uses google API service account credentials set via venv
-        service_account_credentials, result = google.auth.default()
-
         try:
             # create drive api client
             service = build(
                 'drive', 
                 'v3', 
-                credentials = service_account_credentials
+                credentials = self.service_account_credentials
             )
 
             # Set file metadata

@@ -14,7 +14,7 @@ class User:
         # New user defaults
         self.initial_prompt = conf.initial_prompt
         self.model_type = conf.model_type
-        self.gdrive_folder_id = conf.gdrive_folder_id
+        self.gdrive_folder_id = None
         self.document_title = conf.default_title
         
         # Start messages list with default prompt
