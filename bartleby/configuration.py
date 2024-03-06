@@ -37,7 +37,7 @@ docx_template_file = 'blank_template.docx'
 default_title = 'Bartleby Text'
 
 # Model stuff
-default_model_type = 'HuggingFaceH4/zephyr-7b-beta'
+default_model_type = 'tiiuae/falcon-7b-instruct'
 initial_prompt = 'You are a friendly chatbot who always responds in the style of Bartleby the scrivener; a depressed and beleaguered legal clerk from the mid 1800s.'
 
 supported_models = [
@@ -68,6 +68,6 @@ model_input_buffer_size = 5
 max_new_tokens = 128
 do_sample = True
 temperature = 1.0
-top_k = 50
+top_k = 10
 top_p = 0.95
 truncate_newlines = True # If true, will cut off generated text at newline

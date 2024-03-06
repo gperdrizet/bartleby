@@ -1,0 +1,54 @@
+# System Agent
+
+## 1. Introduction
+
+Plan is to build simple agent functionality into bartleby for use with system commands. The goal is to give the end user natural language control over bartleby's functions rather than forcing them to use a specific parameter/argument command.
+
+To accomplish this a text summarization model will be fine-tuned to map 'commands' in the form of statements into function names and arguments to bartleby. Some examples:
+
+| user input                                             | bartleby's action                       |
+|--------------------------------------------------------|-----------------------------------------|
+| Hay bartleby, let's restart the conversation!          | user.restart_conversation()             |
+| Clear the chat history please.                         | user.restart_conversation()             |
+| Save your last response to gdrive for me.              | docx_instance.generate(user, 1)         |
+| Here's the link to our shared gdrive: drive.google.com | user.gdrive_folder_id='drive.google.com |
+
+Here are a couple of things to consider:
+
+1. Actions can be grouped into two types - those that take an argument vs those that don't. The latter will probably be easier to implement.
+2. There are a small number of possible actions.
+3. The agent does not have to make the exact command to execute the action, it just needs to generate stereotyped, parsable output from which we can tell what the user wants to do.
+4. The model doing the chatting and text generation does not need to be the agent model.
+5. Leaving the parameter/argument style commands in place gives a fallback option if the agent fails.
+6. A LLM can be used to generate training inputs from a few human written examples, i.e. 'Rephrase the following statement: Clear the chat history please'
+
+Think of it this way - all we need to do is translate a natural language command into one of our pre-defined command flags and the system will work.
+
+## 2. The plan
+
+In order to make this tractable and test it quickly with the greatest possibility of success, we will start with a small summarization model and just a few commands which do not need arguments. The goal is to implement the following:
+
+1. Fine-tuned system-agent model monitors the chat for suspected user commands.
+2. When a message that is likely to be a command is encountered, the system agent picks a command an executes it.
+3. If a message that might be a command is encountered, prompt the user to rephrase or ask them to confirm what they are trying to do.
+4. If any kind of failure or error occurs, the system prompts the user to use the parameter/argument syntax.
+
+Here are the steps to get there:
+
+1. Pick a few argument-less commands and write some natural language examples of each.
+2. Use LLM to generate as many rephrased versions of the human written natural language commands as possible.
+3. Curate the generated natural language commands.
+4. Fine tune LLM with natural language command - action pairs.
+5. Test
+6. Add more commands and go back to 1.
+
+Questions that need answers:
+
+1. What LLM do we use to generate re-phrased versions of human written natural language commands?
+2. What LLM do we fine tune on our mixed human/synthetic natural language commands dataset?
+3. What/how many commands do we start with?
+4. How do we get/quantify the probability that a given user message is requesting a given action?
+
+## 3. Models
+
+For generation of re-phrased natural language commands from human written examples, let's use:

@@ -75,6 +75,15 @@ class Llm:
 
         self.logger.info('Prompting model')
 
+        # If we are early in the conversation, the chat history may be shorter
+        # than the model input buffer size, in that case, use the length
+        # of the chat history as the input buffer size
+        if len(user.messages) < user.model_input_buffer_size:
+            model_input_buffer_size = len(user.messages)
+
+        else:
+            model_input_buffer_size = user.model_input_buffer_size
+
         # Log user's chat buffer and input messages for debug
         i = 0
 
@@ -82,10 +91,10 @@ class Llm:
             self.logger.debug(f'{user.user_name}\'s chat buffer message {i}: {message}')
             i += 1
 
-        self.logger.debug(f'Model input size: {user.model_input_buffer_size} most recent messages')
+        self.logger.debug(f'Model input size: {model_input_buffer_size} most recent messages')
 
         # Select last n messages for input to the model
-        input_messages = user.messages[-user.model_input_buffer_size:]
+        input_messages = user.messages[-model_input_buffer_size:]
 
         i = 0
 
@@ -123,8 +132,7 @@ class Llm:
             )
 
             # Stop generation timer and calculate total generation time
-            generation_finish_time = time.time()
-            dT = (generation_finish_time - generation_start_time) / 60
+            dT = time.time() - generation_start_time
             self.logger.info(f'{output_ids.size()[1] - prompt.size()[1]} tokens generated in {round(dT, 1)} seconds')
 
             model_output_content = model_output[0]
@@ -134,34 +142,35 @@ class Llm:
 
             messages = []
 
-            for message in user.messages[-user.model_input_buffer_size:]:
+            for message in user.messages[-model_input_buffer_size:]:
                 messages.append(message['content'])
 
-            input = "\n".join(messages[-user.model_input_buffer_size:])
+            input = '\n'.join(messages)
             inputs = self.tokenizer(input, return_tensors='pt')
 
             output_ids = self.model.generate(
                 **inputs, 
                 eos_token_id=self.tokenizer.eos_token_id,
                 pad_token_id=self.tokenizer.eos_token_id,
-                generation_config = user.generation_configurations[user.model_type]
+                generation_config = user.generation_configurations[user.model_type],
+                num_return_sequences = 1
             )
 
-            reply = self.tokenizer.batch_decode(output_ids)
+            reply = self.tokenizer.batch_decode(output_ids, eos_token_id=self.tokenizer.eos_token_id)
 
             # Stop generation timer and calculate total generation time
-            generation_finish_time = time.time()
-            dT = (generation_finish_time - generation_start_time) / 60
+            dT = time.time() - generation_start_time
             self.logger.info(f'{output_ids.size()[1]} tokens generated in {round(dT, 1)} seconds')
 
             try:
+                self.logger.debug(f'Raw reply: {reply}')
                 reply = reply[0]
-                reply = reply.split('\n')[user.model_input_buffer_size]
+                reply = reply.split('\n')
+                reply = reply[model_input_buffer_size]
+                self.logger.debug(f'Parsed reply: {reply}')
 
             except IndexError as e:
                 self.logger.error(f'Caught index error in reply parse.')
-                self.logger.error(f'Reply: {reply}')
-
                 reply = ''
 
         elif user.model_type in conf.dialo_family_models:
@@ -188,8 +197,7 @@ class Llm:
             reply = self.tokenizer.decode(output_ids[:, inputs.shape[-1]:][0], skip_special_tokens=True)
 
             # Stop generation timer and calculate total generation time
-            generation_finish_time = time.time()
-            dT = (generation_finish_time - generation_start_time) / 60
+            dT = time.time() - generation_start_time
             self.logger.info(f'{len(output_ids[:, inputs.shape[-1]:][0])} tokens generated in {round(dT*1000, 0)} milliseconds')
 
         # Format and add the model's reply to the users message history

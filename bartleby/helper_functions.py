@@ -205,7 +205,6 @@ def parse_command_message(docx_instance, user, command_message):
         # before generating a document
         elif user.gdrive_folder_id == None:
             result = 'Please set a Google Drive folder ID before generating a document for upload'
-
         
     # If we didn't recognize the command, post an error to chat
     else:
