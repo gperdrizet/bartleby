@@ -4,7 +4,7 @@ import torch
 #import logging
 import queue
 import bartleby.configuration as conf
-from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig #, FalconForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig #BitsAndBytesConfig, FalconForCausalLM
 
 class Llm:
     '''Class to hold object related to the LLM'''
@@ -27,7 +27,7 @@ class Llm:
         self.model_type = model_type
 
         # Fire up the model and tokenizer based on model type
-        if self.model_type == 'HuggingFaceH4/zephyr-7b-beta':
+        if self.model_type in conf.mistral_family_models:
 
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
 
@@ -36,18 +36,14 @@ class Llm:
                 device_map = self.device_map
             )
 
-        elif self.model_type == 'tiiuae/falcon-7b-instruct':
+        elif self.model_type in conf.falcon_family_models:
 
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
             self.model = AutoModelForCausalLM.from_pretrained(self.model_type)
 
-        elif self.model_type == 'microsoft/DialoGPT-small':
+        elif self.model_type in conf.dialo_family_models:
 
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                self.model_type,
-                padding_side='left'
-            )
-
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
             self.model = AutoModelForCausalLM.from_pretrained(self.model_type)
 
         # Read the default generation config from the model
@@ -100,8 +96,7 @@ class Llm:
         # Start generation timer
         generation_start_time = time.time()
 
-        #if user.model_type == 'HuggingFaceH4/zephyr-7b-beta':
-        if 'zephyr' in user.model_type:
+        if user.model_type in conf.mistral_family_models:
 
             # Tokenize the updated conversation
             prompt = self.tokenizer.apply_chat_template(
@@ -135,7 +130,7 @@ class Llm:
             model_output_content = model_output[0]
             reply = model_output_content.split('\n<|assistant|>\n')[-1]
         
-        elif user.model_type == 'tiiuae/falcon-7b-instruct':
+        elif user.model_type in conf.falcon_family_models:
 
             messages = []
 
@@ -169,28 +164,33 @@ class Llm:
 
                 reply = ''
 
-        elif user.model_type == 'microsoft/DialoGPT-small':
+        elif user.model_type in conf.dialo_family_models:
 
             # Collect and encode chat history
+
+            # Empty holder for tokenized messages
             tokenized_messages = []
 
-            for message in input_messages:
-                tokenized_message = self.tokenizer.encode(message['content'] + self.tokenizer.eos_token, return_tensors='pt')
+            # Add end-of-sequence as last 'message' in input
+            input_messages.append({'content': self.tokenizer.eos_token})
+
+            for message in input_messages[1:]:
+                tokenized_message = self.tokenizer.encode(message['content'], return_tensors='pt')
                 tokenized_messages.append(tokenized_message)
 
-            # append the new user input tokens to the chat history
+            # Concatenate tokenized chat messages
             inputs = torch.cat(tokenized_messages, dim=-1)
 
-            # generated a response while limiting the total chat history to 1000 tokens, 
-            chat_history_ids = self.model.generate(inputs, max_length=1000, pad_token_id=self.tokenizer.eos_token_id)
+            # Generate response
+            output_ids = self.model.generate(inputs, max_length=1000, pad_token_id=self.tokenizer.eos_token_id)
 
-            # get last output tokens from bot
-            reply = self.tokenizer.decode(chat_history_ids[:, inputs.shape[-1]:][0], skip_special_tokens=True)
+            # De-tokenize last response by bot
+            reply = self.tokenizer.decode(output_ids[:, inputs.shape[-1]:][0], skip_special_tokens=True)
 
             # Stop generation timer and calculate total generation time
             generation_finish_time = time.time()
             dT = (generation_finish_time - generation_start_time) / 60
-            self.logger.info(f'{len(chat_history_ids[:, inputs.shape[-1]:][0])} tokens generated in {round(dT*1000, 0)} milliseconds')
+            self.logger.info(f'{len(output_ids[:, inputs.shape[-1]:][0])} tokens generated in {round(dT*1000, 0)} milliseconds')
 
         # Format and add the model's reply to the users message history
         model_message = {
