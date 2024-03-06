@@ -4,7 +4,7 @@ import torch
 #import logging
 import queue
 import bartleby.configuration as conf
-from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig #, FalconForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig #BitsAndBytesConfig, FalconForCausalLM
 
 class Llm:
     '''Class to hold object related to the LLM'''
@@ -27,7 +27,7 @@ class Llm:
         self.model_type = model_type
 
         # Fire up the model and tokenizer based on model type
-        if self.model_type == 'HuggingFaceH4/zephyr-7b-beta':
+        if self.model_type in conf.mistral_family_models:
 
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
 
@@ -36,12 +36,12 @@ class Llm:
                 device_map = self.device_map
             )
 
-        elif self.model_type == 'tiiuae/falcon-7b-instruct':
+        elif self.model_type in conf.falcon_family_models:
 
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
             self.model = AutoModelForCausalLM.from_pretrained(self.model_type)
 
-        elif self.model_type == 'microsoft/DialoGPT-small':
+        elif self.model_type in conf.dialo_family_models:
 
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
             self.model = AutoModelForCausalLM.from_pretrained(self.model_type)
@@ -96,7 +96,7 @@ class Llm:
         # Start generation timer
         generation_start_time = time.time()
 
-        if user.model_type == 'HuggingFaceH4/zephyr-7b-beta':
+        if user.model_type in conf.mistral_family_models:
 
             # Tokenize the updated conversation
             prompt = self.tokenizer.apply_chat_template(
@@ -130,7 +130,7 @@ class Llm:
             model_output_content = model_output[0]
             reply = model_output_content.split('\n<|assistant|>\n')[-1]
         
-        elif user.model_type == 'tiiuae/falcon-7b-instruct':
+        elif user.model_type in conf.falcon_family_models:
 
             messages = []
 
@@ -164,7 +164,7 @@ class Llm:
 
                 reply = ''
 
-        elif user.model_type == 'microsoft/DialoGPT-small':
+        elif user.model_type in conf.dialo_family_models:
 
             # Collect and encode chat history
 

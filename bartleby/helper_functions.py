@@ -52,6 +52,7 @@ def parse_command_message(docx_instance, user, command_message):
         \r  <b>--show-config-full</b>              Show all available generation configuration parameters.
         \r  <b>--show-config-value PARAMETER</b>   Show the value of generation configuration PARAMETER.
         \r  <b>--update-config PARAMETER VALUE</b> Updates generation configuration PARAMETER to VALUE.
+        \r  <b>--supported-models</b>              Post supported models to chat.
         \r  <b>--swap-model MODEL</b>              Change the model type used for generation.
         \r  <b>--document-title</b>                Posts current Google Doc document title to chat.
         \r  <b>--set-document-title</b>            Updates Google Doc document title.
@@ -136,6 +137,11 @@ def parse_command_message(docx_instance, user, command_message):
 
         else:
             result = f'Failed to parse generation configuration update command'
+
+    # List the supported models in chat
+    elif command[0] == '--supported-models':
+        models = '\n'.join(conf.supported_models)
+        result = '\n' + f'{models}'
 
     # Update model used for generation
     elif command[0] == '--swap-model':
