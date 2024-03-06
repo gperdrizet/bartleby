@@ -116,7 +116,7 @@ class Matrix:
             timeout = 600000
         )
 
-        # Get body of message.
+        # Get body of message, removing newline
         user_message = event.body.rstrip()
 
         # Since bartleby only responds to messages which mention him,
