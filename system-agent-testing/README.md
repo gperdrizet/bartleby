@@ -51,4 +51,22 @@ Questions that need answers:
 
 ## 3. Models
 
-For generation of re-phrased natural language commands from human written examples, let's use:
+For generation of re-phrased natural language commands from human written examples, let's use: falcon-7B-instruct. We already have this model cached and running and know how to prompt it. Also, it's an instruct model so it may do better with things like 'Rephrase the following statement:' than pure chat models.
+
+For the agent, let's start with T5-small. It's easy to fine tune and can do and OK job of summarization. Hopefully this will be a slow-ball for it.
+
+Last, let's pick some actions and write natural language commands for them. Also thinking we should include a set of non-command messages labeled as 'none' or not a command or something. Here are some examples:
+
+| Command                                       | Action       |
+|-----------------------------------------------|--------------|
+| Please reset this chat.                       | restart chat |
+| Clear the message history.                    | restart chat |
+| Start a fresh conversation.                   | restart chat |
+| Generate document and upload.                 | make docx    |
+| Create gdrive file.                           | make docx    |
+| Save the last message.                        | make docx    |
+| Do you know a good recipe for scrambled eggs? | None         |
+| Can you tell me a joke?                       | None         |
+| What is your favorite color?                  | None         |
+
+Then, well just fine-tune the heck out of it until it converges on something and see how it does picking out request to restart the chat vs make a document on gdrive vs regular chat interactions. Should be pretty immediately obvious if it works or not.
