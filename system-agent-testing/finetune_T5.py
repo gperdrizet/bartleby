@@ -1,6 +1,6 @@
 import os
-import pickle
 import evaluate
+import pandas as pd
 import numpy as np
 from datasets import Dataset
 from transformers import AutoTokenizer, DataCollatorForSeq2Seq, AutoModelForSeq2SeqLM, Seq2SeqTrainingArguments, Seq2SeqTrainer
@@ -37,9 +37,11 @@ def compute_metrics(eval_pred):
 
 if __name__ == '__main__':
 
-    # Load dataset dict from pickle
-    with open('natural_language_commands_dataset.pkl', 'rb') as f:
-        dataset = pickle.load(f)
+    # Load dataset from csv
+    dataset_df = pd.read_csv('natural_language_commands_dataset.csv', keep_default_na=False)
+
+    # Convert to dict
+    dataset = dataset_df.to_dict(orient='records', index='false')
 
     # Convert to HF dataset
     dataset = Dataset.from_list(dataset)
@@ -68,12 +70,12 @@ if __name__ == '__main__':
     training_args = Seq2SeqTrainingArguments(
         output_dir="../bartleby/hf_cache/T5-system-agent",
         evaluation_strategy="epoch",
-        learning_rate=2e-5,
+        learning_rate=1e-5,
         per_device_train_batch_size=16,
         per_device_eval_batch_size=16,
         weight_decay=0.01,
         save_total_limit=3,
-        num_train_epochs=4,
+        num_train_epochs=40,
         predict_with_generate=True,
         #fp16=True,
         #push_to_hub=True,
