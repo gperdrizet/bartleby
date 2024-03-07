@@ -14,7 +14,7 @@ class Docx:
 
         # Document generation stuff.
         self.document_path = conf.DOCUMENTS_PATH
-        self.template = Document(f'{conf.DATA_PATH}/{conf.docx_template_file}')
+        self.template = Document(f'{self.document_path}/{conf.docx_template_file}')
 
         # Google API service account credentials set via venv
         self.service_account_credentials, _ = google.auth.default()
