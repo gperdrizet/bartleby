@@ -154,6 +154,9 @@ def run():
     logger.info(f'Running in {config.MODE} mode')
     logger.info(f'Using {config.CPU_threads} CPU threads')
 
+    helper_funcs.check_directory_structure()
+    logger.info('Directory structure OK')
+
     # Give torch the requested CPU resources
     torch.set_num_threads(config.CPU_threads)
     logger.info(f'Assigned {config.CPU_threads} CPU threads')

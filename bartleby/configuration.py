@@ -21,6 +21,7 @@ CLEAR_LOGS = True
 
 # Paths
 PROJECT_ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
+HF_CACHE = f'{PROJECT_ROOT_PATH}/hf_cache'
 DATA_PATH = f'{PROJECT_ROOT_PATH}/data'
 NEXT_BATCH_TOKEN_FILE = f'{DATA_PATH}/next_batch'
 DOCUMENTS_PATH = f'{PROJECT_ROOT_PATH}/documents'

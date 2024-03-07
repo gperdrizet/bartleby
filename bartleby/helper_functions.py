@@ -2,6 +2,7 @@ import glob
 import logging
 import os
 import bartleby.configuration as conf
+from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
 def start_logger():
@@ -25,6 +26,12 @@ def start_logger():
     logger.info('############################################### ')
 
     return logger
+
+def check_directory_structure():
+    '''Check to make sure we have directories that were not tracked by git'''
+
+    Path(conf.HF_CACHE).mkdir(parents=True, exist_ok=True)
+    Path(conf.LOG_PATH).mkdir(parents=True, exist_ok=True)
 
 def parse_command_message(docx_instance, user, command_message):
     '''Takes a user message that contains a command and runs the 
