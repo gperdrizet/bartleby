@@ -13,7 +13,7 @@ if __name__ == '__main__':
     tokenizer=AutoTokenizer.from_pretrained('tiiuae/falcon-7b-instruct')
     model=AutoModelForCausalLM.from_pretrained('tiiuae/falcon-7b-instruct', device_map='auto')
 
-    input_file='./human_natural_language_commands.csv'
+    input_file='./human_natural_language_commands.2.csv'
     human_commands_df = pd.read_csv(input_file, keep_default_na=False)
     print(human_commands_df.head())
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
         # Save result
         output_commands_df = pd.DataFrame(output_commands)
         output_commands_df.to_csv(
-            'natural_language_commands_dataset.csv',
+            'natural_language_commands_dataset.2.csv',
             header=True,
             index=False
         )

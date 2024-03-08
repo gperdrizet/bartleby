@@ -70,3 +70,18 @@ Last, let's pick some actions and write natural language commands for them. Also
 | What is your favorite color?                  | None         |
 
 Then, well just fine-tune the heck out of it until it converges on something and see how it does picking out request to restart the chat vs make a document on gdrive vs regular chat interactions. Should be pretty immediately obvious if it works or not.
+
+## 4. Testing
+
+It works great! I guess I'm not surprised, but this is a very cool feature. It *feels* next gen, but is very easy to do in house. We don't need an external API or a big clever model or anything. Just a low bar, easy to train translation task.
+
+OK, let's add a bunch more commands. This is all going to be throw-away script, so let's take some notes so we don't end up repeating work we already did.
+
+| Human natural language file           | Synthetic + human natural language file | Actions covered                      |
+|---------------------------------------|-----------------------------------------|--------------------------------------|
+| human_natural_language_commands.1.csv | natural_language_commands_dataset.1.csv | --restart-chat                       |
+|                                       |                                         | --make-docx                          |
+|                                       |                                         | None                                 |
+| human_natural_language_commands.2.csv | natural_language_commands_dataset.2.csv | --show-prompt                        |
+|                                       |                                         | --update-config max_new_tokens VALUE |
+|                                       |                                         | --update-config temperature VALUE    |
