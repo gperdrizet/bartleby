@@ -45,3 +45,21 @@ commands,"In order to align the model with the data, you need to make adjustment
 commands,"To adapt the model, what modifications can be made?"
 commands,"In order to adapt the model, what changes can I make?"
 commands,"To adapt the model, consider revising the parameters or fine-tuning the model with additional data."
+commands,Show me the system commands.
+commands,Please provide the system commands.
+commands,Provide me with the system commands.
+commands,"The system commands are: <code>dir</code>, <code>ipconfig</code>, <code>route</code"
+commands,Show me the commands for the system.
+commands,Please provide me with the system commands.
+commands,"To display a list of system commands, please type 'help' in the command prompt or terminal. This will show you a list of available"
+commands,Display the system commands.
+commands,Provide the commands for the system.
+commands,Demonstrate the command line interface (CLI) commands.
+commands,What options do you have?
+commands,What alternatives are available to you?
+commands,What choices do you have?
+commands,What choices do you have? is a query that may be addressed in various manners.
+commands,Which alternatives are available to you?
+commands,What choices do you have? is a question. The phrasing is more direct and to the point. It is a simple question
+commands,In what ways can you choose?
+commands,In what scenarios do you find yourself faced with choices?
