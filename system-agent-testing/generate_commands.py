@@ -11,12 +11,12 @@ if __name__ == '__main__':
     # Give torch some CPU
     torch.set_num_threads(18)
     
-    # Initalize the model and tokenizer
+    # Initialize the model and tokenizer
     tokenizer=AutoTokenizer.from_pretrained('tiiuae/falcon-7b-instruct')
     model=AutoModelForCausalLM.from_pretrained('tiiuae/falcon-7b-instruct', device_map='cpu')
 
     # Read the human-written natural language command examples into a dataframe 
-    input_file='./human_NL_commands.2.csv'
+    input_file='./human_NL_commands.3.csv'
     human_commands_df = pd.read_csv(input_file, keep_default_na=False)
     print(human_commands_df.head())
 
@@ -91,7 +91,7 @@ if __name__ == '__main__':
         # Save result
         output_commands_df = pd.DataFrame(output_commands)
         output_commands_df.to_csv(
-            'natural_NL_dataset.2.csv',
+            'natural_NL_dataset.3.csv',
             header=True,
             index=False
         )

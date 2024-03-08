@@ -77,6 +77,8 @@ It works great! I guess I'm not surprised, but this is a very cool feature. It *
 
 OK, let's add a bunch more commands. This is all going to be throw-away script, so let's take some notes so we don't end up repeating work we already did.
 
+## 5. Commands added
+
 | Human inputs            | Augmented dataset         | Actions                              |
 |-------------------------|---------------------------|--------------------------------------|
 | human_NL_commands.1.csv | NL_commands_dataset.1.csv | --restart-chat                       |
@@ -85,5 +87,28 @@ OK, let's add a bunch more commands. This is all going to be throw-away script, 
 | human_NL_commands.2.csv | NL_commands_dataset.2.csv | --show-prompt                        |
 |                         |                           | --update-config max_new_tokens VALUE |
 |                         |                           | --update-config temperature VALUE    |
+| human_NL_commands.3.csv | NL_commands_dataset.3.csv | --commands                           |
+|                         |                           | --input-buffer-size                  |
+|                         |                           | --show-config                        |
 
 As we write and augment examples for more command, they are concatenated manually after curation into *NL_commands_dataset.complete.csv* for use in fine-tuning.
+
+**Note:** Thinking we should probably add a lot more None or no command examples as the number of commands we are trying to encode increases.
+**Also note:** Might not be a bad idea to the commands which take a numerical argument from those that don't and have to system-agent models, one specialized in each command type.
+
+## 6. Commands left to add
+
+```text
+--update-input-buffer N         Updates LLM input buffer to last N messages.
+--update-prompt PROMPT          Updates the system prompt to PROMPT and restarts chat history.
+--show-config-value PARAMETER   Show the value of generation configuration PARAMETER.
+--update-config PARAMETER VALUE Updates generation configuration PARAMETER to VALUE.
+--supported-models              Post supported models to chat.
+--swap-model MODEL              Change the model type used for generation.
+--document-title                Posts current Google Doc document title to chat.
+--set-document-title            Updates Google Doc document title.
+--set-gdrive-folder FOLDER      Set Google Drive folder ID for document upload. 
+--make-docx N                   Makes and uploads docx document to Google Drive where N is the
+                                reverse index in chat history, e.g. 1 is the last message, 2
+                                the second to last etc. If N is omitted, defaults to last message.
+```
