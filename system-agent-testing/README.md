@@ -77,11 +77,13 @@ It works great! I guess I'm not surprised, but this is a very cool feature. It *
 
 OK, let's add a bunch more commands. This is all going to be throw-away script, so let's take some notes so we don't end up repeating work we already did.
 
-| Human natural language file           | Synthetic + human natural language file | Actions covered                      |
-|---------------------------------------|-----------------------------------------|--------------------------------------|
-| human_natural_language_commands.1.csv | natural_language_commands_dataset.1.csv | --restart-chat                       |
-|                                       |                                         | --make-docx                          |
-|                                       |                                         | None                                 |
-| human_natural_language_commands.2.csv | natural_language_commands_dataset.2.csv | --show-prompt                        |
-|                                       |                                         | --update-config max_new_tokens VALUE |
-|                                       |                                         | --update-config temperature VALUE    |
+| Human inputs            | Augmented dataset         | Actions                              |
+|-------------------------|---------------------------|--------------------------------------|
+| human_NL_commands.1.csv | NL_commands_dataset.1.csv | --restart-chat                       |
+|                         |                           | --make-docx                          |
+|                         |                           | None                                 |
+| human_NL_commands.2.csv | NL_commands_dataset.2.csv | --show-prompt                        |
+|                         |                           | --update-config max_new_tokens VALUE |
+|                         |                           | --update-config temperature VALUE    |
+
+As we write and augment examples for more command, they are concatenated manually after curation into *NL_commands_dataset.complete.csv* for use in fine-tuning.
