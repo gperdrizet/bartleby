@@ -38,7 +38,7 @@ def compute_metrics(eval_pred):
 if __name__ == '__main__':
 
     # Load dataset from csv
-    dataset_df = pd.read_csv('natural_language_commands_dataset.csv', keep_default_na=False)
+    dataset_df = pd.read_csv('NL_commands_dataset.complete.csv', keep_default_na=False)
 
     # Convert to dict
     dataset = dataset_df.to_dict(orient='records', index='false')
