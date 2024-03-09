@@ -1,16 +1,18 @@
 import gc
 import time
 import torch
-#import logging
-import queue
 import bartleby.configuration as conf
-import bartleby.helper_functions as helper_funcs
-from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig #BitsAndBytesConfig, FalconForCausalLM
+import bartleby.functions.model_prompting_functions as prompt_funcs
+from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 
 class Llm:
     '''Class to hold object related to the LLM'''
 
     def __init__(self, logger):
+
+        # Give torch the requested CPU resources
+        torch.set_num_threads(conf.CPU_threads)
+        logger.info(f'Assigned {conf.CPU_threads} CPU threads')
 
         # Set device map
         self.device_map = conf.device_map
@@ -112,7 +114,7 @@ class Llm:
         # Select and prompt model: mistral
         if user.model_type in conf.mistral_family_models:
 
-            reply, num_tokens_generated = helper_funcs.prompt_mistral(
+            reply, num_tokens_generated = prompt_funcs.prompt_mistral(
                 input_messages, 
                 self.device_map, 
                 self.model, 
@@ -123,7 +125,7 @@ class Llm:
         # Select and prompt model: falcon
         elif user.model_type in conf.falcon_family_models:
 
-            reply, num_tokens_generated = helper_funcs.prompt_falcon(
+            reply, num_tokens_generated = prompt_funcs.prompt_falcon(
                 input_messages,
                 self.model, 
                 self.tokenizer, 
@@ -133,7 +135,7 @@ class Llm:
         # Select and prompt model: dialo
         elif user.model_type in conf.dialo_family_models:
 
-            reply, num_tokens_generated = helper_funcs.prompt_dialo(
+            reply, num_tokens_generated = prompt_funcs.prompt_dialo(
                 input_messages,
                 self.model, 
                 self.tokenizer
