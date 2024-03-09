@@ -1,0 +1,180 @@
+summary,text
+commands,"Hay bartleby, what commands do you have."
+commands,"Greetings, sir. What commands do you have?"
+commands,"Greetings, Bartleby. What commands do you currently have?"
+commands,"Hello Bartleby, what are your commands?"
+commands,"Bartleby, what commands do you currently have?"
+commands,"Good day, Bartleby. May I know what commands do you have?"
+commands,Show me the available commands.
+commands,Please provide me with the list of available commands.
+commands,Please provide the list of available commands.
+commands,Provide me with the list of available commands.
+commands,List the available options.
+commands,Provide a list of available commands.
+commands,List the available commands.
+commands,Do you have a man page?
+commands,Do you have a reference manual?
+commands,Are there any man pages available?
+commands,Is there a manual available?
+commands,Are there any user guides or documentation available for this software?
+commands,Show me your instructions.
+commands,Please provide me with your instructions.
+commands,Could you please provide me with your instructions?
+commands,Can you please provide me with your instructions?
+commands,Please provide me with your directions.
+commands,Please provide your instructions.
+commands,Could you please show me your instructions?
+commands,How can I adjust the model?
+commands,"To adapt the model, what changes can I make?"
+commands,How can I modify the model?
+commands,What adjustments can I make to the model?
+commands,"To adapt the model, what modifications can be made?"
+commands,"In order to adapt the model, what changes can I make?"
+commands,Show me the system commands.
+commands,Please provide the system commands.
+commands,Provide me with the system commands.
+commands,Show me the commands for the system.
+commands,Please provide me with the system commands.
+commands,Display the system commands.
+commands,Provide the commands for the system.
+commands,What options do you have?
+commands,"Show me the list of options."
+commands,Please provide the list of options.
+commands,Show me the list of options.
+commands,Provide me with the list of options.
+commands,Please provide the list of options or commands.
+commands,Can you please provide me with the list of available commands?
+commands,Please post the list of model actions.
+commands,Kindly provide a list of model actions.
+commands,Could you please provide a list of model actions? Thank you.
+commands,You are requested to provide a list of model actions.
+commands,Could you kindly provide a list of model actions? Thank you.
+commands,What system parameters can I change?
+commands,Which system parameters can I modify?
+commands,What configuration options are available for me to modify?
+commands,What parameters can I modify in this system?
+commands,Which system settings can I modify?
+commands,What configuration options are available?
+commands,Which system parameters can be modified?
+commands,Are you user controllable?
+commands,What user editable setting do you have?
+commands,Which user-editable setting do you have?
+commands,What user-editable setting do you have?
+commands,Are there any user-editable settings available?
+commands,What user-editable configuration option do you offer?
+commands,What editable user setting do you have?
+commands,Which user editable setting do you have?
+commands,Do you have any user-editable settings available?
+commands,Show me the commands available to users.
+commands,Please provide me with the list of commands available to users.
+commands,Please provide the list of commands available to users.
+commands,List the commands available to users.
+commands,Please provide a list of the commands available to users.
+commands,Please provide me with the list of commands available for users.
+commands,Provide me with the list of commands available to users.
+commands,List the available commands for users.
+buffer size,How many previous messages are used as input?
+buffer size,How many messages from the past are considered as input?
+buffer size,What number of previous messages is utilized as input?
+buffer size,How many previous messages are considered when constructing the current message?
+buffer size,Which previous messages are used as input?
+buffer size,What is the total number of messages used as input?
+buffer size,"In total, how many previous messages are used as input?"
+buffer size,How many messages from the past are taken as input?
+buffer size,What number of previous messages serves as input?
+buffer size,How long is the model's input?
+buffer size,What is the duration of the model's input?
+buffer size,How long is the input of the model?
+buffer size,How many messages do you use for generation?
+buffer size,What is the number of messages used for generation?
+buffer size,How many messages are utilized for generation?
+buffer size,What number of messages do you employ for generation?
+buffer size,What is the number of messages you use for generation?
+buffer size,How many messages are used for generation?
+buffer size,To generate how many messages do you use?
+buffer size,What number of messages do you employ for creation?
+buffer size,How many messages are input into the model?
+buffer size,What number of messages does the model receive?
+buffer size,How many inputs does the model receive?
+buffer size,What is the number of messages input into the model?
+buffer size,How long is the input exchange?
+buffer size,How many past messages do you use for inference?
+buffer size,How many previous messages do you rely on for inference?
+buffer size,How many past messages do you rely on for inference?
+buffer size,"In order to infer something from past messages, how many do you typically rely on?"
+buffer size,To what extent do you rely on past messages for inference?
+buffer size,"To infer something from past messages, how many do you typically rely on?"
+buffer size,"When you input my messages to the model, how many of them do you include?"
+buffer size,How many of your messages do you include in the model?
+buffer size,What is the model input buffer size?
+buffer size,What is the input buffer size model?
+buffer size,What is the input buffer size of the model?
+buffer size,How much of our conversation is used for input?
+buffer size,What percentage of our conversation is dedicated to input?
+buffer size,Approximately how much of our conversation is devoted to input?
+buffer size,"When generating responses, how much of the chat history are you using?"
+buffer size,To what extent are you utilizing the chat history in generating your responses?
+buffer size,"In generating chat responses, how much of the previous conversation are you incorporating?"
+buffer size,How much of the chat history are you utilizing?
+buffer size,"When composing replies, how much of the previous conversation are you incorporating?"
+buffer size,"In generating chat responses, how much of the previous conversation are you taking into consideration?"
+buffer size,To what extent are you utilizing the chat history in generating responses?
+buffer size,How much of the chat history are you utilizing when generating responses?
+buffer size,How much of the previous chat history are you utilizing in generating your responses?
+buffer size,To what extent are you utilizing chat history in generating responses?
+buffer size,"When crafting automated chat responses, what proportion of the previous conversation are you incorporating?"
+buffer size,How long is the message history used for each inference step?
+buffer size,"For each inference step, how long is the message history utilized?"
+buffer size,How long is the inference history utilized for each message?
+buffer size,"For each inference step, how long is the message history used?"
+show config,Show me your generation configuration.
+show config,Please provide me with your generation configuration.
+show config,Could you please provide me with your generation configuration?
+show config,Please provide your generation configuration.
+show config,Can you please provide me with your generation configuration?
+show config,Could you please show me your generation configuration?
+show config,Show me the model parameters.
+show config,Please provide the model parameters.
+show config,Please provide me with the model parameters.
+show config,Provide me with the model parameters.
+show config,Could you please provide me with the model parameters?
+show config,Please provide the parameters for the model.
+show config,Can you provide me with the parameters of the model?
+show config,Display the parameters of the model.
+show config,Could you please provide me with the parameters of the model? Thank you.
+show config,What are your model setting?
+show config,What is your model setting?
+show config,What is the setting of your model?
+show config,What are your modeling settings?
+show config,Can you tell me your generation settings?
+show config,What is your generation setting?
+show config,Please provide me with your generation settings.
+show config,Can you please provide me with your generation settings?
+show config,Certainly! Can you please provide me with your generation settings?
+show config,May I know your generation settings?
+show config,Could you please let me know your generation settings?
+show config,What arguments are you using for generation?
+show config,Which arguments are you using for generating your output?
+show config,What arguments are you employing for generation?
+show config,Which arguments are you using for generating your thoughts?
+show config,What methods or approaches are you employing for generating ideas?
+show config,Which arguments are being utilized for generation?
+show config,Are you employing any arguments in the generation process?
+show config,Please post the current generation configuration.
+show config,Could you provide the current generation configuration?
+show config,Could you please provide the current generation configuration?
+show config,What are the current model settings?
+show config,What are the current settings for the model?
+show config,Which settings are currently in use?
+show config,Which model settings are currently in use?
+show config,What parameters does your model have?
+show config,What variables does your model comprise?
+show config,What parameters does your model comprise?
+show config,What variables are included in your model?
+show config,In what parameters does your model consist?
+show config,Which components are included in your model?
+show config,Which parameters does your model comprise?
+show config,Print the setting you use during inference.
+show config,Print the inference setting you use.
+show config,What are your inference settings?
+show config,What are your inference preferences?
