@@ -82,9 +82,11 @@ class Llm:
             model_input_buffer_size = len(user.messages)
 
         else:
+            # If we have enough past messages, use the full buffer size from the
+            # Users config
             model_input_buffer_size = user.model_input_buffer_size
 
-        # Log user's chat buffer and input messages for debug
+        # Log user's chat history for debug
         i = 0
 
         for message in user.messages:
@@ -93,11 +95,12 @@ class Llm:
 
         self.logger.debug(f'Model input size: {model_input_buffer_size} most recent messages')
 
-        # Select last n messages for input to the model
+        # Select last n messages from chat history for input to the model
         input_messages = user.messages[-model_input_buffer_size:]
 
         i = 0
 
+        # Log the contents of the model input buffer for debug
         for message in input_messages:
             self.logger.debug(f'Model input {i}: {message}')
             i += 1
@@ -105,6 +108,7 @@ class Llm:
         # Start generation timer
         generation_start_time = time.time()
 
+        # Select model: mistral
         if user.model_type in conf.mistral_family_models:
 
             # Tokenize the updated conversation
@@ -115,6 +119,7 @@ class Llm:
                 return_tensors = 'pt'
             )
             
+            # Select device
             if self.device_map != 'cpu':
                 prompt=prompt.to('cuda')
 
@@ -135,19 +140,38 @@ class Llm:
             dT = time.time() - generation_start_time
             self.logger.info(f'{output_ids.size()[1] - prompt.size()[1]} tokens generated in {round(dT, 1)} seconds')
 
+            # Parse model's response
             model_output_content = model_output[0]
             reply = model_output_content.split('\n<|assistant|>\n')[-1]
         
+        # Select model: mistral
         elif user.model_type in conf.falcon_family_models:
 
+            # Empty list to hold parsed and formatted messages
             messages = []
 
+            # Format messages for input to falcon
             for message in user.messages[-model_input_buffer_size:]:
-                messages.append(message['content'])
+                
+                if message['role'] == 'system': 
+                    messages.append(f"system: {message['content']}")
 
+                elif message['role'] == 'user': 
+                    messages.append(f"user: {message['content']}")
+
+                elif message['role'] == 'assistant': 
+                    messages.append(f"assistant: {message['content']}")
+
+            # Add a final 'assistant:' line with no message to prompt reply from model
+            messages.append('assistant:')
+
+            # Collect messages from list into string
             input = '\n'.join(messages)
+
+            # Tokenize the input messages
             inputs = self.tokenizer(input, return_tensors='pt')
 
+            # Generate the response
             output_ids = self.model.generate(
                 **inputs, 
                 eos_token_id=self.tokenizer.eos_token_id,
@@ -156,23 +180,28 @@ class Llm:
                 num_return_sequences = 1
             )
 
+            # Un-tokenize the response
             reply = self.tokenizer.batch_decode(output_ids, eos_token_id=self.tokenizer.eos_token_id)
 
             # Stop generation timer and calculate total generation time
             dT = time.time() - generation_start_time
             self.logger.info(f'{output_ids.size()[1]} tokens generated in {round(dT, 1)} seconds')
 
+            # Fence to catch index errors in reply parse caused by empty response
             try:
+                # Parse the reply
                 self.logger.debug(f'Raw reply: {reply}')
                 reply = reply[0]
                 reply = reply.split('\n')
                 reply = reply[model_input_buffer_size]
+                reply = reply.replace('assistant: ', '')
                 self.logger.debug(f'Parsed reply: {reply}')
 
             except IndexError as e:
                 self.logger.error(f'Caught index error in reply parse.')
                 reply = ''
 
+        # Select model: dialo
         elif user.model_type in conf.dialo_family_models:
 
             # Collect and encode chat history
@@ -183,7 +212,8 @@ class Llm:
             # Add end-of-sequence as last 'message' in input
             input_messages.append({'content': self.tokenizer.eos_token})
 
-            for message in input_messages[1:]:
+            # Tokenize the messages
+            for message in input_messages:
                 tokenized_message = self.tokenizer.encode(message['content'], return_tensors='pt')
                 tokenized_messages.append(tokenized_message)
 
@@ -193,7 +223,7 @@ class Llm:
             # Generate response
             output_ids = self.model.generate(inputs, max_length=1000, pad_token_id=self.tokenizer.eos_token_id)
 
-            # De-tokenize last response by bot
+            # Un-tokenize last response by bot
             reply = self.tokenizer.decode(output_ids[:, inputs.shape[-1]:][0], skip_special_tokens=True)
 
             # Stop generation timer and calculate total generation time
@@ -206,6 +236,7 @@ class Llm:
             'content': reply
         }
 
+        # Add the bot's reply to the users chat history and log for debug
         user.messages.append(model_message)
         self.logger.debug(f'Model reply: {model_message}')
 
