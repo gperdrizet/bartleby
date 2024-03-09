@@ -9,14 +9,14 @@ os.environ['HF_HOME'] = '/mnt/fast_scratch/huggingface_transformers_cache'
 if __name__ == '__main__':
 
     # Give torch some CPU
-    torch.set_num_threads(18)
+    torch.set_num_threads(8)
     
     # Initialize the model and tokenizer
     tokenizer=AutoTokenizer.from_pretrained('tiiuae/falcon-7b-instruct')
     model=AutoModelForCausalLM.from_pretrained('tiiuae/falcon-7b-instruct', device_map='cpu')
 
     # Read the human-written natural language command examples into a dataframe 
-    input_file='./human_NL_commands.3.csv'
+    input_file='./human_NL_commands.4.csv'
     human_commands_df = pd.read_csv(input_file, keep_default_na=False)
     print(human_commands_df.head())
 
@@ -58,7 +58,7 @@ if __name__ == '__main__':
             temperature=1.0,
             num_beams=20, 
             num_beam_groups=20, 
-            max_new_tokens=30, 
+            max_new_tokens=128, 
             diversity_penalty=0.5,
             num_return_sequences=10,
             eos_token_id=tokenizer.eos_token_id,
@@ -91,7 +91,7 @@ if __name__ == '__main__':
         # Save result
         output_commands_df = pd.DataFrame(output_commands)
         output_commands_df.to_csv(
-            'natural_NL_dataset.3.csv',
+            'NL_commands_dataset.4.csv',
             header=True,
             index=False
         )
