@@ -2,6 +2,7 @@ import glob
 import logging
 import os
 import bartleby.configuration as conf
+from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
 def start_logger():
@@ -14,7 +15,7 @@ def start_logger():
 
     # Create logger
     logger = logging.getLogger(__name__)
-    handler = RotatingFileHandler(f'{conf.LOG_PATH}/bartleby.log', maxBytes=20000, backupCount=10)
+    handler = RotatingFileHandler(f'{conf.LOG_PATH}/bartleby.log', maxBytes=80000, backupCount=10)
     formatter = logging.Formatter(conf.LOG_PREFIX, datefmt='%Y-%m-%d %I:%M:%S %p')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -25,6 +26,12 @@ def start_logger():
     logger.info('############################################### ')
 
     return logger
+
+def check_directory_structure():
+    '''Check to make sure we have directories that were not tracked by git'''
+
+    Path(conf.HF_CACHE).mkdir(parents=True, exist_ok=True)
+    Path(conf.LOG_PATH).mkdir(parents=True, exist_ok=True)
 
 def parse_command_message(docx_instance, user, command_message):
     '''Takes a user message that contains a command and runs the 
@@ -158,8 +165,8 @@ def parse_command_message(docx_instance, user, command_message):
 
     # Sets document title
     elif command[0] == '--set-document-title':
-        if len(command) == 2:
-            user.document_title = command[1]
+        if len(command) >= 2:
+            user.document_title = ' '.join(command[1:])
             result = f'Document title updated'
 
         else:
@@ -182,11 +189,11 @@ def parse_command_message(docx_instance, user, command_message):
         if user.gdrive_folder_id != None:
 
             # If it's a bare generate command with no argument, make the
-            # document from the last message in the users chant history
+            # document from the last message in the users chat history
             if len(command) == 1:
                 docx_instance.generate(user, 1, None)
 
-            # If the generate command is followed by an argument, use that
+            # If the generate command is followed by one argument, use that
             # to select the message to convert into docx
             elif len(command) == 2:
                 docx_instance.generate(user, int(command[1]), None)
