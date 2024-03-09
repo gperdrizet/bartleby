@@ -4,6 +4,7 @@ import torch
 #import logging
 import queue
 import bartleby.configuration as conf
+import bartleby.helper_functions as helper_funcs
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig #BitsAndBytesConfig, FalconForCausalLM
 
 class Llm:
@@ -108,135 +109,47 @@ class Llm:
         # Start generation timer
         generation_start_time = time.time()
 
-        # Select model: mistral
+        # Select and prompt model: mistral
         if user.model_type in conf.mistral_family_models:
 
-            # Tokenize the updated conversation
-            prompt = self.tokenizer.apply_chat_template(
-                input_messages,
-                tokenize = True,
-                add_generation_prompt = True,
-                return_tensors = 'pt'
-            )
-            
-            # Select device
-            if self.device_map != 'cpu':
-                prompt=prompt.to('cuda')
-
-            # Generate response
-            output_ids = self.model.generate(
-                prompt,
-                generation_config = user.generation_configurations[user.model_type]
+            reply, num_tokens_generated = helper_funcs.prompt_mistral(
+                input_messages, 
+                self.device_map, 
+                self.model, 
+                self.tokenizer, 
+                user.generation_configurations[user.model_type]
             )
 
-            # Un-tokenize response
-            model_output = self.tokenizer.batch_decode(
-                output_ids,
-                skip_special_tokens = True,
-                clean_up_tokenization_spaces = False
-            )
-
-            # Stop generation timer and calculate total generation time
-            dT = time.time() - generation_start_time
-            self.logger.info(f'{output_ids.size()[1] - prompt.size()[1]} tokens generated in {round(dT, 1)} seconds')
-
-            # Parse model's response
-            model_output_content = model_output[0]
-            reply = model_output_content.split('\n<|assistant|>\n')[-1]
-        
-        # Select model: mistral
+        # Select and prompt model: falcon
         elif user.model_type in conf.falcon_family_models:
 
-            # Empty list to hold parsed and formatted messages
-            messages = []
-
-            # Format messages for input to falcon
-            for message in user.messages[-model_input_buffer_size:]:
-                
-                if message['role'] == 'system': 
-                    messages.append(f"system: {message['content']}")
-
-                elif message['role'] == 'user': 
-                    messages.append(f"user: {message['content']}")
-
-                elif message['role'] == 'assistant': 
-                    messages.append(f"assistant: {message['content']}")
-
-            # Add a final 'assistant:' line with no message to prompt reply from model
-            messages.append('assistant:')
-
-            # Collect messages from list into string
-            input = '\n'.join(messages)
-
-            # Tokenize the input messages
-            inputs = self.tokenizer(input, return_tensors='pt')
-
-            # Generate the response
-            output_ids = self.model.generate(
-                **inputs, 
-                eos_token_id=self.tokenizer.eos_token_id,
-                pad_token_id=self.tokenizer.eos_token_id,
-                generation_config = user.generation_configurations[user.model_type],
-                num_return_sequences = 1
+            reply, num_tokens_generated = helper_funcs.prompt_falcon(
+                input_messages,
+                self.model, 
+                self.tokenizer, 
+                user.generation_configurations[user.model_type]
             )
 
-            # Un-tokenize the response
-            reply = self.tokenizer.batch_decode(output_ids, eos_token_id=self.tokenizer.eos_token_id)
-
-            # Stop generation timer and calculate total generation time
-            dT = time.time() - generation_start_time
-            self.logger.info(f'{output_ids.size()[1]} tokens generated in {round(dT, 1)} seconds')
-
-            # Fence to catch index errors in reply parse caused by empty response
-            try:
-                # Parse the reply
-                self.logger.debug(f'Raw reply: {reply}')
-                reply = reply[0]
-                reply = reply.split('\n')
-                reply = reply[model_input_buffer_size]
-                reply = reply.replace('assistant: ', '')
-                self.logger.debug(f'Parsed reply: {reply}')
-
-            except IndexError as e:
-                self.logger.error(f'Caught index error in reply parse.')
-                reply = ''
-
-        # Select model: dialo
+        # Select and prompt model: dialo
         elif user.model_type in conf.dialo_family_models:
 
-            # Collect and encode chat history
+            reply, num_tokens_generated = helper_funcs.prompt_dialo(
+                input_messages,
+                self.model, 
+                self.tokenizer
+            )
 
-            # Empty holder for tokenized messages
-            tokenized_messages = []
+        # Stop generation timer, calculate and log total generation time
+        dT = time.time() - generation_start_time
+        self.logger.info(f'{num_tokens_generated} tokens generated in {round(dT, 1)} seconds')
 
-            # Add end-of-sequence as last 'message' in input
-            input_messages.append({'content': self.tokenizer.eos_token})
-
-            # Tokenize the messages
-            for message in input_messages:
-                tokenized_message = self.tokenizer.encode(message['content'], return_tensors='pt')
-                tokenized_messages.append(tokenized_message)
-
-            # Concatenate tokenized chat messages
-            inputs = torch.cat(tokenized_messages, dim=-1)
-
-            # Generate response
-            output_ids = self.model.generate(inputs, max_length=1000, pad_token_id=self.tokenizer.eos_token_id)
-
-            # Un-tokenize last response by bot
-            reply = self.tokenizer.decode(output_ids[:, inputs.shape[-1]:][0], skip_special_tokens=True)
-
-            # Stop generation timer and calculate total generation time
-            dT = time.time() - generation_start_time
-            self.logger.info(f'{len(output_ids[:, inputs.shape[-1]:][0])} tokens generated in {round(dT*1000, 0)} milliseconds')
-
-        # Format and add the model's reply to the users message history
+        # Format models reply as dict
         model_message = {
             'role': 'assistant',
             'content': reply
         }
 
-        # Add the bot's reply to the users chat history and log for debug
+        # Add the reply to the users chat history and log for debug
         user.messages.append(model_message)
         self.logger.debug(f'Model reply: {model_message}')
 
