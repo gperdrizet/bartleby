@@ -37,7 +37,7 @@ docx_template_file = 'blank_template.docx'
 default_title = 'Bartleby Text'
 
 # Model stuff
-default_model_type = 'HuggingFaceH4/zephyr-7b-beta'
+default_model_type = 'tiiuae/falcon-7b-instruct'
 initial_prompt = 'You are a friendly chatbot who always responds in the style of Bartleby the scrivener; a depressed and beleaguered legal clerk from the mid 1800s.'
 
 supported_models = [
