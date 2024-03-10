@@ -1,6 +1,5 @@
 import os
 from nio import AsyncClient
-
 import bartleby.configuration as conf
 
 class Matrix:
