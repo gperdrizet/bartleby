@@ -1,6 +1,5 @@
 import os
 import torch
-import pandas as pd
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 
 # Set HuggingFace cache
