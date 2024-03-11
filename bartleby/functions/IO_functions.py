@@ -5,10 +5,13 @@ from nio import RoomMessageText
 import bartleby.functions.command_parsing_functions as command_funcs
 import bartleby.classes.llm_class as llm
 import bartleby.classes.user_class as user
+import bartleby.classes.system_agent_class as system_agent
 
 async def matrix_listener_loop(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger):
     '''Watches for messages from users in the matrix room, when it finds
     one, handles routing that user to an LLM'''
+
+    system_agent_instance = system_agent.System_agent(logger) 
 
     # Log bot into the matrix server and post a hello
     _ = await matrix_instance.async_client.login(matrix_instance.matrix_bot_password)
@@ -80,18 +83,31 @@ async def matrix_listener_loop(docx_instance, matrix_instance, users, llms, gene
                         result = command_funcs.parse_command_message(docx_instance, users[user_name], user_message)
                         _ = await matrix_instance.post_system_message(result, user_name)
 
-                    # If it's not a command, add it to the user's conversation and 
-                    # send them to the LLM for a response
+                    # If it's not a --command, send it to the system agent
                     else:
 
-                        users[user_name].messages.append({
-                            'role': 'user',
-                            'content': user_message
-                        })
+                        # Check to see if the user's message translates to a known command
+                        command = system_agent_instance.translate_command(user_message)
 
-                        # Put the user into the llm's queue
-                        generation_queue.put(users[user_name])
-                        logger.info(f't = {round(time.time() - message_time, 2)}: Added {user_name} to generation queue')
+                        # If the user message translates to a command send it to the
+                        # system agent's parser for execution
+                        if command != 'None':
+
+                            result = command_funcs.parse_system_agent_command(docx_instance, users[user_name], command)
+                            _ = await matrix_instance.post_system_message(result, user_name)
+                            
+                        # If the users message does not translate to a command, add it
+                        # to their message history and send them to the model for inference
+                        elif command == 'None':
+
+                            users[user_name].messages.append({
+                                'role': 'user',
+                                'content': user_message
+                            })
+
+                            # Put the user into the llm's queue
+                            generation_queue.put(users[user_name])
+                            logger.info(f't = {round(time.time() - message_time, 2)}: Added {user_name} to generation queue')
 
         # Check to see if there are any users with generated responses in the
         # Response queue, if so, post to chat.
