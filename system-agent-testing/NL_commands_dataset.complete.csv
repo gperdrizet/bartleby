@@ -756,7 +756,6 @@ show config,Print the setting you use during inference.
 show config,Print the inference setting you use.
 show config,What are your inference settings?
 show config,What are your inference preferences?
-summary,text
 set input buffer 5,Use the last 5 message as input for response generation.
 set input buffer 5,Consider the last 5 messages as input for generating a response.
 set input buffer 5,Utilize the final 5 messages as input for generating a response.
