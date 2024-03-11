@@ -117,3 +117,16 @@ As we write and augment examples for more commands, they are concatenated manual
                                 reverse index in chat history, e.g. 1 is the last message, 2
                                 the second to last etc. If N is omitted, defaults to last message.
 ```
+
+## 7. Testing notes
+
+1. Updating the model input buffer size chokes, not sure where - seemed like it was working in testing.
+2. Looks like out fine tuned T5 started getting confused between the 3rd and 4th sets of new commands It's having trouble differentiating between input buffer and max output token updates.
+
+I think we really need to see a probability distribution over the top many commands the agent thinks the user's message means. For example, 'complete the statement: the early bird' makes it reset the chat logs, hahaha. I have to laugh at that one.
+
+Ok, so maybe we just found the limit of T5-small's ability to do this type of thing. We didn't test the model with 12 commands encoded but we did test it with 9 and it seemed to work great. Two thoughts here:
+
+1. There's a clear limit to doing it this way - it's not scalable. Each specific action needs a human to come up with example commands, then curate synthetic examples of the same and then somebody needs to write a parse stanza to catch the agent's output and run it.
+
+2. It's not really general - i.e. the interaction between the user and agent must follow a rigid structure. For example, asking: 'How do I change x' and then saying: 'OK, change it to y' wouldn't work. And the user cannot just talk naturally with the agent about what commands are available and what they do.
