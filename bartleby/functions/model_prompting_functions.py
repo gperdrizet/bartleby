@@ -36,7 +36,7 @@ def prompt_mistral(input_messages, device_map, model, tokenizer, generation_conf
 
     return reply, num_tokens_generated
 
-def prompt_falcon(input_messages, model, tokenizer, generation_configuration):
+def prompt_falcon(input_messages, device_map, model, tokenizer, generation_configuration):
 
     # Empty list to hold parsed and formatted messages
     messages = []
@@ -61,6 +61,10 @@ def prompt_falcon(input_messages, model, tokenizer, generation_configuration):
 
     # Tokenize the input messages
     inputs = tokenizer(input, return_tensors='pt')
+
+    # Select device
+    if device_map != 'cpu':
+        inputs=inputs.to('cuda')
 
     # Generate the response
     output_ids = model.generate(
@@ -90,7 +94,7 @@ def prompt_falcon(input_messages, model, tokenizer, generation_configuration):
 
     return reply, num_tokens_generated
 
-def prompt_dialo(input_messages, model, tokenizer):
+def prompt_dialo(input_messages, device_map, model, tokenizer):
     # Collect and encode chat history
 
     # Empty holder for tokenized messages
@@ -106,6 +110,10 @@ def prompt_dialo(input_messages, model, tokenizer):
 
     # Concatenate tokenized chat messages
     inputs = torch.cat(tokenized_messages, dim=-1)
+
+    # Select device
+    if device_map != 'cpu':
+        inputs=inputs.to('cuda')
 
     # Generate response
     output_ids = model.generate(inputs, max_length=1000, pad_token_id=tokenizer.eos_token_id)

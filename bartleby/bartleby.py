@@ -15,6 +15,7 @@ def run():
     logger = helper_funcs.start_logger()
     logger.info(f'Running in {config.MODE} mode')
     logger.info(f'Using {config.CPU_threads} CPU threads')
+    logger.info(f'Device map is: {config.device_map}')
 
     helper_funcs.check_directory_structure()
     logger.info('Directory structure OK')

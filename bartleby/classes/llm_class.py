@@ -29,8 +29,8 @@ class Llm:
         # Set model type
         self.model_type = model_type
 
-        # Fire up the model and tokenizer based on model type
-        if self.model_type in conf.mistral_family_models:
+        # Fire up the model and tokenizer
+        if self.model_type in conf.supported_models:
 
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
 
@@ -38,16 +38,6 @@ class Llm:
                 self.model_type,
                 device_map = self.device_map
             )
-
-        elif self.model_type in conf.falcon_family_models:
-
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
-            self.model = AutoModelForCausalLM.from_pretrained(self.model_type)
-
-        elif self.model_type in conf.dialo_family_models:
-
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
-            self.model = AutoModelForCausalLM.from_pretrained(self.model_type)
 
         # Read the default generation config from the model
         self.default_generation_configuration = GenerationConfig.from_model_config(
@@ -118,7 +108,7 @@ class Llm:
                 input_messages, 
                 self.device_map, 
                 self.model, 
-                self.tokenizer, 
+                self.tokenizer,
                 user.generation_configurations[user.model_type]
             )
 
@@ -127,8 +117,9 @@ class Llm:
 
             reply, num_tokens_generated = prompt_funcs.prompt_falcon(
                 input_messages,
+                self.device_map,
                 self.model, 
-                self.tokenizer, 
+                self.tokenizer,
                 user.generation_configurations[user.model_type]
             )
 
@@ -137,6 +128,7 @@ class Llm:
 
             reply, num_tokens_generated = prompt_funcs.prompt_dialo(
                 input_messages,
+                self.device_map,
                 self.model, 
                 self.tokenizer
             )
