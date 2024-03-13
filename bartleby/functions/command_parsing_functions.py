@@ -22,6 +22,9 @@ def parse_command_message(docx_instance, user, command_message):
         \r  <b>--show-prompt</b>                   Post the current system prompt to chat.
         \r  <b>--update-prompt PROMPT</b>          Updates the system prompt to PROMPT and restarts chat history.
         \r  <b>--restart-chat</b>                  Clears and restarts chat history.
+        \r  <b>--show-generation-mode</b>          Posts the current generation mode.
+        \r  <b>--show-generation-modes</b>         Posts available generation modes.
+        \r  <b>--set-generation-mode MODE</b>      Sets generation mode to MODE.
         \r  <b>--show-config</b>                   Post generation configuration parameters not set to model default.
         \r  <b>--show-config-full</b>              Show all available generation configuration parameters.
         \r  <b>--show-config-value PARAMETER</b>   Show the value of generation configuration PARAMETER.
@@ -75,6 +78,24 @@ def parse_command_message(docx_instance, user, command_message):
     elif command[0] == '--restart-chat':
         user.restart_conversation()
         result = 'Chat history cleared and conversation reset'
+
+    # Show current generation mode
+    elif command[0] == '--show-generation-mode':
+        result = f'Generation mode: {user.generation_mode}'
+
+    # Show available generation modes
+    elif command[0] == '--show-generation-modes':
+        generation_modes = ', '.join(conf.generation_mode.keys())
+        result = f'Generation modes: {generation_modes}'
+
+    # Set new generation mode
+    elif command[0] == '--set-generation-mode':
+        if len(command) == 2 and command[1] in conf.generation_mode.keys():
+            user.generation_mode = command[1]
+            result = f'Generation mode set to {command[1]}'
+        
+        else:
+            result = 'Could not parse generation mode set command'
 
     # Post non-model default generation configuration options to chat
     elif command[0] == '--show-config':

@@ -38,7 +38,7 @@ async def matrix_listener_loop(docx_instance, matrix_instance, users, llms, gene
                     user_name = event.sender.split(':')[0][1:]
 
                     message_time = time.time()
-                    logger.info(f't = 0.00: Caught message from {user_name} mentioning bartleby')
+                    logger.info(f'0.00 s: Caught message from {user_name} mentioning bartleby')
 
                     # If we have not heard from this user before, add them to users
                     # and populate some defaults from configuration.py
@@ -55,10 +55,10 @@ async def matrix_listener_loop(docx_instance, matrix_instance, users, llms, gene
                         # add it to the list of running llms
                         llms[users[user_name].model_type] = llm.Llm(logger)
                         llms[users[user_name].model_type].initialize_model(users[user_name].model_type)
-                        logger.info(f"t = {round(time.time() - message_time, 2)}: Initialized {users[user_name].model_type} model for {user_name}")
+                        logger.info(f"+{round(time.time() - message_time, 2)} s: Initialized {users[user_name].model_type} model for {user_name}")
 
                     else:
-                        logger.info(f"t = {round(time.time() - message_time, 2)}: Already have {users[user_name].model_type} running for {user_name}")
+                        logger.info(f"+{round(time.time() - message_time, 2)} s: Already have {users[user_name].model_type} running for {user_name}")
 
                     # Check if the user has a configuration set for this type of model
                     if users[user_name].model_type not in users[user_name].generation_configurations.keys():
@@ -68,11 +68,12 @@ async def matrix_listener_loop(docx_instance, matrix_instance, users, llms, gene
                         # own copy to modify at will
                         model_default_generation_configuration = llms[users[user_name].model_type].default_generation_configuration
                         users[user_name].generation_configurations[users[user_name].model_type] = model_default_generation_configuration
-                        logger.info(f't = {round(time.time() - message_time, 2)}: Set generation configuration for {user_name} from model defaults')
+                        users[user_name].set_generation_mode()
+                        logger.info(f'+{round(time.time() - message_time, 2)} s: Set generation configuration for {user_name} with {users[user_name].generation_mode} defaults')
 
                     # Get body of user message
                     user_message = await matrix_instance.catch_message(event)
-                    logger.debug(f't = {round(time.time() - message_time, 2)}: User message: {user_message}')
+                    logger.debug(f'+{round(time.time() - message_time, 2)} s: User message: {user_message}')
 
                     # Check to see if it's a command message, if so, send it to the command parser
                     if user_message[:2] == '--' or user_message[:1] == '–':
@@ -91,7 +92,7 @@ async def matrix_listener_loop(docx_instance, matrix_instance, users, llms, gene
 
                         # Put the user into the llm's queue
                         generation_queue.put(users[user_name])
-                        logger.info(f't = {round(time.time() - message_time, 2)}: Added {user_name} to generation queue')
+                        logger.info(f'+{round(time.time() - message_time, 2)} s: Added {user_name} to generation queue')
 
         # Check to see if there are any users with generated responses in the
         # Response queue, if so, post to chat.
@@ -103,12 +104,12 @@ async def matrix_listener_loop(docx_instance, matrix_instance, users, llms, gene
 
             # Get the next user from the responder queue
             queued_user = response_queue.get()
-            logger.info(f't = {round(time.time() - message_time, 2)}: Responder got {queued_user.user_name} from generator')
+            logger.info(f'+{round(time.time() - message_time, 2)} s: Responder got {queued_user.user_name} from generator')
 
             # Post the new response from the users conversation
             _ = await matrix_instance.post_message(queued_user)
             response_queue.task_done()
-            logger.info(f't = {round(time.time() - message_time, 2)}: Posted reply to {queued_user.user_name} in chat')
+            logger.info(f'+{round(time.time() - message_time, 2)} s: Posted reply to {queued_user.user_name} in chat')
 
 
 def generator(llms, generation_queue, response_queue, logger):
@@ -120,12 +121,10 @@ def generator(llms, generation_queue, response_queue, logger):
         
         # Get the next user from the generation input queue
         queued_user = generation_queue.get()
-        logger.info(f'LLM got {queued_user.user_name} from listener')
 
         # Send the user for generation
         _ = llms[queued_user.model_type].prompt_model(queued_user)
         generation_queue.task_done()
-        logger.info(f'Response for {queued_user.user_name} generated')
 
         # Send the user to responder to post the LLM's response
         response_queue.put(queued_user)

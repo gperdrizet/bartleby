@@ -20,9 +20,6 @@ class Llm:
         # Set quantization
         self.quantization = conf.model_quantization
 
-        # Set newline truncation
-        self.truncate_newlines = conf.truncate_newlines
-
         # Add logger
         self.logger = logger
 
@@ -59,11 +56,8 @@ class Llm:
 
         # Replace some stock values with new defaults from configuration file
         self.default_generation_configuration.max_new_tokens = conf.max_new_tokens
-        self.default_generation_configuration.do_sample = conf.do_sample
-        self.default_generation_configuration.temperature = conf.temperature
-        self.default_generation_configuration.top_k = conf.top_k
-        self.default_generation_configuration.top_p = conf.top_p
-        #self.default_generation_configuration.torch_dtype = torch.bfloat16
+        #self.default_generation_configuration.length_penalty = conf.length_penalty
+        self.default_generation_configuration.torch_dtype = torch.bfloat16
 
     def restart_model(self, model_type):
 
