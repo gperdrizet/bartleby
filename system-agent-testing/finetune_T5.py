@@ -53,7 +53,7 @@ if __name__ == '__main__':
     print(dataset["train"][0])
 
     # Tokenize the dataset
-    checkpoint = "google-t5/t5-small"
+    checkpoint = "google-t5/t5-base"
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
     tokenized_dataset = dataset.map(preprocess_function, batched=True)
 
@@ -68,14 +68,14 @@ if __name__ == '__main__':
 
     # Set training args
     training_args = Seq2SeqTrainingArguments(
-        output_dir="../bartleby/hf_cache/T5-system-agent",
+        output_dir="../bartleby/hf_cache/T5-base-system-agent",
         evaluation_strategy="epoch",
         learning_rate=1e-5,
         per_device_train_batch_size=16,
         per_device_eval_batch_size=16,
         weight_decay=0.01,
         save_total_limit=3,
-        num_train_epochs=800,
+        num_train_epochs=1600,
         predict_with_generate=True,
         #fp16=True,
         #push_to_hub=True,
@@ -94,4 +94,4 @@ if __name__ == '__main__':
 
     trainer.train()
 
-    model.save_pretrained('../bartleby/hf_cache/T5-system-agent')
+    model.save_pretrained('../bartleby/hf_cache/T5-base-system-agent')
