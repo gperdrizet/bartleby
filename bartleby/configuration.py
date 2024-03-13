@@ -16,7 +16,7 @@ import bartleby.credentials.matrix as matrix
 
 #-*- coding: utf-8 -*-
 
-MODE='matrix'
+MODE='discord' #'matrix'
 
 LOG_LEVEL='DEBUG'
 LOG_PREFIX='%(levelname)s - %(message)s' # '%(asctime)s - %(name)s - %(levelname)s - %(message)s'

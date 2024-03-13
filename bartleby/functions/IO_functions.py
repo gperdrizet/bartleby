@@ -6,6 +6,9 @@ import bartleby.functions.command_parsing_functions as command_funcs
 import bartleby.classes.llm_class as llm
 import bartleby.classes.user_class as user
 
+async def discord_listener_loop():
+    print('This is where Discord communication is handled')
+
 async def matrix_listener_loop(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger):
     '''Watches for messages from users in the matrix room, when it finds
     one, handles routing that user to an LLM'''
@@ -129,6 +132,9 @@ def generator(llms, generation_queue, response_queue, logger):
         # Send the user to responder to post the LLM's response
         response_queue.put(queued_user)
 
+# Wrapper function to start the discord listener loop via asyncIO in a thread
+def discord_listener():
+    asyncio.run(discord_listener_loop())
 
 # Wrapper function to start the matrix listener loop via asyncIO in a thread
 def matrix_listener(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger):

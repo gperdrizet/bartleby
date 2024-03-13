@@ -39,21 +39,30 @@ def run():
     matrix_instance.start_matrix_client()
     logger.info('Matrix chat client started successfully')
 
-    # Start the matrix listener
-    matrix_listener_thread = Thread(target=io_funcs.matrix_listener, args=[
-        docx_instance,
-        matrix_instance, 
-        users, 
-        llms, 
-        generation_queue, 
-        response_queue, 
-        logger
-    ])
+    if config.MODE == 'matrix':
 
-    matrix_listener_thread.start()
-    logger.info('Started matrix listener thread')
+        # Start the matrix listener
+        matrix_listener_thread = Thread(target=io_funcs.matrix_listener, args=[
+            docx_instance,
+            matrix_instance, 
+            users, 
+            llms, 
+            generation_queue, 
+            response_queue, 
+            logger
+        ])
 
-    # Start generator thread for LLMs
-    generator_thread = Thread(target=io_funcs.generator, args=[llms, generation_queue, response_queue, logger])
-    generator_thread.start()
-    logger.info('Started LLM generator thread')
+        matrix_listener_thread.start()
+        logger.info('Started matrix listener thread')
+
+        # Start generator thread for LLMs
+        generator_thread = Thread(target=io_funcs.generator, args=[llms, generation_queue, response_queue, logger])
+        generator_thread.start()
+        logger.info('Started LLM generator thread')
+
+    elif config.MODE == 'discord':
+        
+        # Start the discord listener
+        discord_listener_thread = Thread(target=io_funcs.discord_listener, args=[])
+        discord_listener_thread.start()
+        logger.info('Started discord listener thread')
