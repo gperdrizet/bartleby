@@ -18,7 +18,7 @@ import bartleby.credentials.matrix as matrix
 
 MODE='matrix'
 
-LOG_LEVEL='DEBUG'
+LOG_LEVEL='INFO'
 LOG_PREFIX='%(levelname)s - %(message)s' # '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 CLEAR_LOGS=True
 
@@ -69,10 +69,10 @@ dialo_family_models=[
 device_map='sequential'
 model_quantization = 'four bit'
 CPU_threads=18
-model_input_buffer_size=2
-max_new_tokens=16
+model_input_buffer_size=5
+max_new_tokens=128
 do_sample=True
 temperature=1.0
 top_k=50
 top_p=0.95
-truncate_newlines=True # If true, will cut off generated text at newline
+#truncate_newlines=True # If true, will cut off generated text at newline
