@@ -80,6 +80,7 @@ def prompt_falcon(input_messages, device_map, model, tokenizer, generation_confi
 
     # Un-tokenize the response
     reply = tokenizer.batch_decode(output_ids, eos_token_id=tokenizer.eos_token_id)
+    print(f'Raw model reply: {reply}')
 
     # Fence to catch index errors in reply parse caused by empty response
     try:

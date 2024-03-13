@@ -5,7 +5,7 @@ import pathlib
 os.environ['HF_HOME']=f'{pathlib.Path(__file__).parent.resolve()}/hf_cache'
 
 # Set visible GPUs
-os.environ['CUDA_VISIBLE_DEVICES']='1,2'
+os.environ['CUDA_VISIBLE_DEVICES']='0'
 
 import bartleby.credentials.matrix as matrix
 
@@ -41,7 +41,7 @@ docx_template_file='blank_template.docx'
 default_title='Bartleby Text'
 
 # Model stuff
-default_model_type='HuggingFaceH4/zephyr-7b-beta'
+default_model_type='tiiuae/falcon-7b-instruct'
 initial_prompt='You are a friendly chatbot who always responds in the style of Bartleby the scrivener; a depressed and beleaguered legal clerk from the mid 1800s.'
 
 supported_models=[
@@ -67,11 +67,47 @@ dialo_family_models=[
 ]
 
 device_map='sequential'
+model_quantization = 'four bit'
 CPU_threads=18
-model_input_buffer_size=2
-max_new_tokens=16
-do_sample=True
-temperature=1.0
-top_k=50
-top_p=0.95
-truncate_newlines=True # If true, will cut off generated text at newline
+model_input_buffer_size=5
+max_new_tokens=512
+
+# Generation modes, used to set groups of generation 
+# config parameters to non-model default values
+
+default_generation_mode='sampling'
+
+generation_mode={
+    'greedy': {
+        'exponential_decay_length_penalty': (16, -1)
+    },
+    'beam_search': {
+        'num_beams': 10,
+        'early_stopping': True,
+        'no_repeat_ngram_size': 2,
+        'length_penalty': -0.1
+    },
+    'sampling': {
+        'do_sample': True,
+        'top_k': 0,
+        'temperature': 0.6,
+        'exponential_decay_length_penalty': (16, -1)
+    },
+    'top_k': {
+        'do_sample': True,
+        'top_k': 50,
+        'exponential_decay_length_penalty': (16, -1)
+    },
+    'top_p': {
+        'do_sample': True,
+        'top_p': 0.92,
+        'top_k': 0,
+        'exponential_decay_length_penalty': (16, -1)
+    },
+    'top_kp':{
+        'do_sample': True,
+        'top_k': 50,
+        'top_p': 0.95,
+        'exponential_decay_length_penalty': (16, -1)
+    }
+}

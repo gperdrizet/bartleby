@@ -3,7 +3,7 @@ import time
 import torch
 import bartleby.configuration as conf
 import bartleby.functions.model_prompting_functions as prompt_funcs
-from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
+from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, BitsAndBytesConfig
 
 class Llm:
     '''Class to hold object related to the LLM'''
@@ -17,8 +17,8 @@ class Llm:
         # Set device map
         self.device_map = conf.device_map
 
-        # Set newline truncation
-        self.truncate_newlines = conf.truncate_newlines
+        # Set quantization
+        self.quantization = conf.model_quantization
 
         # Add logger
         self.logger = logger
@@ -34,9 +34,19 @@ class Llm:
 
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
 
+            if self.quantization == 'four bit':
+                quantization_config = BitsAndBytesConfig(
+                    load_in_4bit=True, 
+                    bnb_4bit_compute_dtype=torch.float16
+                )
+
+            else:
+                quantization_config = None
+
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_type,
-                device_map = self.device_map
+                device_map = self.device_map,
+                quantization_config=quantization_config
             )
 
         # Read the default generation config from the model
@@ -46,11 +56,8 @@ class Llm:
 
         # Replace some stock values with new defaults from configuration file
         self.default_generation_configuration.max_new_tokens = conf.max_new_tokens
-        self.default_generation_configuration.do_sample = conf.do_sample
-        self.default_generation_configuration.temperature = conf.temperature
-        self.default_generation_configuration.top_k = conf.top_k
-        self.default_generation_configuration.top_p = conf.top_p
-        #self.default_generation_configuration.torch_dtype = torch.bfloat16
+        #self.default_generation_configuration.length_penalty = conf.length_penalty
+        self.default_generation_configuration.torch_dtype = torch.bfloat16
 
     def restart_model(self, model_type):
 
@@ -98,6 +105,9 @@ class Llm:
             self.logger.debug(f'Model input {i}: {message}')
             i += 1
 
+        # Reset cuda memory stats
+        torch.cuda.reset_peak_memory_stats()
+
         # Start generation timer
         generation_start_time = time.time()
 
@@ -136,6 +146,10 @@ class Llm:
         # Stop generation timer, calculate and log total generation time
         dT = time.time() - generation_start_time
         self.logger.info(f'{num_tokens_generated} tokens generated in {round(dT, 1)} seconds')
+
+        # Get and log peak GPU memory use
+        max_memory = torch.cuda.max_memory_allocated()
+        self.logger.info(f'Peak GPU memory use: {round(max_memory / 10**9, 1)}')
 
         # Format models reply as dict
         model_message = {
