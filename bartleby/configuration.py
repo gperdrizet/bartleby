@@ -67,6 +67,7 @@ dialo_family_models=[
 ]
 
 device_map='sequential'
+model_quantization = 'four bit'
 CPU_threads=18
 model_input_buffer_size=2
 max_new_tokens=16
