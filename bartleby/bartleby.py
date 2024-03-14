@@ -76,3 +76,12 @@ def run():
 
         discord_listener_thread.start()
         logger.info('Started discord listener thread')
+
+        # # Start discord poster
+        # discord_poster_thread = Thread(target=io_funcs.discord_poster, args=[
+        #     response_queue, 
+        #     logger
+        # ])
+
+        # discord_poster_thread.start()
+        # logger.info('Started discord poster thread')

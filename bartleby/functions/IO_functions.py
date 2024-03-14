@@ -1,12 +1,14 @@
 import asyncio
 import time
 import discord
+from discord.ext import tasks
 from nio import RoomMessageText
 
 import bartleby.functions.command_parsing_functions as command_funcs
 import bartleby.functions.helper_functions as helper_funcs
 import bartleby.classes.llm_class as llm
 import bartleby.classes.user_class as user
+import bartleby.classes.discord_class as discord_class
 
 def discord_listener(
     bot_token,
@@ -20,10 +22,9 @@ def discord_listener(
 
     discord_logger=helper_funcs.start_discord_logger()
 
-    intents = discord.Intents.default()
-    intents.message_content = True
-
-    client = discord.Client(intents=intents)
+    intents=discord.Intents.default()
+    intents.message_content=True
+    client = discord_class.MyClient(logger, response_queue, intents=intents)
 
     @client.event
     async def on_ready():
@@ -31,15 +32,103 @@ def discord_listener(
 
     @client.event
     async def on_message(message):
-        if message.author == client.user:
-            return
+        if message.author != client.user:
 
-        if message.content.startswith('$hello'):
-            await message.channel.send('Hello!')
+            # Get the username and deal with initializing them or their LLM
+            # As needed
+            user_name=message.author
+            message_time=helper_funcs.setup_user(logger, user_name, users, llms)
+
+            # What is a message anyway
+            logger.info(f'Caught message is of class {type(message)}')
+
+            # Get body of user message
+            user_message = message.content
+            logger.debug(f'+{round(time.time() - message_time, 2)}s: User message: {user_message}')
+
+            # Check to see if it's a command message, if so, send it to the command parser
+            if user_message[:2] == '--' or user_message[:1] == '–':
+
+                #result = command_funcs.parse_command_message(docx_instance, users[user_name], user_message)
+                await message.channel.send('Caught command message')
+
+            # If it's not a command, add it to the user's conversation and 
+            # send them to the LLM for a response
+            else:
+
+                users[user_name].messages.append({
+                    'role': 'user',
+                    'content': user_message
+                })
+
+                logger.info(f'{user_name} is talking in {message.channel}')
+                users[user_name].message_object=message
+                users[user_name].message_time=message_time
+
+                # Put the user into the llm's queue
+                generation_queue.put(users[user_name])
+                logger.info(f'+{round(time.time() - message_time, 2)}s: Added {user_name} to generation queue')
+
+    async def setup_hook(client) -> None:
+        # start the task to run in the background
+        client.my_background_task.start()
+
+    @tasks.loop(seconds=1)  # task runs every 1 seconds
+    async def my_background_task(client):
+
+        logger.debug('Checking LLM response queue.')
+
+        if response_queue.empty() == False:
+
+            # Get the next user from the responder queue
+            queued_user = response_queue.get()
+            logger.info(f'+{round(time.time() - queued_user.message_time, 2)}s: Responder got {queued_user.user_name} from generator')
+
+            # Post the new response from the users conversation
+            channel = client.get_channel(1217620182663696394)
+            await channel.send(queued_user.messages[-1]['content'])
+            response_queue.task_done()
+            logger.info(f'+{round(time.time() - queued_user.message_time, 2)}s: Posted reply to {queued_user.user_name} in chat')
+
+    @my_background_task.before_loop
+    async def before_my_task(client):
+        await client.wait_until_ready()  # wait until the bot logs in
+        # if message.content.startswith('$hello'):
+        #     await message.channel.send('Hello!')
 
     client.run(bot_token, log_handler=None)
 
-async def matrix_listener_loop(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger):
+async def discord_poster_loop(response_queue, logger):
+
+    while True:
+
+        # Check to see if there are any users with generated responses in the
+        # Response queue, if so, post to chat.
+        #
+        # NOTE: documentation says, "Similarly, if empty() returns False it doesn’t 
+        # guarantee that a subsequent call to get() will not block."
+        # Not sure when/why that would happen...
+        if response_queue.empty() == False:
+
+            # Get the next user from the responder queue
+            queued_user = response_queue.get()
+            logger.info(f'+{round(time.time() - queued_user.message_time, 2)}s: Responder got {queued_user.user_name} from generator')
+
+            # Post the new response from the users conversation
+            await queued_user.message_object.channel.send(queued_user.messages[-1]['content'])
+            response_queue.task_done()
+            logger.info(f'+{round(time.time() - queued_user.message_time, 2)}s: Posted reply to {queued_user.user_name} in chat')
+
+
+async def matrix_listener_loop(
+    docx_instance, 
+    matrix_instance, 
+    users, 
+    llms, 
+    generation_queue, 
+    response_queue, 
+    logger
+):
     '''Watches for messages from users in the matrix room, when it finds
     one, handles routing that user to an LLM'''
 
@@ -165,3 +254,7 @@ def generator(llms, generation_queue, response_queue, logger):
 # Wrapper function to start the matrix listener loop via asyncIO in a thread
 def matrix_listener(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger):
     asyncio.run(matrix_listener_loop(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger))
+
+# Wrapper function to start discord poster loop via asyncIO in a thread
+def discord_poster(response_queue, logger):
+    asyncio.run(discord_poster_loop(response_queue, logger))
