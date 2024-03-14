@@ -63,6 +63,6 @@ def run():
     elif config.MODE == 'discord':
         
         # Start the discord listener
-        discord_listener_thread = Thread(target=io_funcs.discord_listener, args=[])
+        discord_listener_thread = Thread(target=io_funcs.discord_listener, args=[config.bot_token])
         discord_listener_thread.start()
         logger.info('Started discord listener thread')

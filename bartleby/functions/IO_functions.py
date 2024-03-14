@@ -1,13 +1,33 @@
 import asyncio
 import time
+import discord
 from nio import RoomMessageText
 
 import bartleby.functions.command_parsing_functions as command_funcs
 import bartleby.classes.llm_class as llm
 import bartleby.classes.user_class as user
 
-async def discord_listener_loop():
+def discord_listener_loop(discord_token):
     print('This is where Discord communication is handled')
+
+    intents = discord.Intents.default()
+    intents.message_content = True
+
+    client = discord.Client(intents=intents)
+
+    @client.event
+    async def on_ready():
+        print(f'We have logged in as {client.user}')
+
+    @client.event
+    async def on_message(message):
+        if message.author == client.user:
+            return
+
+        if message.content.startswith('$hello'):
+            await message.channel.send('Hello!')
+
+    client.run(discord_token)
 
 async def matrix_listener_loop(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger):
     '''Watches for messages from users in the matrix room, when it finds
@@ -133,8 +153,8 @@ def generator(llms, generation_queue, response_queue, logger):
         response_queue.put(queued_user)
 
 # Wrapper function to start the discord listener loop via asyncIO in a thread
-def discord_listener():
-    asyncio.run(discord_listener_loop())
+def discord_listener(discord_token):
+    discord_listener_loop(discord_token)
 
 # Wrapper function to start the matrix listener loop via asyncIO in a thread
 def matrix_listener(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger):

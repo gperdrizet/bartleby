@@ -8,6 +8,7 @@ os.environ['HF_HOME']=f'{pathlib.Path(__file__).parent.resolve()}/hf_cache'
 os.environ['CUDA_VISIBLE_DEVICES']='0'
 
 import bartleby.credentials.matrix as matrix
+import bartleby.credentials.discord_credentials as discord
 
 # Specify encoding here. This is needed because some phones
 # have a tendency to autocorrect '--' to '–', which is not an
@@ -35,6 +36,9 @@ matrix_room_id=matrix.matrix_room_id
 matrix_server_url=matrix.matrix_server_url
 matrix_bot_username=matrix.matrix_bot_username
 matrix_bot_password=matrix.matrix_bot_password
+
+# Discord stuff
+bot_token = discord.token
 
 # Document output stuff
 docx_template_file='blank_template.docx'
