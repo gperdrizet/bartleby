@@ -4,11 +4,21 @@ import discord
 from nio import RoomMessageText
 
 import bartleby.functions.command_parsing_functions as command_funcs
+import bartleby.functions.helper_functions as helper_funcs
 import bartleby.classes.llm_class as llm
 import bartleby.classes.user_class as user
 
-def discord_listener_loop(discord_token):
-    print('This is where Discord communication is handled')
+def discord_listener(
+    bot_token,
+    docx_instance,
+    users,
+    llms,
+    generation_queue,
+    response_queue,
+    logger
+):
+
+    discord_logger=helper_funcs.start_discord_logger()
 
     intents = discord.Intents.default()
     intents.message_content = True
@@ -17,7 +27,7 @@ def discord_listener_loop(discord_token):
 
     @client.event
     async def on_ready():
-        print(f'We have logged in as {client.user}')
+        logger.info(f'Logged into Discord as {client.user}')
 
     @client.event
     async def on_message(message):
@@ -27,7 +37,7 @@ def discord_listener_loop(discord_token):
         if message.content.startswith('$hello'):
             await message.channel.send('Hello!')
 
-    client.run(discord_token)
+    client.run(bot_token, log_handler=None)
 
 async def matrix_listener_loop(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger):
     '''Watches for messages from users in the matrix room, when it finds
@@ -151,10 +161,6 @@ def generator(llms, generation_queue, response_queue, logger):
 
         # Send the user to responder to post the LLM's response
         response_queue.put(queued_user)
-
-# Wrapper function to start the discord listener loop via asyncIO in a thread
-def discord_listener(discord_token):
-    discord_listener_loop(discord_token)
 
 # Wrapper function to start the matrix listener loop via asyncIO in a thread
 def matrix_listener(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger):

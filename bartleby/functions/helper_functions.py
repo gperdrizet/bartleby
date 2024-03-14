@@ -14,16 +14,43 @@ def start_logger():
             os.remove(file)
 
     # Create logger
-    logger = logging.getLogger(__name__)
-    handler = RotatingFileHandler(f'{conf.LOG_PATH}/bartleby.log', maxBytes=80000, backupCount=10)
+    logger = logging.getLogger('bartleby')
+    logger.setLevel(conf.LOG_LEVEL)
+    
+    handler = RotatingFileHandler(
+        f'{conf.LOG_PATH}/bartleby.log',
+        encoding='utf-8',
+        maxBytes=32 * 1024 * 1024,  # 32 MiB, 
+        backupCount=5
+    )
+    
     formatter = logging.Formatter(conf.LOG_PREFIX, datefmt='%Y-%m-%d %I:%M:%S %p')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logger.setLevel(conf.LOG_LEVEL)
 
     logger.info('############################################### ')
     logger.info('############## Starting bartleby ############## ')
     logger.info('############################################### ')
+
+    return logger
+
+def start_discord_logger():
+    '''Sets up logging for discord.py'''
+
+    logger = logging.getLogger('discord')
+    logger.setLevel(conf.LOG_LEVEL)
+    logging.getLogger('discord.http').setLevel(logging.INFO)
+
+    handler = RotatingFileHandler(
+        f'{conf.LOG_PATH}/discord.log',
+        encoding='utf-8',
+        maxBytes=32 * 1024 * 1024,  # 32 MiB
+        backupCount=5,  # Rotate through 5 files
+    )
+    dt_fmt = '%Y-%m-%d %H:%M:%S'
+    formatter = logging.Formatter('[{asctime}] [{levelname:<8}] {name}: {message}', dt_fmt, style='{')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
     return logger
 
