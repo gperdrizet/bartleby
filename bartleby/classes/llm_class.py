@@ -10,10 +10,6 @@ class Llm:
 
     def __init__(self, logger):
 
-        # Give torch the requested CPU resources
-        torch.set_num_threads(conf.CPU_threads)
-        logger.info(f'Assigned {conf.CPU_threads} CPU threads')
-
         # Set device map
         self.device_map = conf.device_map
 
@@ -72,8 +68,13 @@ class Llm:
         self.initialize_model(model_type)
 
     def prompt_model(self, user):
+        '''Prompts model, using and updating the user's chat buffer.'''
 
         self.logger.info('Prompting model')
+
+        # Give torch the requested CPU resources
+        torch.set_num_threads(conf.CPU_threads)
+        self.logger.info(f'Assigned {conf.CPU_threads} CPU threads')
 
         # If we are early in the conversation, the chat history may be shorter
         # than the model input buffer size, in that case, use the length
@@ -149,7 +150,7 @@ class Llm:
 
         # Get and log peak GPU memory use
         max_memory = torch.cuda.max_memory_allocated()
-        self.logger.info(f'Peak GPU memory use: {round(max_memory / 10**9, 1)}')
+        self.logger.info(f'Peak GPU memory use: {round(max_memory / 10**9, 1)} GB')
 
         # Format models reply as dict
         model_message = {

@@ -24,7 +24,7 @@ def discord_listener(
 
     intents=discord.Intents.default()
     intents.message_content=True
-    client = discord_class.MyClient(logger, response_queue, intents=intents)
+    client = discord_class.LLMClient(logger, response_queue, intents=intents)
 
     @client.event
     async def on_ready():
@@ -38,9 +38,6 @@ def discord_listener(
             # As needed
             user_name=message.author
             message_time=helper_funcs.setup_user(logger, user_name, users, llms)
-
-            # What is a message anyway
-            logger.info(f'Caught message is of class {type(message)}')
 
             # Get body of user message
             user_message = message.content
@@ -61,40 +58,12 @@ def discord_listener(
                     'content': user_message
                 })
 
-                logger.info(f'{user_name} is talking in {message.channel}')
                 users[user_name].message_object=message
                 users[user_name].message_time=message_time
 
                 # Put the user into the llm's queue
                 generation_queue.put(users[user_name])
                 logger.info(f'+{round(time.time() - message_time, 2)}s: Added {user_name} to generation queue')
-
-    async def setup_hook(client) -> None:
-        # start the task to run in the background
-        client.my_background_task.start()
-
-    @tasks.loop(seconds=1)  # task runs every 1 seconds
-    async def my_background_task(client):
-
-        logger.debug('Checking LLM response queue.')
-
-        if response_queue.empty() == False:
-
-            # Get the next user from the responder queue
-            queued_user = response_queue.get()
-            logger.info(f'+{round(time.time() - queued_user.message_time, 2)}s: Responder got {queued_user.user_name} from generator')
-
-            # Post the new response from the users conversation
-            channel = client.get_channel(1217620182663696394)
-            await channel.send(queued_user.messages[-1]['content'])
-            response_queue.task_done()
-            logger.info(f'+{round(time.time() - queued_user.message_time, 2)}s: Posted reply to {queued_user.user_name} in chat')
-
-    @my_background_task.before_loop
-    async def before_my_task(client):
-        await client.wait_until_ready()  # wait until the bot logs in
-        # if message.content.startswith('$hello'):
-        #     await message.channel.send('Hello!')
 
     client.run(bot_token, log_handler=None)
 
