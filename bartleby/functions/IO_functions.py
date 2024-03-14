@@ -46,8 +46,13 @@ def discord_listener(
             # Check to see if it's a command message, if so, send it to the command parser
             if user_message[:2] == '--' or user_message[:1] == '–':
 
-                #result = command_funcs.parse_command_message(docx_instance, users[user_name], user_message)
-                await message.channel.send('Caught command message')
+                result = command_funcs.parse_command_message(docx_instance, users[user_name], user_message)
+                result = result.replace('        \r  <b>', '')
+                result = result.replace('</b>', '')
+                result = result.replace('<b>', '')
+                result = result.replace('\n\n', '\n')
+                logger.debug(result)
+                await message.channel.send(f'```{result}```')
 
             # If it's not a command, add it to the user's conversation and 
             # send them to the LLM for a response

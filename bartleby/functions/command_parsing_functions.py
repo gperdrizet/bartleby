@@ -34,7 +34,7 @@ def parse_command_message(docx_instance, user, command_message):
         \r  <b>--document-title</b>                Posts current Google Doc document title to chat.
         \r  <b>--set-document-title</b>            Updates Google Doc document title.
         \r  <b>--set-gdrive-folder FOLDER</b>      Set Google Drive folder ID for document upload. 
-        \r  <b>--make-docx N</b>                   Makes and uploads docx document to Google Drive where N is the reverse index in chat history, e.g. 1 is the last message, 2 the second to last etc. If N is omitted, defaults to last message.
+        \r  <b>--make-docx N</b>                   Makes and uploads docx document to Google Drive.
         '''
 
         result = commands
