@@ -37,41 +37,113 @@ def discord_listener(
     async def on_message(message):
         if message.author != client.user:
 
-            # Get the username and deal with initializing them or their LLM
-            # As needed
-            user_name=message.author
-            message_time=helper_funcs.setup_user(logger, user_name, users, llms)
+            # Before we respond, we need to take a look a the channel the message came from.
+            # The logic goes like this: if there is only one user present, respond to the
+            # message. If there is more than one user present, only respond to the message
+            # if it mentions bartleby or is a reply to one of bartleby's messages.
 
-            # Get body of user message
-            user_message = message.content
-            logger.debug(f'+{round(time.time() - message_time, 2)}s: User message: {user_message}')
+            # Set a flag for mentions containing bartleby
+            mentions_bartleby = False
 
-            # Check to see if it's a command message, if so, send it to the command parser
-            if user_message[:2] == '--' or user_message[:1] == '–':
+            # Set a flag for replies to bartleby
+            reply_to_bartleby = False
 
-                result = command_funcs.parse_command_message(docx_instance, users[user_name], user_message)
-                result = result.replace('        \r  <b>', '')
-                result = result.replace('</b>', '')
-                result = result.replace('<b>', '')
-                result = result.replace('\n\n', '\n')
-                logger.debug(result)
-                await message.channel.send(f'```{result}```')
+            # Check if bartleby was mentioned
+            mentions = []
 
-            # If it's not a command, add it to the user's conversation and 
-            # send them to the LLM for a response
+            for mention in message.mentions:
+                user = client.get_user(mention.id)
+                mentions.append(user.name)
+
+            if 'bartleby' in mentions or 'everyone' in mentions:
+                mentions_bartleby = True
+
+            # Check if the message is a reply to bartleby
+            reference = message.reference
+
+            if reference != None:
+                referenced_message_id = reference.message_id
+                reference_channel_id = reference.channel_id
+                reference_channel = client.get_channel(reference_channel_id)
+                reference_message = await reference_channel.fetch_message(referenced_message_id)
+                sender = reference_message.author
+                sender_name = sender.name
+
+                if sender_name == 'bartleby':
+                    reply_to_bartleby = True
+
+                logger.debug(f'Message reference: {reference}')
+                logger.debug(f'Referenced message ID: {referenced_message_id}')
+                logger.debug(f'Original sender: {sender_name}')
+
+            # Find out how many not offline users are in the channel that the message came from
+            # Get the channel id from the message
+            channel = client.get_channel(message.channel.id)
+
+            # Get the number of not offline users in the channel - this is better than
+            # getting it from the guild because in a server of x members a channel can have
+            # x - n members if it is private
+
+            online_channel_members = 0
+
+            for member in channel.members:
+                logger.debug(f'{member}: {member.status}')
+                if str(member.status) != 'offline':
+                    online_channel_members += 1
+
+            # OK, now we have everything we need to decide if we should respond to the message!
+            if online_channel_members > 2 and mentions_bartleby == False and reply_to_bartleby == False:
+
+                # If there are more than bartleby + 1 people in the channel, but bartleby was not
+                # mentioned in the message and it wasn't a reply to bartleby, ignore it - it must
+                # be people in the channel talking to each other, not bartleby.
+                logger.info('Ignoring message')
+
+            # Otherwise, respond
             else:
 
-                users[user_name].messages.append({
-                    'role': 'user',
-                    'content': user_message
-                })
+                # Get the username and deal with initializing them or their LLM
+                # As needed
+                user_name=message.author
+                message_time=helper_funcs.setup_user(logger, user_name, users, llms)
 
-                users[user_name].message_object=message
-                users[user_name].message_time=message_time
+                # Get body of user message
+                user_message = message.content
 
-                # Put the user into the llm's queue
-                generation_queue.put(users[user_name])
-                logger.info(f'+{round(time.time() - message_time, 2)}s: Added {user_name} to generation queue')
+                # If we are reading this message because it was a reply to bartleby,
+                # split off the mentioned user ID at the closing '> ' and take
+                # whatever comes after
+                if mentions_bartleby == True:
+                    user_message = user_message.split('> ')[-1]
+                    
+                logger.debug(f'+{round(time.time() - message_time, 2)}s: User message: {user_message}')
+
+                # Check to see if it's a command message, if so, send it to the command parser
+                if user_message[:2] == '--' or user_message[:1] == '–':
+
+                    result = command_funcs.parse_command_message(docx_instance, users[user_name], user_message)
+                    result = result.replace('        \r  <b>', '')
+                    result = result.replace('</b>', '')
+                    result = result.replace('<b>', '')
+                    result = result.replace('\n\n', '\n')
+                    logger.debug(result)
+                    await message.channel.send(f'```{result}```')
+
+                # If it's not a command, add it to the user's conversation and 
+                # send them to the LLM for a response
+                else:
+
+                    users[user_name].messages.append({
+                        'role': 'user',
+                        'content': user_message
+                    })
+
+                    users[user_name].message_object=message
+                    users[user_name].message_time=message_time
+
+                    # Put the user into the llm's queue
+                    generation_queue.put(users[user_name])
+                    logger.info(f'+{round(time.time() - message_time, 2)}s: Added {user_name} to generation queue')
 
     client.run(bot_token, log_handler=None)
 
