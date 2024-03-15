@@ -70,7 +70,7 @@ dialo_family_models=[
     'microsoft/DialoGPT-large'
 ]
 
-device_map='sequential'
+device_map='cuda:0'
 model_quantization = 'four bit'
 CPU_threads=18
 model_input_buffer_size=5

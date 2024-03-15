@@ -72,28 +72,6 @@ def discord_listener(
 
     client.run(bot_token, log_handler=None)
 
-async def discord_poster_loop(response_queue, logger):
-
-    while True:
-
-        # Check to see if there are any users with generated responses in the
-        # Response queue, if so, post to chat.
-        #
-        # NOTE: documentation says, "Similarly, if empty() returns False it doesn’t 
-        # guarantee that a subsequent call to get() will not block."
-        # Not sure when/why that would happen...
-        if response_queue.empty() == False:
-
-            # Get the next user from the responder queue
-            queued_user = response_queue.get()
-            logger.info(f'+{round(time.time() - queued_user.message_time, 2)}s: Responder got {queued_user.user_name} from generator')
-
-            # Post the new response from the users conversation
-            await queued_user.message_object.channel.send(queued_user.messages[-1]['content'])
-            response_queue.task_done()
-            logger.info(f'+{round(time.time() - queued_user.message_time, 2)}s: Posted reply to {queued_user.user_name} in chat')
-
-
 async def matrix_listener_loop(
     docx_instance, 
     matrix_instance, 
@@ -228,7 +206,3 @@ def generator(llms, generation_queue, response_queue, logger):
 # Wrapper function to start the matrix listener loop via asyncIO in a thread
 def matrix_listener(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger):
     asyncio.run(matrix_listener_loop(docx_instance, matrix_instance, users, llms, generation_queue, response_queue, logger))
-
-# Wrapper function to start discord poster loop via asyncIO in a thread
-def discord_poster(response_queue, logger):
-    asyncio.run(discord_poster_loop(response_queue, logger))
