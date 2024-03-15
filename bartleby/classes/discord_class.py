@@ -34,10 +34,32 @@ class LLMClient(discord.Client):
             self.response_queue.task_done()
             self.logger.info(f'+{round(time.time() - queued_user.message_time, 2)}s: Responder got {queued_user.user_name} from generator')
 
-            # Post the new response from the users conversation
-            self.logger.debug(f'Message object attributes: {dir(queued_user.message_object)}')
+            # Get the channel from the channel id in the queued user's message object
             channel = self.get_channel(queued_user.message_object.channel.id)
-            await channel.send(queued_user.messages[-1]['content'])
+
+            # Get the number of not offline users in the channel - this is better than
+            # getting it from the guild because in a server of x members a channel can have
+            # x - n members if it is private
+
+            online_channel_members = 0
+
+            for member in channel.members:
+                self.logger.debug(f'{member}: {member.status}')
+                if str(member.status) != 'offline':
+                    online_channel_members += 1
+
+            self.logger.debug(f'Not-offline count {online_channel_members}')
+
+            # If it is just bartleby and one other user, forgo replies and mentions
+            # and just post bare messages as if it were a DM
+            if online_channel_members <= 2:
+                await channel.send(queued_user.messages[-1]['content'])
+
+            # If there is more than one user, i.e. bartleby + 2 users = 3 members,
+            # use replies
+            if online_channel_members > 2:
+                await queued_user.message_object.reply(queued_user.messages[-1]['content'])
+            
             self.logger.info(f'+{round(time.time() - queued_user.message_time, 2)}s: Posted reply to {queued_user.user_name} in chat')
 
     # Wait until the bot is logged in to start the task

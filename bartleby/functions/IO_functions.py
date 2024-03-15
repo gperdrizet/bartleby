@@ -24,7 +24,10 @@ def discord_listener(
 
     intents=discord.Intents.default()
     intents.message_content=True
-    client = discord_class.LLMClient(logger, response_queue, intents=intents)
+    intents.members=True
+    intents.typing=False
+    intents.presences=True
+    client=discord_class.LLMClient(logger, response_queue, intents=intents)
 
     @client.event
     async def on_ready():
