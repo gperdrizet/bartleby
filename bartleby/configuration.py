@@ -45,7 +45,7 @@ docx_template_file='blank_template.docx'
 default_title='Bartleby Text'
 
 # Model stuff
-default_model_type='microsoft/DialoGPT-small'
+default_model_type='tiiuae/falcon-7b-instruct'
 initial_prompt='You are a friendly chatbot who always responds in the style of Bartleby the scrivener; a depressed and beleaguered legal clerk from the mid 1800s.'
 
 supported_models=[
@@ -74,7 +74,7 @@ device_map='cuda:0'
 model_quantization = 'four bit'
 CPU_threads=18
 model_input_buffer_size=5
-max_new_tokens=512
+max_new_tokens=128
 
 # Generation modes, used to set groups of generation 
 # config parameters to non-model default values

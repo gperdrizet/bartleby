@@ -1,6 +1,8 @@
-from discord.ext import tasks
 import discord
 import time
+import textwrap
+from discord.ext import tasks
+from discord import app_commands
 class LLMClient(discord.Client):
     '''Custom discord client class with background task to 
     check the LLM response queue and post any new generated 
@@ -13,7 +15,16 @@ class LLMClient(discord.Client):
         self.logger = logger
         self.response_queue = response_queue
 
+        # Add command tree
+        self.tree = app_commands.CommandTree(self)
+
     async def setup_hook(self) -> None:
+
+        # Sync global command tree to guild
+        MY_GUILD = discord.Object(id=755533103065333911)
+        await self.tree.sync()
+        self.tree.copy_global_to(guild=MY_GUILD)
+        await self.tree.sync(guild=MY_GUILD)
 
         # Start the task to run in the background
         self.check_response_queue.start()
@@ -53,12 +64,33 @@ class LLMClient(discord.Client):
             # If it is just bartleby and one other user, forgo replies and mentions
             # and just post bare messages as if it were a DM
             if online_channel_members <= 2:
-                await channel.send(queued_user.messages[-1]['content'])
+
+                # Make sure we don't hit discord's character limit
+                if len(queued_user.messages[-1]['content']) < 2000:
+                    await channel.send(queued_user.messages[-1]['content'])
+
+                # If the reply is too long, split it up and post the chunks
+                else:
+                    chunks = textwrap.wrap(queued_user.messages[-1]['content'], 2000)
+
+                    for chunk in chunks:
+                        await channel.send(chunk)
+
 
             # If there is more than one user, i.e. bartleby + 2 users = 3 members,
             # use replies
             if online_channel_members > 2:
-                await queued_user.message_object.reply(queued_user.messages[-1]['content'])
+
+                # Make sure we don't hit discord's character limit
+                if len(queued_user.messages[-1]['content']) < 2000:
+                    await queued_user.message_object.reply(queued_user.messages[-1]['content'])
+
+                # If the reply is too long, split it up and post the chunks
+                else:
+                    chunks = textwrap.wrap(queued_user.messages[-1]['content'], 2000)
+
+                    for chunk in chunks:
+                        await queued_user.message_object.reply(chunk)
             
             self.logger.info(f'+{round(time.time() - queued_user.message_time, 2)}s: Posted reply to {queued_user.user_name} in chat')
 
