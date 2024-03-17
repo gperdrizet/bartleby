@@ -8,6 +8,7 @@ os.environ['HF_HOME']=f'{pathlib.Path(__file__).parent.resolve()}/hf_cache'
 os.environ['CUDA_VISIBLE_DEVICES']='0'
 
 import bartleby.credentials.matrix as matrix
+import bartleby.credentials.discord_credentials as discord
 
 # Specify encoding here. This is needed because some phones
 # have a tendency to autocorrect '--' to '–', which is not an
@@ -16,7 +17,7 @@ import bartleby.credentials.matrix as matrix
 
 #-*- coding: utf-8 -*-
 
-MODE='matrix'
+MODE='discord' #'matrix'
 
 LOG_LEVEL='DEBUG'
 LOG_PREFIX='%(levelname)s - %(message)s' # '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -35,6 +36,9 @@ matrix_room_id=matrix.matrix_room_id
 matrix_server_url=matrix.matrix_server_url
 matrix_bot_username=matrix.matrix_bot_username
 matrix_bot_password=matrix.matrix_bot_password
+
+# Discord stuff
+bot_token = discord.token
 
 # Document output stuff
 docx_template_file='blank_template.docx'
@@ -66,11 +70,11 @@ dialo_family_models=[
     'microsoft/DialoGPT-large'
 ]
 
-device_map='sequential'
+device_map='cuda:0'
 model_quantization = 'four bit'
 CPU_threads=18
 model_input_buffer_size=5
-max_new_tokens=512
+max_new_tokens=128
 
 # Generation modes, used to set groups of generation 
 # config parameters to non-model default values
