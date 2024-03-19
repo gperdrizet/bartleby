@@ -15,8 +15,8 @@ class System_agent:
         self.logger = logger
 
         # Start model and tokenizer
-        self.tokenizer = T5Tokenizer.from_pretrained('google-t5/t5-small')
-        self.model = T5ForConditionalGeneration.from_pretrained('/mnt/fast_scratch/huggingface_transformers_cache/T5-system-agent')
+        self.tokenizer = T5Tokenizer.from_pretrained('google-t5/t5-base')
+        self.model = T5ForConditionalGeneration.from_pretrained('/mnt/fast_scratch/huggingface_transformers_cache/T5-base-system-agent')
 
     def translate_command(self, message):
         input_ids = self.tokenizer(f'summarize: {message}', return_tensors="pt").input_ids

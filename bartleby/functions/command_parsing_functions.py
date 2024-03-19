@@ -233,8 +233,8 @@ def parse_system_agent_command(docx_instance, user, command):
     elif command == 'buffer size':
         result = f'LLM input buffer size: last {user.model_input_buffer_size} messages'
 
-    elif command.split(' ')[:3] == 'set buffer size':
-        user.model_input_buffer_size = int(command[3])
+    elif 'set input buffer' in command:
+        user.model_input_buffer_size = int(command.split(' ')[3])
         result = f'LLM input buffer updated to last {user.model_input_buffer_size} messages'
 
     elif 'output length' in command:
@@ -248,7 +248,7 @@ def parse_system_agent_command(docx_instance, user, command):
         # Set and check the new value
         user.generation_configurations[user.model_type].max_new_tokens = num_tokens
         new_value = user.generation_configurations[user.model_type].max_new_tokens
-        result = f"Updated {command.split(' ')[:2]} from {old_value} to {new_value}"
+        result = f"Updated {' '.join(command.split(' ')[:2])} from {old_value} to {new_value}"
 
     elif 'temperature' in command:
 
@@ -290,6 +290,18 @@ def parse_system_agent_command(docx_instance, user, command):
         # before generating a document
         elif user.gdrive_folder_id == None:
             result = 'Please set a Google Drive folder ID before generating a document for upload'
+
+    elif command == 'supported models':
+        models = '\n'.join(conf.supported_models)
+        result = '\n' + f'{models}'
+
+    elif command == 'document title':
+        result = f'Document title: {user.document_title}'
+
+    elif command.split(' ')[:2] == 'swap model':
+        new_model = command.split(' ')[-1]
+        user.model_type = new_model
+        result = f'Switched to {new_model} model'
 
     elif command == 'commands':
         

@@ -21,15 +21,18 @@ def discord_listener(
     response_queue,
     logger
 ):
+    # Start system agent
+    system_agent_instance = system_agent.System_agent(logger) 
 
+    # Set discord logging settings
     discord_logger=helper_funcs.start_discord_logger()
 
+    # Set intents and start the discord client
     intents=discord.Intents.default()
     intents.message_content=True
     intents.members=True
     intents.typing=False
     intents.presences=True
-    #client=discord_class.LLMClient(logger, response_queue, intents=intents)
     client=discord_class.LLMClient(logger, response_queue, command_prefix='/', intents=intents)
 
     @client.event
@@ -129,24 +132,39 @@ def discord_listener(
                     result = result.replace('</b>', '')
                     result = result.replace('<b>', '')
                     result = result.replace('\n\n', '\n')
-                    logger.debug(result)
-                    await message.channel.send(f'```{result}```')
 
-                # If it's not a command, add it to the user's conversation and 
-                # send them to the LLM for a response
+                # If it's not a --command, send it to the system agent
                 else:
 
-                    users[user_name].messages.append({
-                        'role': 'user',
-                        'content': user_message
-                    })
+                    # Check to see if the user's message translates to a known command
+                    command = system_agent_instance.translate_command(user_message)
 
-                    users[user_name].message_object=message
-                    users[user_name].message_time=message_time
+                    # If the user message translates to a command send it to the
+                    # system agent's parser for execution
+                    if command != 'None':
 
-                    # Put the user into the llm's queue
-                    generation_queue.put(users[user_name])
-                    logger.info(f'+{round(time.time() - message_time, 2)}s: Added {user_name} to generation queue')
+                        result = command_funcs.parse_system_agent_command(docx_instance, users[user_name], command)
+
+                        # Post the result and log
+                        await message.channel.send(f'```{result}```')
+                        logger.debug(result)
+
+                    # If the message does not translate to a command the system agent
+                    # recognizes, add it to the conversation put the user in the LLM
+                    # in the LLM queue for a response
+                    else:
+
+                        users[user_name].messages.append({
+                            'role': 'user',
+                            'content': user_message
+                        })
+
+                        users[user_name].message_object=message
+                        users[user_name].message_time=message_time
+
+                        # Put the user into the llm's queue
+                        generation_queue.put(users[user_name])
+                        logger.info(f'+{round(time.time() - message_time, 2)}s: Added {user_name} to generation queue')
 
     # @client.tree.command()
     # @app_commands.describe(

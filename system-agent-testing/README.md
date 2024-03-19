@@ -117,6 +117,8 @@ As we write and augment examples for more commands, they are concatenated manual
 
 Going to skip adding these for now. The fact that there are so many parameters to update makes me think it won't work very well. We are probably better off letting the user set generation config. parameters via the traditional chat commands interface. Same goes for the generation prompt. I'm guessing that our fine-tuned T5 will have trouble correctly isolating the new prompt text from the user.
 
+Let's get rid of the set gdrive command and the temperature and output tokens commands and add current model.
+
 ## 7. Testing notes
 
 1. Updating the model input buffer size chokes, not sure where - seemed like it was working in testing.
