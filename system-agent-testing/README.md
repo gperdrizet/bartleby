@@ -93,6 +93,9 @@ OK, let's add a bunch more commands. This is all going to be done with throw-awa
 | human_NL_commands.4.csv | NL_commands_dataset.4.csv | --update-input-buffer N              |
 |                         |                           | --set-document-title                 |
 |                         |                           | --set-gdrive-folder FOLDER           |
+| human_NL_commands.5.csv | NL_commands_dataset.5.csv | --supported-models                   |
+|                         |                           | --document-title                     |
+|                         |                           | --swap-model MODEL                   |
 
 As we write and augment examples for more commands, they are concatenated manually after curation into *NL_commands_dataset.complete.csv* for use in fine-tuning.
 
@@ -102,7 +105,7 @@ As we write and augment examples for more commands, they are concatenated manual
 
 **Other notes:**
 
-1. When setting the title, the synthetic command generation seems to struggle with examples where the new title is not capitalized of in quotes.
+1. When setting the title, the synthetic command generation seems to struggle with examples where the new title is not capitalized or in quotes.
 
 ## 6. Commands left to add
 
@@ -110,18 +113,14 @@ As we write and augment examples for more commands, they are concatenated manual
 --update-prompt PROMPT          Updates the system prompt to PROMPT and restarts chat history.
 --show-config-value PARAMETER   Show the value of generation configuration PARAMETER.
 --update-config PARAMETER VALUE Updates generation configuration PARAMETER to VALUE.
---supported-models              Post supported models to chat.
---swap-model MODEL              Change the model type used for generation.
---document-title                Posts current Google Doc document title to chat.
---make-docx N                   Makes and uploads docx document to Google Drive where N is the
-                                reverse index in chat history, e.g. 1 is the last message, 2
-                                the second to last etc. If N is omitted, defaults to last message.
 ```
+
+Going to skip adding these for now. The fact that there are so many parameters to update makes me think it won't work very well. We are probably better off letting the user set generation config. parameters via the traditional chat commands interface. Same goes for the generation prompt. I'm guessing that our fine-tuned T5 will have trouble correctly isolating the new prompt text from the user.
 
 ## 7. Testing notes
 
 1. Updating the model input buffer size chokes, not sure where - seemed like it was working in testing.
-2. Looks like out fine tuned T5 started getting confused between the 3rd and 4th sets of new commands It's having trouble differentiating between input buffer and max output token updates.
+2. Looks like our fine tuned T5 started getting confused between the 3rd and 4th sets of new commands It's having trouble differentiating between input buffer and max output token updates.
 
 I think we really need to see a probability distribution over the top many commands the agent thinks the user's message means. For example, 'complete the statement: the early bird' makes it reset the chat logs, hahaha. I have to laugh at that one.
 
