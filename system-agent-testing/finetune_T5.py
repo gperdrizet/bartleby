@@ -5,9 +5,6 @@ import numpy as np
 from datasets import Dataset
 from transformers import AutoTokenizer, DataCollatorForSeq2Seq, AutoModelForSeq2SeqLM, Seq2SeqTrainingArguments, Seq2SeqTrainer
 
-# Set HuggingFace cache
-os.environ['HF_HOME'] = '/mnt/fast_scratch/huggingface_transformers_cache'
-
 def preprocess_function(examples):
     '''Helper function to preprocess text in HF dataset for summarization'''
 
@@ -37,6 +34,12 @@ def compute_metrics(eval_pred):
 
 if __name__ == '__main__':
 
+    # Set HuggingFace cache
+    os.environ['HF_HOME'] = '/mnt/fast_scratch/huggingface_transformers_cache'
+
+    # Set visible GPUs
+    os.environ['CUDA_VISIBLE_DEVICES']='0'
+
     # Load dataset from csv
     dataset_df = pd.read_csv('NL_commands_dataset.complete.csv', keep_default_na=False)
 
@@ -64,7 +67,7 @@ if __name__ == '__main__':
     rouge = evaluate.load("rouge")
 
     # Load model
-    model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint)
+    model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint, device_map='auto')
 
     # Set training args
     training_args = Seq2SeqTrainingArguments(
@@ -77,7 +80,7 @@ if __name__ == '__main__':
         save_total_limit=3,
         num_train_epochs=1600,
         predict_with_generate=True,
-        #fp16=True,
+        fp16=True,
         #push_to_hub=True,
     )
 
