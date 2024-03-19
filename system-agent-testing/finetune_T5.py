@@ -41,7 +41,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES']='0'
 
     # Load dataset from csv
-    dataset_df = pd.read_csv('NL_commands_dataset.complete.csv', keep_default_na=False)
+    dataset_df = pd.read_csv('response_length_dataset.csv', keep_default_na=False)
 
     # Convert to dict
     dataset = dataset_df.to_dict(orient='records', index='false')
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     print(dataset["train"][0])
 
     # Tokenize the dataset
-    checkpoint = "google-t5/t5-base"
+    checkpoint = "google-t5/t5-small"
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
     tokenized_dataset = dataset.map(preprocess_function, batched=True)
 
@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     # Set training args
     training_args = Seq2SeqTrainingArguments(
-        output_dir="../bartleby/hf_cache/T5-base-system-agent",
+        output_dir="../bartleby/hf_cache/T5-small-output-size-selector",
         evaluation_strategy="epoch",
         learning_rate=1e-5,
         per_device_train_batch_size=16,
@@ -97,4 +97,4 @@ if __name__ == '__main__':
 
     trainer.train()
 
-    model.save_pretrained('../bartleby/hf_cache/T5-base-system-agent')
+    model.save_pretrained('../bartleby/hf_cache/T5-small-output-size-selector')
