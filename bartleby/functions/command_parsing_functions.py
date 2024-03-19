@@ -13,48 +13,14 @@ def parse_command_message(docx_instance, user, command_message):
 
     # Post commands to chat
     if command[0] == '--commands':
-        
-        commands = '''\n<b>Available commands:</b>\n
-        \r  <b>--commands</b>              Posts this message to chat.
-        \r  <b>--input-buffer-size</b>     Post size of LLM input buffer.
-        \r  <b>--update-input-buffer N</b> Updates LLM input buffer to N messages.
-        \r  <b>--show-input-messages</b>   Posts content of LLM input buffer.
-        \r  <b>--show-prompt</b>           Post the current system prompt to chat.
-        \r  <b>--update-prompt PROMPT</b>  Updates the system prompt to PROMPT and 
-        \r  <b></b>                        restarts chat history.
-        \r  <b>--restart-chat</b>          Clears and restarts chat history.
-        \r  <b>--show-generation-mode</b>  Posts the current generation mode.
-        \r  <b>--show-generation-modes</b> Posts available generation modes.
-        \r  <b>--set-generation-mode X</b> Sets generation mode to X.
-        \r  <b>--show-config</b>           Post generation configuration parameters 
-        \r  <b></b>                        not set to model default.
-        \r  <b>--show-config-full</b>      Show all available generation
-        \r  <b></b>                        configuration parameters.
-        \r  <b>--show-config-value X</b>   Show the value of generation configuration 
-        \r  <b></b>                        parameter X.
-        \r  <b>--update-config X Y</b>     Updates value of generation configuration 
-        \r  <b></b>                        parameter X to Y.
-        \r  <b>--supported-models</b>      Post supported models to chat.
-        \r  <b>--swap-model X</b>          Change the model type used for generation.
-        \r  <b>--document-title</b>        Posts current Google Doc document title 
-        \r  <b></b>                        to chat.
-        \r  <b>--set-document-title</b>    Updates Google Doc document title.
-        \r  <b>--set-gdrive-folder X</b>   Set Google Drive folder ID for document 
-        \r  <b></b>                        upload. 
-        \r  <b>--make-docx N</b>           Makes and uploads docx document to 
-        \r  <b></b>                        Google Drive using last N message.
-        '''
-
-        ###############################################################################
-
-        result = commands
+        result = conf.commands
 
     # Show the current LLM input buffer size
     elif command[0] == '--input-buffer-size':
         result = f'LLM input buffer size: last {user.model_input_buffer_size} messages'
 
     # Set the LLM input buffer size
-    elif command[0] == '--update-input-buffer':
+    elif command[0] == '--set-input-buffer-size':
         if len(command) == 2:
 
             user.model_input_buffer_size = int(command[1])
@@ -64,7 +30,7 @@ def parse_command_message(docx_instance, user, command_message):
             result = f'Failed to parse buffer size update command'
 
     # Post current contents of LLM input buffer
-    elif command[0] == '--show-input-messages':
+    elif command[0] == '--input-messages':
 
         # Select last n messages for input to the model
         messages = []
@@ -75,17 +41,17 @@ def parse_command_message(docx_instance, user, command_message):
         result = '\n' + '\n'.join(messages)
 
     # Post current prompt to chat
-    elif command[0] == '--show-prompt':
+    elif command[0] == '--prompt':
         result = f'Prompt: {user.initial_prompt}'
 
     # Update prompt with user input and reset message chain
-    elif command[0] == '--update-prompt':
+    elif command[0] == '--set-prompt':
         user.initial_prompt = ' '.join(command[1:])
         user.restart_conversation()
         result = 'Prompt update complete, conversation reset'
 
     # Clear chat history and reinitialize with current initial prompt
-    elif command[0] == '--restart-chat':
+    elif command[0] == '--reset-chat':
         user.restart_conversation()
         result = 'Chat history cleared and conversation reset'
 

@@ -44,6 +44,20 @@ OK, cool - I think that's all of the commands we have right now. Discord has one
 
 First decision to make here is if/what verbs to use, i.e. show_input_buffer_size vs --input-buffer-size. Also, I think we should add the '--commands' to the system agent. I think that's a pretty useful one to have at the user's fingertips.
 
+#### Updated system commands
+
+| chat command                 | discord slash command         | system agent command | action                                                                                  |
+|------------------------------|-------------------------------|----------------------|-----------------------------------------------------------------------------------------|
+| --commands                   | /commands                     | Yes                  | Posts list of available chat commands                                                   |
+| --input-buffer-size          | /input_buffer_size            | Yes                  | Posts the number of most recent chat messages currently being used as input the the LLM |
+| --set-input-buffer-size N    | /set_input_buffer_size N      | Yes                  | Sets the number of most recent chat messages to use as input for the LLM to N           |
+| --input-messages             | /input_messages               | No                   | Posts the current contents of the LLM input buffer in chat                              |
+| --prompt                     | /prompt                       | Yes                  | Posts the current initial system prompt used to start each conversation                 |
+| --set-prompt PROMPT          | /set_prompt PROMPT            | No                   | Sets initial system prompt used to start new conversations to PROMPT                    |
+| --reset-chat                 | /reset_chat                   | Yes                  | Clears message history and starts a new conversation                                    |
+
+OK, done!
+
 ### 2.2. Generation configuration commands
 
 | chat command                 | discord slash command         | system agent command | action                                                                                  |

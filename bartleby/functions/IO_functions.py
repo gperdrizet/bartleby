@@ -166,29 +166,39 @@ def discord_listener(
                         generation_queue.put(users[user_name])
                         logger.info(f'+{round(time.time() - message_time, 2)}s: Added {user_name} to generation queue')
 
-    # @client.tree.command()
-    # @app_commands.describe(
-    #     first_value='The first value you want to add something to',
-    #     second_value='The value you want to add to the first value',
-    # )
-    # async def add(interaction: discord.Interaction, first_value: int, second_value: int):
-    #     """Adds two numbers together."""
-    #     await interaction.response.send_message(f'{first_value} + {second_value} = {first_value + second_value}')
+    ##### System commands ################################################
+    @client.tree.command()
+    async def command(interaction: discord.Interaction):
+        """Posts available chat commands"""
+
+        # Get the user name
+        user_name = interaction.user
+
+        # Get the command reference from the config file
+        result = conf.commands
+        result = result.replace('        \r  <b>', '')
+        result = result.replace('</b>', '')
+        result = result.replace('<b>', '')
+        result = result.replace('\n\n', '\n')
+
+        # Post the reply and log the interaction
+        await interaction.response.send_message(f'```{result}```')
+        logger.debug(f'Show commands from: {user_name}')
 
     @client.tree.command()
-    async def show_input_buffer_size(interaction: discord.Interaction):
+    async def input_buffer_size(interaction: discord.Interaction):
         """Posts the current LLM input buffer size."""
 
         # Get the user name
         user_name = interaction.user
 
         # Post the reply and log the interaction
-        await interaction.response.send_message(f'Using last {users[user_name].model_input_buffer_size} messages as input')
+        await interaction.response.send_message(f'```LLM using last {users[user_name].model_input_buffer_size} messages as input```')
         logger.debug(f'Show input buffer size command from: {user_name}')
 
     @client.tree.command()
     @app_commands.describe(buffer_size='New input buffer size')
-    async def update_input_buffer_size(interaction: discord.Interaction, buffer_size: int):
+    async def set_input_buffer_size(interaction: discord.Interaction, buffer_size: int):
         """Updates the LLM input buffer size."""
 
         # Get the user name
@@ -198,23 +208,42 @@ def discord_listener(
         users[user_name].model_input_buffer_size = buffer_size
 
         # Post the reply and log the interaction
-        await interaction.response.send_message(f'Changed model input buffer to last {buffer_size} messages')
+        await interaction.response.send_message(f'```Changed model input buffer to last {buffer_size} messages```')
         logger.debug(f'Update input buffer size to {buffer_size} command from: {user_name}')
 
     @client.tree.command()
-    async def show_prompt(interaction: discord.Interaction):
+    async def input_messages(interaction: discord.Interaction):
+        """Post contents of LLM input buffer to chat."""
+
+        # Get the user name
+        user_name = interaction.user
+
+        # Select last n messages for input to the model
+        messages = []
+
+        for message in users[user_name].messages[-users[user_name].model_input_buffer_size:]:
+            messages.append(f"{message['role']}: {message['content']}")
+
+        result = '\n'.join(messages)
+
+        # Post the reply and log the interaction
+        await interaction.response.send_message(f'```{result}```')
+        logger.debug(f'Show input buffer command from: {user_name}')
+
+    @client.tree.command()
+    async def prompt(interaction: discord.Interaction):
         """Post the generation prompt."""
 
         # Get the user name
         user_name = interaction.user
 
         # Post the reply and log the interaction
-        await interaction.response.send_message(f'Generation prompt: {users[user_name].initial_prompt}')
+        await interaction.response.send_message(f'```Generation prompt: {users[user_name].initial_prompt}```')
         logger.debug(f'Show prompt command from: {user_name}')
 
     @client.tree.command()
     @app_commands.describe(initial_prompt='New generation prompt')
-    async def update_prompt(interaction: discord.Interaction, initial_prompt: str):
+    async def set_prompt(interaction: discord.Interaction, initial_prompt: str):
         """Updates the generation prompt."""
 
         # Get the user name
@@ -225,7 +254,7 @@ def discord_listener(
         users[user_name].restart_conversation()
 
         # Post the reply and log the interaction
-        await interaction.response.send_message(f'Changed model input buffer to last {initial_prompt} messages')
+        await interaction.response.send_message(f'```Changed model input buffer to last {initial_prompt} messages```')
         logger.debug(f'Update prompt command from: {user_name}. New prompt: {initial_prompt}')
 
     @client.tree.command()
@@ -239,7 +268,7 @@ def discord_listener(
         users[user_name].restart_conversation()
 
         # Post the reply and log the interaction
-        await interaction.response.send_message(f'Conversation reset')
+        await interaction.response.send_message(f'```Conversation reset```')
         logger.debug(f'Restart chat command from: {user_name}')
 
     @client.tree.command()

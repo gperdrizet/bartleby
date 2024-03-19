@@ -115,3 +115,37 @@ generation_mode={
         'exponential_decay_length_penalty': (16, -1)
     }
 }
+
+
+# Commands documentation to post in chat when asked
+
+commands = '''\n<b>Available commands:</b>\n
+\r  <b>--commands</b>                Posts this message to chat.
+\r  <b>--input-buffer-size</b>       Post size of LLM input buffer.
+\r  <b>--set-input-buffer-size N</b> Updates LLM input buffer to N messages.
+\r  <b>--input-messages</b>          Posts content of LLM input buffer.
+\r  <b>--prompt</b>                  Post the current system prompt to chat.
+\r  <b>--set-prompt PROMPT</b>       Updates the system prompt to PROMPT and 
+\r  <b></b>                          restarts chat history.
+\r  <b>--reset-chat</b>              Clears and restarts chat history.
+\r  <b>--show-generation-mode</b>  Posts the current generation mode.
+\r  <b>--show-generation-modes</b> Posts available generation modes.
+\r  <b>--set-generation-mode X</b> Sets generation mode to X.
+\r  <b>--show-config</b>           Post generation configuration parameters 
+\r  <b></b>                        not set to model default.
+\r  <b>--show-config-full</b>      Show all available generation
+\r  <b></b>                        configuration parameters.
+\r  <b>--show-config-value X</b>   Show the value of generation configuration 
+\r  <b></b>                        parameter X.
+\r  <b>--update-config X Y</b>     Updates value of generation configuration 
+\r  <b></b>                        parameter X to Y.
+\r  <b>--supported-models</b>      Post supported models to chat.
+\r  <b>--swap-model X</b>          Change the model type used for generation.
+\r  <b>--document-title</b>        Posts current Google Doc document title 
+\r  <b></b>                        to chat.
+\r  <b>--set-document-title</b>    Updates Google Doc document title.
+\r  <b>--set-gdrive-folder X</b>   Set Google Drive folder ID for document 
+\r  <b></b>                        upload. 
+\r  <b>--make-docx N</b>           Makes and uploads docx document to 
+\r  <b></b>                        Google Drive using last N message.
+'''
