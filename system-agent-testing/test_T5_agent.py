@@ -9,8 +9,8 @@ if __name__ == '__main__':
 
     torch.set_num_threads(18)
     
-    tokenizer = T5Tokenizer.from_pretrained('google-t5/t5-base')
-    model = T5ForConditionalGeneration.from_pretrained('/mnt/fast_scratch/huggingface_transformers_cache/T5-base-system-agent')
+    tokenizer = T5Tokenizer.from_pretrained('google-t5/t5-small')
+    model = T5ForConditionalGeneration.from_pretrained('/mnt/fast_scratch/huggingface_transformers_cache/T5-small-output-size-selector')
 
     print()
 
