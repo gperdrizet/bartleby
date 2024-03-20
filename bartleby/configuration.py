@@ -76,12 +76,13 @@ CPU_threads=18
 model_input_buffer_size=5
 max_new_tokens=128
 
-# Generation modes, used to set groups of generation 
+# Decoding modes, used to set groups of generation 
 # config parameters to non-model default values
+# corresponding to common decoding methods
 
-default_generation_mode='sampling'
+default_decoding_mode='sampling'
 
-generation_mode={
+decoding_mode={
     'greedy': {
         'exponential_decay_length_penalty': (16, -1)
     },
@@ -128,19 +129,18 @@ commands = '''\n<b>Available commands:</b>\n
 \r  <b>--set-prompt PROMPT</b>       Updates the system prompt to PROMPT and 
 \r  <b></b>                          restarts chat history.
 \r  <b>--reset-chat</b>              Clears and restarts chat history.
-\r  <b>--show-generation-mode</b>  Posts the current generation mode.
-\r  <b>--show-generation-modes</b> Posts available generation modes.
-\r  <b>--set-generation-mode X</b> Sets generation mode to X.
-\r  <b>--show-config</b>           Post generation configuration parameters 
-\r  <b></b>                        not set to model default.
-\r  <b>--show-config-full</b>      Show all available generation
-\r  <b></b>                        configuration parameters.
-\r  <b>--show-config-value X</b>   Show the value of generation configuration 
-\r  <b></b>                        parameter X.
-\r  <b>--update-config X Y</b>     Updates value of generation configuration 
-\r  <b></b>                        parameter X to Y.
-\r  <b>--supported-models</b>      Post supported models to chat.
-\r  <b>--swap-model X</b>          Change the model type used for generation.
+\r  <b>--decoding-mode</b>           Posts the current decoding mode.
+\r  <b>--decoding-modes</b>          Posts available decoding mode presets.
+\r  <b>--set-decoding-mode X</b>     Sets decoding mode to X preset.
+\r  <b>--config</b>                  Post generation configuration parameters 
+\r  <b></b>                          not set to model default.
+\r  <b>--config-full</b>             Show all available generation
+\r  <b></b>                          configuration parameters.
+\r  <b>--set-config X Y</b>          Updates value of generation configuration 
+\r  <b></b>                          parameter X to Y.
+\r  <b>--model</b>                   Post current model to chat.
+\r  <b>--models</b>                  Post supported models to chat.
+\r  <b>--swap-model X</b>            Change the model type used for generation.
 \r  <b>--document-title</b>        Posts current Google Doc document title 
 \r  <b></b>                        to chat.
 \r  <b>--set-document-title</b>    Updates Google Doc document title.

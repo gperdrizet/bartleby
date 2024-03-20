@@ -36,7 +36,7 @@ def parse_command_message(docx_instance, user, command_message):
         messages = []
 
         for message in user.messages[-user.model_input_buffer_size:]:
-            messages.append(f"{message['role']}: {message['content']}")
+            messages.append(f"{message['role']}: {message['content']}\n")
 
         result = '\n' + '\n'.join(messages)
 
@@ -55,40 +55,34 @@ def parse_command_message(docx_instance, user, command_message):
         user.restart_conversation()
         result = 'Chat history cleared and conversation reset'
 
-    # Show current generation mode
-    elif command[0] == '--show-generation-mode':
-        result = f'Generation mode: {user.generation_mode}'
+    # Show current decoding mode
+    elif command[0] == '--decoding-mode':
+        result = f'Decoding mode: {user.decoding_mode}'
 
-    # Show available generation modes
-    elif command[0] == '--show-generation-modes':
-        generation_modes = ', '.join(conf.generation_mode.keys())
-        result = f'Generation modes: {generation_modes}'
+    # Show available decoding modes
+    elif command[0] == '--decoding-modes':
+        decoding_modes = ', '.join(conf.decoding_mode.keys())
+        result = f'Decoding modes: {decoding_modes}'
 
-    # Set new generation mode
-    elif command[0] == '--set-generation-mode':
-        if len(command) == 2 and command[1] in conf.generation_mode.keys():
-            user.generation_mode = command[1]
-            result = f'Generation mode set to {command[1]}'
+    # Set new decoding mode
+    elif command[0] == '--set-decoding-mode':
+        if len(command) == 2 and command[1] in conf.decoding_mode.keys():
+            user.decoding_mode = command[1]
+            result = f'Decoding mode set to {command[1]}'
         
         else:
-            result = 'Could not parse generation mode set command'
+            result = 'Could not parse decoding mode set command'
 
     # Post non-model default generation configuration options to chat
-    elif command[0] == '--show-config':
+    elif command[0] == '--config':
         result = f'{user.generation_configurations[user.model_type]}\n'
 
     # Post all generation configurations options to chat
-    elif command[0] == '--show-config-full':
+    elif command[0] == '--config-full':
         result = f'{user.generation_configurations[user.model_type].__dict__}\n'
 
-    # Post value of specific generation configuration command to output
-    elif command[0] == '--show-config-value':
-        if len(command) == 2:
-            value = getattr(user.generation_configurations[user.model_type], command[1])
-            result = f'{command[1]}: {value}'
-
     # Update generation configuration option with user input
-    elif command[0] == '--update-config':
+    elif command[0] == '--set-config':
         if len(command) == 3:
 
             # Get the initial value for the parameter specified by user
@@ -109,8 +103,12 @@ def parse_command_message(docx_instance, user, command_message):
         else:
             result = f'Failed to parse generation configuration update command'
 
+    # Post the current model in chat
+    elif command[0] == '--model':
+        result = f'Current model: {user.model_type}'
+
     # List the supported models in chat
-    elif command[0] == '--supported-models':
+    elif command[0] == '--models':
         models = '\n'.join(conf.supported_models)
         result = '\n' + f'{models}'
 
