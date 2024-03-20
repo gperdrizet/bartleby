@@ -85,14 +85,11 @@ OK, let's add a bunch more commands. This is all going to be done with throw-awa
 |                         |                           | --make-docx                          |
 |                         |                           | None                                 |
 | human_NL_commands.2.csv | NL_commands_dataset.2.csv | --show-prompt                        |
-|                         |                           | --update-config max_new_tokens VALUE |
-|                         |                           | --update-config temperature VALUE    |
 | human_NL_commands.3.csv | NL_commands_dataset.3.csv | --commands                           |
 |                         |                           | --input-buffer-size                  |
 |                         |                           | --show-config                        |
 | human_NL_commands.4.csv | NL_commands_dataset.4.csv | --update-input-buffer N              |
 |                         |                           | --set-document-title                 |
-|                         |                           | --set-gdrive-folder FOLDER           |
 | human_NL_commands.5.csv | NL_commands_dataset.5.csv | --supported-models                   |
 |                         |                           | --document-title                     |
 |                         |                           | --swap-model MODEL                   |

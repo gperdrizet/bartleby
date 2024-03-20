@@ -75,15 +75,29 @@ OK, done!
 
 Same comment here about if/when to use verbs consistently. Thinking we should not use 'show' and only use 'set' rather than 'update'. This way many commands will come in pairs, e.g. '--generation-config' to list the generation config and '--set-generation-config' to make a change. Also, I think we can loose 'show_generation_config_value'.
 
+#### Updated generation configuration commands
+
+| chat command                 | discord slash command         | system agent command | action                                                                                  |
+|------------------------------|-------------------------------|----------------------|-----------------------------------------------------------------------------------------|
+| --decoding-mode              | /decoding_mode                | No                   | Post the current generation decoding mode to chat                                       |
+| --decoding-modes             | /decoding_modes               | No                   | Posts the list of available generation decoding mode presets to chat                    |
+| --set-decoding-mode MODE     | /set_decoding_mode MODE       | No                   | Sets generation decoding mode to MODE where mode is one of the available presets        |
+| --config                     | /config                       | Yes                  | Posts any values from transformers.GenerationConfig not currently set to model defaults |
+| --config-full                | /config_full                  | No                   | Posts all values from transformers.GenerationConfig                                     |
+| --set-config X Y             | /set_config X Y               | No (except temp. and max new tokens) | Updates the value of any parameter X from transformers.GenerationConfig to Y |
+| --model                      | /show_current_model           | No                   | Post the name of the model currently being used for generation                          |
+| --models                     | /models                       | Yes                  | Post the list of available models to chat                                               |
+| --swap-model MODEL           | /swap_model MODEL             | Yes                  | Changes the LLM being used for response generation to MODEL from supported model list   |
+
 ### 2.3. Document commands
 
 | chat command                 | discord slash command         | system agent command | action                                                                                  |
 |------------------------------|-------------------------------|----------------------|-----------------------------------------------------------------------------------------|
 | --document-title             | /show_document_title          | Yes                  | Posts the current document title, used for saving output to gdrive, in chat             |
 | --set-document-title TITLE   | /set_document_title TITLE     | Yes                  | Sets the document title that will be used to save output to gdrive                      |
-| --set-gdrive-folder LINK     | /set_gdrive_folder LINK       | Yes                  | Sets the target gdrive folder used for document uploads to LINK where link is a google drive folder share link |
+| --set-gdrive-folder LINK     | /set_gdrive_folder LINK       | No                   | Sets the target gdrive folder used for document uploads to LINK where link is a google drive folder share link |
 | --make-docx N                | /make_docx (no argument)      | Yes                  | Makes a docx file using document title for title and filename, uploads it to gdrive using a previously provided share link. Chat command takes integer N specifying how many most recent messages to include, discord slash command takes no arguments and generates document from the most recent message. |
 
 Need to decide what the behavior of make-docx should be - does it just use the last message, or do we take a range while defaulting the the last message if no range is given? I the latter is better, gives flexibility along with ability not to use it.
 
-OK, I think we are good-to-go. Let's make a final list here and update with changes as we are making them, so we don't get confused
+OK, I think we are good-to-go. Let's make a final list here and update with changes as we are making them, so we don't get confused.
