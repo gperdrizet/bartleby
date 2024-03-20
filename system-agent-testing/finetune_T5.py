@@ -41,7 +41,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES']='0'
 
     # Load dataset from csv
-    dataset_df = pd.read_csv('response_length_dataset.csv', keep_default_na=False)
+    dataset_df = pd.read_csv('NL_commands_dataset.complete.csv', keep_default_na=False)
 
     # Convert to dict
     dataset = dataset_df.to_dict(orient='records', index='false')
@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     # Set training args
     training_args = Seq2SeqTrainingArguments(
-        output_dir="../bartleby/hf_cache/T5-small-output-size-selector",
+        output_dir="../bartleby/hf_cache/T5-small-system-agent",
         evaluation_strategy="epoch",
         learning_rate=1e-5,
         per_device_train_batch_size=16,
@@ -97,4 +97,4 @@ if __name__ == '__main__':
 
     trainer.train()
 
-    model.save_pretrained('../bartleby/hf_cache/T5-small-output-size-selector')
+    model.save_pretrained('../bartleby/hf_cache/T5-small-system-agent')
