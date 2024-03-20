@@ -5,7 +5,7 @@ import pathlib
 os.environ['HF_HOME']=f'{pathlib.Path(__file__).parent.resolve()}/hf_cache'
 
 # Set visible GPUs
-os.environ['CUDA_VISIBLE_DEVICES']='0'
+os.environ['CUDA_VISIBLE_DEVICES']='1'
 
 import bartleby.credentials.matrix as matrix
 import bartleby.credentials.discord_credentials as discord
@@ -45,7 +45,7 @@ docx_template_file='blank_template.docx'
 default_title='Bartleby Text'
 
 # Model stuff
-default_model_type='tiiuae/falcon-7b-instruct'
+default_model_type='HuggingFaceH4/zephyr-7b-beta'
 initial_prompt='You are a friendly chatbot who always responds in the style of Bartleby the scrivener; a depressed and beleaguered legal clerk from the mid 1800s.'
 
 supported_models=[
@@ -70,11 +70,23 @@ dialo_family_models=[
     'microsoft/DialoGPT-large'
 ]
 
+# Some system settings for generation
 device_map='cuda:0'
 model_quantization = 'four bit'
 CPU_threads=18
 model_input_buffer_size=5
 max_new_tokens=128
+
+# Length penalty defaults for short and long outputs
+# These are selected at run time by the agent based
+# on if it determines the user's message wants a short
+# or long response
+long_start_index=int(max_new_tokens) * 0.75
+short_start_index=16
+long_decay_factor=0.5
+short_decay_factor=-1.0
+long_length_penalty=-0.01
+short_length_penalty=-0.1
 
 # Decoding modes, used to set groups of generation 
 # config parameters to non-model default values
@@ -84,41 +96,41 @@ default_decoding_mode='sampling'
 
 decoding_mode={
     'greedy': {
-        'exponential_decay_length_penalty': (16, -1)
+        'exponential_decay_length_penalty': (short_start_index, short_decay_factor)
     },
     'beam_search': {
         'num_beams': 10,
         'early_stopping': True,
         'no_repeat_ngram_size': 2,
-        'length_penalty': -0.1
+        'length_penalty': short_length_penalty
     },
     'sampling': {
         'do_sample': True,
         'top_k': 0,
         'temperature': 0.6,
-        'exponential_decay_length_penalty': (16, -1)
+        'exponential_decay_length_penalty': (short_start_index, short_decay_factor)
     },
     'top_k': {
         'do_sample': True,
         'top_k': 50,
-        'exponential_decay_length_penalty': (16, -1)
+        'exponential_decay_length_penalty': (short_start_index, short_decay_factor)
     },
     'top_p': {
         'do_sample': True,
         'top_p': 0.92,
         'top_k': 0,
-        'exponential_decay_length_penalty': (16, -1)
+        'exponential_decay_length_penalty': (short_start_index, short_decay_factor)
     },
     'top_kp':{
         'do_sample': True,
         'top_k': 50,
         'top_p': 0.95,
-        'exponential_decay_length_penalty': (16, -1)
+        'exponential_decay_length_penalty': (short_start_index, short_decay_factor)
     }
 }
 
 
-# Commands documentation to post in chat when asked
+# Command documentation to post in chat when asked
 
 commands = '''\n<b>Available commands:</b>\n
 \r  <b>--commands</b>                Posts this message to chat.

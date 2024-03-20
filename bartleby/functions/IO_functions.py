@@ -163,8 +163,33 @@ def discord_listener(
                             'content': user_message
                         })
 
+                        # Add the message object and time for easy parsing later on
                         users[user_name].message_object=message
                         users[user_name].message_time=message_time
+
+                        # Use system agent to pick short or long output and set the corresponding parameters
+                        output_size = system_agent_instance.select_output_size(user_message)
+
+                        if users[user_name].decoding_mode == 'beam_search':
+
+                            if output_size == 'long response':
+                                logger.debug(f'Generating long response with beam search')
+                                users[user_name].generation_configurations[users[user_name].model_type].length_penalty=conf.long_length_penalty
+                            
+                            elif output_size == 'short response':
+                                logger.debug(f'Generating short response with beam search')
+                                users[user_name].generation_configurations[users[user_name].model_type].length_penalty=conf.short_length_penalty
+
+                        else:
+
+                            if output_size == 'long response':
+                                logger.debug(f'Generating long response with {users[user_name].decoding_mode}')
+                                long_start_index = int(users[user_name].generation_configurations[users[user_name].model_type].max_new_tokens * 0.75)
+                                users[user_name].generation_configurations[users[user_name].model_type].exponential_decay_length_penalty=(long_start_index, conf.long_decay_factor)
+                            
+                            elif output_size == 'short response':
+                                logger.debug(f'Generating short response with {users[user_name].decoding_mode}')
+                                users[user_name].generation_configurations[users[user_name].model_type].exponential_decay_length_penalty=(conf.short_start_index, conf.short_decay_factor)
 
                         # Put the user into the llm's queue
                         generation_queue.put(users[user_name])
@@ -342,6 +367,7 @@ def discord_listener(
 
         # Make the update
         users[user_name].decoding_mode = decoding_mode
+        users[user_name].set_decoding_mode()
 
         # Post the reply and log the interaction
         await interaction.response.send_message(f'```Changed decoding mode to {decoding_mode}```')
@@ -359,7 +385,7 @@ def discord_listener(
             users[user_name] = user.User(user_name)
 
         # Post the reply and log the interaction
-        await interaction.response.send_message(f'Non-model-default generation settings: {users[user_name].generation_configurations[users[user_name].model_type]}')
+        await interaction.response.send_message(f'```Non-model-default generation settings: {users[user_name].generation_configurations[users[user_name].model_type]}```')
 
     @client.tree.command()
     async def config_full(interaction: discord.Interaction):
@@ -373,7 +399,7 @@ def discord_listener(
             users[user_name] = user.User(user_name)
 
         # Post the reply and log the interaction
-        await interaction.response.send_message(f'All available generation settings: {users[user_name].generation_configurations[users[user_name].model_type].__dict__}')
+        await interaction.response.send_message(f'```All available generation settings: {users[user_name].generation_configurations[users[user_name].model_type].__dict__}```')
 
     @client.tree.command()
     @app_commands.describe(parameter='Parameter to update', new_value='New value')
@@ -398,7 +424,7 @@ def discord_listener(
         setattr(users[user_name].generation_configurations[users[user_name].model_type], parameter, val)
 
         # Post the reply and log the interaction
-        await interaction.response.send_message(f'Updated parameter {parameter}: {val}')
+        await interaction.response.send_message(f'```Updated parameter {parameter}: {val}```')
         logger.debug(f'Show config parameter command from: {user_name}. {parameter}: {val}')
 
     @client.tree.command()
@@ -413,7 +439,7 @@ def discord_listener(
             users[user_name] = user.User(user_name)
 
         # Post the reply and log the interaction
-        await interaction.response.send_message(f'Current model: {users[user_name].model_type}')
+        await interaction.response.send_message(f'```Current model: {users[user_name].model_type}```')
         logger.debug(f'Show current model command from: {user_name}')
 
     @client.tree.command()
@@ -428,7 +454,8 @@ def discord_listener(
             users[user_name] = user.User(user_name)
 
         # Post the reply and log the interaction
-        await interaction.response.send_message('\n' + '\n'.join(conf.supported_models))
+        model_list = '\n' + '\n'.join(conf.supported_models)
+        await interaction.response.send_message(f'```{model_list}```')
         logger.debug(f'Show supported models command from: {user_name}')
 
     @client.tree.command()
@@ -450,14 +477,14 @@ def discord_listener(
             users[user_name].model_type = model_type
 
             # Post the reply and log the interaction
-            await interaction.response.send_message(f'Switched to {model_type}. Note the next reply may be slow if this model is not cached or already running.')
+            await interaction.response.send_message(f'```Switched to {model_type}. Note the next reply may be slow if this model is not cached or already running.```')
             logger.debug(f'Swap model command from: {user_name}. New model: {model_type}')
 
         else:
 
             # Post the reply and log the interaction
             supported_models = '\n' + '\n'.join(conf.supported_models)
-            await interaction.response.send_message(f'New model must be one of: {supported_models}')
+            await interaction.response.send_message(f'```New model must be one of: {supported_models}```')
             logger.debug(f'Failed swap model command from: {user_name}. New model: {model_type}')
 
 
@@ -481,7 +508,7 @@ def discord_listener(
         users[user_name].gdrive_folder_id = gdrive_id
 
         # Post the reply and log the interaction
-        await interaction.response.send_message(f'gdrive folder ID: {gdrive_id}')
+        await interaction.response.send_message(f'```gdrive folder ID: {gdrive_id}```')
         logger.debug(f'Set gdrive folder command from: {user_name}')
 
     @client.tree.command()
@@ -496,7 +523,7 @@ def discord_listener(
             users[user_name] = user.User(user_name)
 
         # Post the reply and log the interaction
-        await interaction.response.send_message(f'Document title: {users[user_name].document_title}')
+        await interaction.response.send_message(f'```Document title: {users[user_name].document_title}```')
         logger.debug(f'Show document title command from: {user_name}')
 
     @client.tree.command()
@@ -515,7 +542,7 @@ def discord_listener(
         users[user_name].document_title = document_title
 
         # Post the reply and log the interaction
-        await interaction.response.send_message(f'Document title: {document_title}')
+        await interaction.response.send_message(f'```Document title: {document_title}```')
         logger.debug(f'Set document title command from: {user_name}')
 
     @client.tree.command()
@@ -537,14 +564,14 @@ def discord_listener(
             docx_instance.generate(users[user_name], 1, None)
             
             # Post the reply and log the interaction
-            await interaction.response.send_message(f'Document generated')
+            await interaction.response.send_message(f'```Document generated```')
             logger.debug(f'Got make docx command from: {user_name}')
 
         # If they have not set a gdrive folder id, ask them to set one
         # before generating a document
         elif users[user_name].gdrive_folder_id == None:
 
-            await interaction.response.send_message(f'Please set a gdrive folder generating a document')
+            await interaction.response.send_message(f'```Please set a gdrive folder generating a document```')
             logger.debug(f'Got make docx command without gdrive folder id from: {user_name}')
 
     # Context menu command to generate document via left click on message
@@ -553,6 +580,9 @@ def discord_listener(
 
         # Get the user name
         user_name = interaction.user
+
+        # Get the message text
+        text = message.content
 
         # If this is the first interaction from this user, onboard them
         if user_name not in users.keys():
@@ -563,17 +593,17 @@ def discord_listener(
         if users[user_name].gdrive_folder_id != None:
             
             # Make the document
-            docx_instance.generate(users[user_name], 1, None)
+            docx_instance.generate_from_text(users[user_name], text)
             
             # Post the reply and log the interaction
-            await interaction.response.send_message(f'Document generated')
+            await interaction.response.send_message(f'```Document generated```')
             logger.debug(f'Got make docx command from: {user_name}')
 
         # If they have not set a gdrive folder id, ask them to set one
         # before generating a document
         elif users[user_name].gdrive_folder_id == None:
 
-            await interaction.response.send_message(f'Please set a gdrive folder generating a document')
+            await interaction.response.send_message(f'```Please set a gdrive folder generating a document```')
             logger.debug(f'Got make docx command without gdrive folder id from: {user_name}')
 
     client.run(bot_token, log_handler=None)

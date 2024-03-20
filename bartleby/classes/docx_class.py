@@ -89,6 +89,49 @@ class Docx:
         # Upload the docx to gdrive
         result = self.upload(output_filename)
 
+    def generate_from_text(self, user, body):
+        '''Takes user and text, generates and upload docx to gdrive'''
+
+        # Set gdrive folder id from user
+        self.gdrive_folder_id = user.gdrive_folder_id
+
+        # Load docx template
+        self.load_template()
+
+        # Add heading 
+        result = self.template.add_paragraph(user.document_title, style = 'Heading 1')
+
+        # Split on newlines to make paragraphs
+        paragraphs = body.split('\n')
+
+        paragraph_count = 0
+
+        # Loop on paragraphs and add them to doc
+        for paragraph in paragraphs:
+
+            # Make sure this 'paragraph' has content, i.e. it wasn't
+            # the result of splitting a multiple newline
+            if len(paragraph) > 0:
+
+                # Add the paragraph to the document
+                paragraph_count += 1
+                result = self.template.add_paragraph(paragraph)
+
+                # Deal with spacing between paragraphs. If the body contains
+                # multiple paragraphs and this is not the last one, add some
+                # space after it.
+                if (len(paragraphs) > 1) and (paragraph_count < len(body)):
+                    result.paragraph_format.space_after = Pt(6)
+
+        # Format output file name for docx file
+        output_filename = f'{user.document_title.replace(" ", "_")}.docx'
+
+        # Save the docx
+        self.template.save(f'{self.document_path}/{output_filename}')
+
+        # Upload the docx to gdrive
+        result = self.upload(output_filename)
+
     def load_template(self):
         '''Loads and returns empty docx document
         with some pre-defined styles'''

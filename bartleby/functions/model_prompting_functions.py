@@ -88,6 +88,7 @@ def prompt_falcon(input_messages, device_map, model, tokenizer, generation_confi
         reply = reply.split('\n')
         reply = reply[len(input_messages)]
         reply = reply.replace('assistant: ', '')
+        reply = reply.replace('<|endoftext|>', '')
 
     except IndexError as e:
         reply = ''

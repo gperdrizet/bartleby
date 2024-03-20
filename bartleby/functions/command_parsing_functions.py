@@ -68,6 +68,7 @@ def parse_command_message(docx_instance, user, command_message):
     elif command[0] == '--set-decoding-mode':
         if len(command) == 2 and command[1] in conf.decoding_mode.keys():
             user.decoding_mode = command[1]
+            user.set_decoding_mode()
             result = f'Decoding mode set to {command[1]}'
         
         else:
