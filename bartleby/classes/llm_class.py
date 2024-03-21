@@ -131,7 +131,8 @@ class Llm:
                 self.device_map,
                 self.model, 
                 self.tokenizer,
-                user.generation_configurations[user.model_type]
+                user.generation_configurations[user.model_type],
+                self.logger
             )
 
         # Select and prompt model: dialo

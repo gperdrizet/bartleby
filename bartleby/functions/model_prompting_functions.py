@@ -36,7 +36,7 @@ def prompt_mistral(input_messages, device_map, model, tokenizer, generation_conf
 
     return reply, num_tokens_generated
 
-def prompt_falcon(input_messages, device_map, model, tokenizer, generation_configuration):
+def prompt_falcon(input_messages, device_map, model, tokenizer, generation_configuration, logger):
 
     # Empty list to hold parsed and formatted messages
     messages = []
@@ -66,6 +66,8 @@ def prompt_falcon(input_messages, device_map, model, tokenizer, generation_confi
     if device_map != 'cpu':
         inputs=inputs.to('cuda')
 
+    logger.debug(generation_configuration)
+
     # Generate the response
     output_ids = model.generate(
         **inputs, 
@@ -80,6 +82,7 @@ def prompt_falcon(input_messages, device_map, model, tokenizer, generation_confi
 
     # Un-tokenize the response
     reply = tokenizer.batch_decode(output_ids, eos_token_id=tokenizer.eos_token_id)
+    logger.debug(f'Raw reply: {reply}')
 
     # Fence to catch index errors in reply parse caused by empty response
     try:

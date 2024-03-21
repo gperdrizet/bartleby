@@ -193,7 +193,7 @@ def parse_system_agent_command(docx_instance, user, command):
         result = f'Prompt: {user.initial_prompt}'
 
     elif command == 'show config':
-        result = f'{user.generation_configurations[user.model_type].__dict__}\n'
+        result = f'{user.generation_configurations[user.model_type]}\n'
 
     elif command == 'buffer size':
         result = f'LLM input buffer size: last {user.model_input_buffer_size} messages'
@@ -269,28 +269,8 @@ def parse_system_agent_command(docx_instance, user, command):
         result = f'Switched to {new_model} model'
 
     elif command == 'commands':
-        
-        commands = '''\n<b>Available methods & parameters:</b>\n
-        \r  <b>--commands</b>                      Posts this message to chat.
-        \r  <b>--input-buffer-size</b>             Post size of LLM input buffer.
-        \r  <b>--update-input-buffer N</b>         Updates LLM input buffer to last N messages.
-        \r  <b>--show-input-messages</b>           Posts current content of LLM input buffer.
-        \r  <b>--show-prompt</b>                   Post the current system prompt to chat.
-        \r  <b>--update-prompt PROMPT</b>          Updates the system prompt to PROMPT and restarts chat history.
-        \r  <b>--restart-chat</b>                  Clears and restarts chat history.
-        \r  <b>--show-config</b>                   Post generation configuration parameters not set to model default.
-        \r  <b>--show-config-full</b>              Show all available generation configuration parameters.
-        \r  <b>--show-config-value PARAMETER</b>   Show the value of generation configuration PARAMETER.
-        \r  <b>--update-config PARAMETER VALUE</b> Updates generation configuration PARAMETER to VALUE.
-        \r  <b>--supported-models</b>              Post supported models to chat.
-        \r  <b>--swap-model MODEL</b>              Change the model type used for generation.
-        \r  <b>--document-title</b>                Posts current Google Doc document title to chat.
-        \r  <b>--set-document-title</b>            Updates Google Doc document title.
-        \r  <b>--set-gdrive-folder FOLDER</b>      Set Google Drive folder ID for document upload. 
-        \r  <b>--make-docx N</b>                   Makes and uploads docx document to Google Drive where N is the reverse index in chat history, e.g. 1 is the last message, 2 the second to last etc. If N is omitted, defaults to last message.
-        '''
 
-        result = commands
+        result = conf.commands
 
     # If we didn't recognize the command, post an error to chat
     else:

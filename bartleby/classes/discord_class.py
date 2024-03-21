@@ -23,8 +23,8 @@ class LLMClient(discord.Client):
         # Sync global command tree to guild
         MY_GUILD = discord.Object(id=755533103065333911)
         await self.tree.sync()
-        self.tree.copy_global_to(guild=MY_GUILD)
-        await self.tree.sync(guild=MY_GUILD)
+        #self.tree.copy_global_to(guild=MY_GUILD)
+        #await self.tree.sync(guild=MY_GUILD)
 
         # Start the task to run in the background
         self.check_response_queue.start()

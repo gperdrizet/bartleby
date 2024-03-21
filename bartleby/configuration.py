@@ -5,7 +5,7 @@ import pathlib
 os.environ['HF_HOME']=f'{pathlib.Path(__file__).parent.resolve()}/hf_cache'
 
 # Set visible GPUs
-os.environ['CUDA_VISIBLE_DEVICES']='1'
+os.environ['CUDA_VISIBLE_DEVICES']='0'
 
 import bartleby.credentials.matrix as matrix
 import bartleby.credentials.discord_credentials as discord
@@ -45,7 +45,7 @@ docx_template_file='blank_template.docx'
 default_title='Bartleby Text'
 
 # Model stuff
-default_model_type='HuggingFaceH4/zephyr-7b-beta'
+default_model_type='tiiuae/falcon-7b-instruct'
 initial_prompt='You are a friendly chatbot who always responds in the style of Bartleby the scrivener; a depressed and beleaguered legal clerk from the mid 1800s.'
 
 supported_models=[
@@ -73,9 +73,9 @@ dialo_family_models=[
 # Some system settings for generation
 device_map='cuda:0'
 model_quantization = 'four bit'
-CPU_threads=18
+CPU_threads=10
 model_input_buffer_size=5
-max_new_tokens=128
+max_new_tokens=64
 
 # Length penalty defaults for short and long outputs
 # These are selected at run time by the agent based
@@ -83,8 +83,8 @@ max_new_tokens=128
 # or long response
 long_start_index=int(max_new_tokens) * 0.75
 short_start_index=16
-long_decay_factor=0.5
-short_decay_factor=-1.0
+long_decay_factor=10
+short_decay_factor=-1
 long_length_penalty=-0.01
 short_length_penalty=-0.1
 
@@ -92,7 +92,7 @@ short_length_penalty=-0.1
 # config parameters to non-model default values
 # corresponding to common decoding methods
 
-default_decoding_mode='sampling'
+default_decoding_mode='top_kp'
 
 decoding_mode={
     'greedy': {
@@ -132,32 +132,32 @@ decoding_mode={
 
 # Command documentation to post in chat when asked
 
-commands = '''\n<b>Available commands:</b>\n
-\r  <b>--commands</b>                Posts this message to chat.
-\r  <b>--input-buffer-size</b>       Post size of LLM input buffer.
-\r  <b>--set-input-buffer-size N</b> Updates LLM input buffer to N messages.
-\r  <b>--input-messages</b>          Posts content of LLM input buffer.
-\r  <b>--prompt</b>                  Post the current system prompt to chat.
-\r  <b>--set-prompt PROMPT</b>       Updates the system prompt to PROMPT and 
-\r  <b></b>                          restarts chat history.
-\r  <b>--reset-chat</b>              Clears and restarts chat history.
-\r  <b>--decoding-mode</b>           Posts the current decoding mode.
-\r  <b>--decoding-modes</b>          Posts available decoding mode presets.
-\r  <b>--set-decoding-mode X</b>     Sets decoding mode to X preset.
-\r  <b>--config</b>                  Post generation configuration parameters 
-\r  <b></b>                          not set to model default.
-\r  <b>--config-full</b>             Show all available generation
-\r  <b></b>                          configuration parameters.
-\r  <b>--set-config X Y</b>          Updates value of generation configuration 
-\r  <b></b>                          parameter X to Y.
-\r  <b>--model</b>                   Post current model to chat.
-\r  <b>--models</b>                  Post supported models to chat.
-\r  <b>--swap-model X</b>            Change the model type used for generation.
-\r  <b>--document-title</b>        Posts current Google Doc document title 
-\r  <b></b>                        to chat.
-\r  <b>--set-document-title</b>    Updates Google Doc document title.
-\r  <b>--set-gdrive-folder X</b>   Set Google Drive folder ID for document 
-\r  <b></b>                        upload. 
-\r  <b>--make-docx N</b>           Makes and uploads docx document to 
-\r  <b></b>                        Google Drive using last N message.
+commands = '''\n<b>Available commands:</b>\n\n
+<b>--commands</b>                Posts this message to chat.
+<b>--input-buffer-size</b>       Post size of LLM input buffer.
+<b>--set-input-buffer-size N</b> Updates LLM input buffer to N messages.
+<b>--input-messages</b>          Posts content of LLM input buffer.
+<b>--prompt</b>                  Post the current system prompt to chat.
+<b>--set-prompt PROMPT</b>       Updates the system prompt to PROMPT and 
+<b></b>                          restarts chat history.
+<b>--reset-chat</b>              Clears and restarts chat history.
+<b>--decoding-mode</b>           Posts the current decoding mode.
+<b>--decoding-modes</b>          Posts available decoding mode presets.
+<b>--set-decoding-mode X</b>     Sets decoding mode to X preset.
+<b>--config</b>                  Post generation configuration parameters 
+<b></b>                          not set to model default.
+<b>--config-full</b>             Show all available generation
+<b></b>                          configuration parameters.
+<b>--set-config X Y</b>          Updates value of generation configuration 
+<b></b>                          parameter X to Y.
+<b>--model</b>                   Post current model to chat.
+<b>--models</b>                  Post supported models to chat.
+<b>--swap-model X</b>            Change the model type used for generation.
+<b>--document-title</b>          Posts current Google Doc document title 
+<b></b>                          to chat.
+<b>--set-document-title</b>      Updates Google Doc document title.
+<b>--set-gdrive-folder X</b>     Set Google Drive folder ID for document 
+<b></b>                          upload. 
+<b>--make-docx</b>               Makes and uploads docx document to 
+<b></b>                          Google Drive from last message.
 '''

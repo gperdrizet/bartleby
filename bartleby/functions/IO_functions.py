@@ -148,6 +148,10 @@ def discord_listener(
                     if command != 'None':
 
                         result = command_funcs.parse_system_agent_command(docx_instance, users[user_name], command)
+                        result = result.replace('        \r  <b>', '')
+                        result = result.replace('</b>', '')
+                        result = result.replace('<b>', '')
+                        result = result.replace('\n\n', '\n')
 
                         # Post the result and log
                         await message.channel.send(f'```{result}```')
