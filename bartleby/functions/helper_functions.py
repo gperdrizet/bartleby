@@ -96,7 +96,7 @@ def setup_user(logger, user_name, users, llms):
         # own copy to modify at will
         model_default_generation_configuration = llms[users[user_name].model_type].default_generation_configuration
         users[user_name].generation_configurations[users[user_name].model_type] = model_default_generation_configuration
-        users[user_name].set_generation_mode()
-        logger.info(f'+{round(time.time() - message_time, 2)}s: Set generation configuration for {user_name} with {users[user_name].generation_mode} defaults')
+        users[user_name].set_decoding_mode()
+        logger.info(f'+{round(time.time() - message_time, 2)}s: Set generation configuration for {user_name} with {users[user_name].decoding_mode} defaults')
 
     return message_time

@@ -70,8 +70,6 @@ class Llm:
     def prompt_model(self, user):
         '''Prompts model, using and updating the user's chat buffer.'''
 
-        self.logger.info('Prompting model')
-
         # Give torch the requested CPU resources
         torch.set_num_threads(conf.CPU_threads)
         self.logger.info(f'Assigned {conf.CPU_threads} CPU threads')
@@ -106,6 +104,8 @@ class Llm:
             self.logger.debug(f'Model input {i}: {message}')
             i += 1
 
+        self.logger.info('Prompting model')
+
         # Reset cuda memory stats
         torch.cuda.reset_peak_memory_stats()
 
@@ -131,7 +131,8 @@ class Llm:
                 self.device_map,
                 self.model, 
                 self.tokenizer,
-                user.generation_configurations[user.model_type]
+                user.generation_configurations[user.model_type],
+                self.logger
             )
 
         # Select and prompt model: dialo
