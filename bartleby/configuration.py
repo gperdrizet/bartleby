@@ -5,7 +5,7 @@ import pathlib
 os.environ['HF_HOME']=f'{pathlib.Path(__file__).parent.resolve()}/hf_cache'
 
 # Set visible GPUs
-os.environ['CUDA_VISIBLE_DEVICES']='0'
+os.environ['CUDA_VISIBLE_DEVICES']='1'
 
 import bartleby.credentials.matrix as matrix
 import bartleby.credentials.discord_credentials as discord
@@ -71,8 +71,8 @@ dialo_family_models=[
 ]
 
 # Some system settings for generation
-device_map='cuda:0'
-model_quantization = 'four bit'
+device_map='cpu' #'cuda:0'
+model_quantization=None #'four bit'
 CPU_threads=10
 model_input_buffer_size=5
 max_new_tokens=64
@@ -135,8 +135,10 @@ decoding_mode={
 commands = '''\n<b>Available commands:</b>\n\n
 <b>--commands</b>                Posts this message to chat.
 <b>--input-buffer-size</b>       Post size of LLM input buffer.
-<b>--set-input-buffer-size N</b> Updates LLM input buffer to N messages.
-<b>--input-messages</b>          Posts content of LLM input buffer.
+<b>--set-input-buffer-size N</b> Updates LLM input buffer to 
+<b></b>                          N messages.
+<b>--input-messages</b>          Posts content of LLM input 
+<b></b>                          buffer.
 <b>--prompt</b>                  Post the current system prompt to chat.
 <b>--set-prompt PROMPT</b>       Updates the system prompt to PROMPT and 
 <b></b>                          restarts chat history.

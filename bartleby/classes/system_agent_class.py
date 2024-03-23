@@ -18,12 +18,12 @@ class System_agent:
         self.tokenizer = T5Tokenizer.from_pretrained('google-t5/t5-small')
 
         self.system_agent_model = T5ForConditionalGeneration.from_pretrained(
-            '/mnt/fast_scratch/huggingface_transformers_cache/T5-small-system-agent',
+            'gperdrizet/T5-small-system-agent',
             device_map='cpu'    
         )
 
         self.output_sizer_model = T5ForConditionalGeneration.from_pretrained(
-            '/mnt/fast_scratch/huggingface_transformers_cache/T5-small-output-size-selector',
+            'gperdrizet/T5-small-output-size-selector',
             device_map='cpu'    
         )
 
