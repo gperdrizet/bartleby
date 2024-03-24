@@ -1,4 +1,5 @@
-FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
+#FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
+FROM ubuntu:20.04
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1

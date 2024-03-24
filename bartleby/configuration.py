@@ -73,7 +73,7 @@ dialo_family_models=[
 # Some system settings for generation
 device_map='cpu' #'cuda:0'
 model_quantization=None #'four bit'
-CPU_threads=10
+CPU_threads=4
 model_input_buffer_size=5
 max_new_tokens=64
 
