@@ -1,11 +1,4 @@
-#FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
-FROM ubuntu:20.04
-
-# Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
-
-# Turns off buffering for easier container logging
-ENV PYTHONUNBUFFERED=1
+FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
 
 # Set location of Google service account credentials
 ENV GOOGLE_APPLICATION_CREDENTIALS="/bartleby/bartleby/credentials/service_key.json"
@@ -17,26 +10,27 @@ RUN apt-get update
 RUN apt-get install -y python3 python3-pip
 RUN python3 -m pip install --upgrade pip
 
-# Install some bitsandbytes prerequisites
-# RUN pip install scipy==1.10.1
-# RUN pip install torch==1.13.1
-
 # Move the bartleby and bitsandbytes source code in
 WORKDIR /bartleby
 COPY . /bartleby
 
-# Build install bitsandbytes
-# WORKDIR /bartleby/bitsandbytes
-# RUN python3 setup.py install
-
-# Install pip requirements
+# Install dependencies
 WORKDIR /bartleby
-RUN python3 -m pip install -r requirements.txt
+RUN pip install torch==1.13.1
+RUN pip install transformers==4.37.2
+RUN pip install discord.py==2.3.2
+RUN pip install matrix-nio==0.24.0
+RUN pip install google-api-core==2.17.0
+RUN pip install python-docx==1.1.0
+RUN pip install google-api-python-client==2.116.0
+RUN pip install sentencepiece==0.2.0
+RUN pip install accelerate==0.26.1
+RUN pip install scipy==1.10.1
 
-# Creates a non-root user with an explicit UID and adds permission to access the /app folder
-# For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
-RUN adduser -u 5678 --disabled-password --gecos "" bartleby && chown -R bartleby /bartleby
-USER bartleby
+# Install bitsandbytes
+WORKDIR /bartleby/bitsandbytes
+RUN python3 setup.py install
 
-# Test bitsandbytes
+# Run bartleby
+WORKDIR /bartleby
 CMD ["python3", "-m", "bartleby"]

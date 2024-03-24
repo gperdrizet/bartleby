@@ -639,8 +639,272 @@ Here is the setup for a CPU only image:
 2. Comment out the individual installs of torch and scipy
 3. Edit config and set quantization to none and device map to cpu
 
-Next steps will be to:
+#### Clean requirements+bitsandbytes for docker success
 
-1. Not put secrets in the image - need to learn how to do this correctly
-2. Do a better job of pruning requirements
-3. Maybe make it a multi-stage build
+OK - Here is what we actually need to run (at least on discord). Note: it's around half the size of the main venv:
+
+```text
+accelerate==0.26.1
+aiofiles==23.2.1
+aiohttp==3.9.3
+aiohttp-socks==0.8.4
+aiosignal==1.3.1
+async-timeout==4.0.3
+attrs==23.2.0
+bitsandbytes==0.41.2
+cachetools==5.3.3
+certifi==2024.2.2
+charset-normalizer==3.3.2
+discord.py==2.3.2
+filelock==3.13.1
+frozenlist==1.4.1
+fsspec==2024.3.1
+google-api-core==2.17.0
+google-api-python-client==2.116.0
+google-auth==2.29.0
+google-auth-httplib2==0.2.0
+googleapis-common-protos==1.63.0
+h11==0.14.0
+h2==4.1.0
+hpack==4.0.0
+httplib2==0.22.0
+huggingface-hub==0.21.4
+hyperframe==6.0.1
+idna==3.6
+importlib-resources==6.4.0
+jsonschema==4.21.1
+jsonschema-specifications==2023.12.1
+lxml==5.1.0
+matrix-nio==0.24.0
+multidict==6.0.5
+numpy==1.24.4
+nvidia-cublas-cu11==11.10.3.66
+nvidia-cuda-nvrtc-cu11==11.7.99
+nvidia-cuda-runtime-cu11==11.7.99
+nvidia-cudnn-cu11==8.5.0.96
+packaging==24.0
+pkgutil-resolve-name==1.3.10
+protobuf==4.25.3
+psutil==5.9.8
+pyasn1==0.5.1
+pyasn1-modules==0.3.0
+pycryptodome==3.20.0
+pyparsing==3.1.2
+python-docx==1.1.0
+python-socks==2.4.4
+PyYAML==6.0.1
+referencing==0.34.0
+regex==2023.12.25
+requests==2.31.0
+rpds-py==0.18.0
+rsa==4.9
+safetensors==0.4.2
+scipy==1.10.1
+sentencepiece==0.2.0
+tokenizers==0.15.2
+torch==1.13.1
+tqdm==4.66.2
+transformers==4.37.2
+typing-extensions==4.10.0
+unpaddedbase64==2.1.0
+uritemplate==4.1.1
+urllib3==2.2.1
+yarl==1.9.4
+zipp==3.18.1
+
+```
+
+OK, now the dockerfile:
+
+```text
+FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
+
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
+
+# Set location of Google service account credentials
+ENV GOOGLE_APPLICATION_CREDENTIALS="/bartleby/bartleby/credentials/service_key.json"
+
+WORKDIR /
+
+# Install python 3.8 & pip
+RUN apt-get update
+RUN apt-get install -y python3 python3-pip
+RUN python3 -m pip install --upgrade pip
+
+# Move the bartleby and bitsandbytes source code in
+WORKDIR /bartleby
+COPY . /bartleby
+
+# Build install bitsandbytes
+# WORKDIR /bartleby/bitsandbytes
+# RUN python3 setup.py install
+
+# Install pip requirements
+WORKDIR /bartleby
+RUN python3 -m pip install -r requirements.txt
+
+# Creates a non-root user with an explicit UID and adds permission to access the /app folder
+# For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
+RUN adduser -u 5678 --disabled-password --gecos "" bartleby && chown -R bartleby /bartleby
+USER bartleby
+
+# Test bitsandbytes
+CMD ["python3", "-m", "bartleby"]
+```
+
+Thought for sure we had it that time, but no. Still have some sort of path issues going on inside the container. Heres the log:
+
+```text
+False
+
+===================================BUG REPORT===================================
+================================================================================
+The following directories listed in your path were found to be non-existent: {PosixPath('/usr/local/nvidia/lib'), PosixPath('/usr/local/nvidia/lib64')}
+/usr/local/lib/python3.8/dist-packages/bitsandbytes-0.41.2-py3.8.egg/bitsandbytes/cuda_setup/main.py:166: UserWarning: Welcome to bitsandbytes. For bug reports, please run
+
+python -m bitsandbytes
+
+
+/usr/local/lib/python3.8/dist-packages/bitsandbytes-0.41.2-py3.8.egg/bitsandbytes/cuda_setup/main.py:166: UserWarning: /usr/local/nvidia/lib:/usr/local/nvidia/lib64 did not contain ['libcudart.so', 'libcudart.so.11.0', 'libcudart.so.12.0'] as expected! Searching further paths...
+/usr/local/lib/python3.8/dist-packages/bitsandbytes-0.41.2-py3.8.egg/bitsandbytes/cuda_setup/main.py:166: UserWarning: WARNING: Compute capability < 7.5 detected! Only slow 8-bit matmul is supported for your GPU!                     If you run into issues with 8-bit matmul, you can try 4-bit quantization: https://huggingface.co/blog/4bit-transformers-bitsandbytes
+CUDA_SETUP: WARNING! libcudart.so not found in any environmental path. Searching in backup paths...
+DEBUG: Possible options found for libcudart.so: {PosixPath('/usr/local/cuda/lib64/libcudart.so.11.0')}
+CUDA SETUP: PyTorch settings found: CUDA_VERSION=117, Highest Compute Capability: 3.7.
+CUDA SETUP: To manually override the PyTorch CUDA version please see:https://github.com/TimDettmers/bitsandbytes/blob/main/how_to_use_nonpytorch_cuda.md
+CUDA SETUP: Required library version not found: libbitsandbytes_cuda117_nocublaslt.so. Maybe you need to compile it from source?
+CUDA SETUP: Defaulting to libbitsandbytes_cpu.so...
+
+================================================ERROR=====================================
+CUDA SETUP: CUDA detection failed! Possible reasons:
+1. You need to manually override the PyTorch CUDA version. Please see: "https://github.com/TimDettmers/bitsandbytes/blob/main/how_to_use_nonpytorch_cuda.md
+2. CUDA driver not installed
+3. CUDA not installed
+4. You have multiple conflicting CUDA libraries
+5. Required library not pre-compiled for this bitsandbytes release!
+CUDA SETUP: If you compiled from source, try again with `make CUDA_VERSION=DETECTED_CUDA_VERSION` for example, `make CUDA_VERSION=113`.
+CUDA SETUP: The CUDA version for the compile might depend on your conda install. Inspect CUDA version via `conda list | grep cuda`.
+================================================================================
+
+CUDA SETUP: Something unexpected happened. Please compile from source:
+git clone https://github.com/TimDettmers/bitsandbytes.git
+cd bitsandbytes
+CUDA_VERSION=117 make cuda11x_nomatmul
+python setup.py install
+CUDA SETUP: Setup Failed!
+```
+
+Plan now is to try starting with a 'nude' container, i.e. updated nvidia/cuda:11.4.3-runtime-ubuntu20.04 with just python & pip installed. Then do the set-up manually from inside the container and see what, if anything goes wrong. Here is the dockerfile:
+
+```text
+FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
+
+WORKDIR /
+
+# Install python 3.8 & pip
+RUN apt-get update
+RUN apt-get install -y python3 python3-pip
+RUN python3 -m pip install --upgrade pip
+
+# Move the bartleby and bitsandbytes source code in
+WORKDIR /bartleby
+COPY . /bartleby
+
+# Creates a non-root user with an explicit UID and adds permission to access the /app folder
+# For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
+RUN adduser -u 5678 --disabled-password --gecos "" bartleby && chown -R bartleby /bartleby
+USER bartleby
+```
+
+#### Manual container install notes
+
+Right off the bat, I am seeing warnings. During the pip torch install the following appears:
+
+```text
+  WARNING: The script isympy is installed in '/home/bartleby/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts convert-caffe2-to-onnx, convert-onnx-to-caffe2 and torchrun are installed in '/home/bartleby/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+```
+
+Install appears to complete successfully.
+
+Also, seeing similar warnings during the transformers install:
+
+```text
+  WARNING: The script tqdm is installed in '/home/bartleby/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts f2py, f2py3 and f2py3.8 are installed in '/home/bartleby/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script normalizer is installed in '/home/bartleby/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script huggingface-cli is installed in '/home/bartleby/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script transformers-cli is installed in '/home/bartleby/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+```
+
+These are all related to the 'bartleby' user's home directory. I wonder if we even need that? I think it was added by vscode when we generated the docker assets. Let's try removing that from the dockerfile and starting again.
+
+OK, cool. No warnings this time. Proceeding with manual environment setup. Except this (which was expected).
+
+```text
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behavior with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+```
+
+Sweet, it works! Let's add everything back to the dockerfile, except the adduser stuff and try building the image again.
+
+Holy crap, this is frustrating. Still doesn't work via the dockerfile. I really don't understand why. My only thought it that installing via requirements doesn't work and it's not docker's problem. It is true that I have never tested just cloning the repo fresh and setting it up with pip. I think, for now, to avoid going down that rabbit hole and to just get the container working, I am going to add the exact commands in the exact order it takes to get the nude container running into the dockerfile.
+
+```text
+FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
+
+# Set location of Google service account credentials
+ENV GOOGLE_APPLICATION_CREDENTIALS="/bartleby/bartleby/credentials/service_key.json"
+
+WORKDIR /
+
+# Install python 3.8 & pip
+RUN apt-get update
+RUN apt-get install -y python3 python3-pip
+RUN python3 -m pip install --upgrade pip
+
+# Move the bartleby and bitsandbytes source code in
+WORKDIR /bartleby
+COPY . /bartleby
+
+# Install dependencies
+WORKDIR /bartleby
+RUN pip install torch==1.13.1
+RUN pip install transformers==4.37.2
+RUN pip install discord.py==2.3.2
+RUN pip install matrix-nio==0.24.0
+RUN pip install google-api-core==2.17.0
+RUN pip install python-docx==1.1.0
+RUN pip install google-api-python-client==2.116.0
+RUN pip install sentencepiece==0.2.0
+RUN pip install accelerate==0.26.1
+RUN pip install scipy==1.10.1
+
+# Install bitsandbytes
+WORKDIR /bartleby/bitsandbytes
+RUN python3 setup.py install
+
+# Run bartleby
+WORKDIR /bartleby
+CMD ["python3", "-m", "bartleby"]
+```
+
+#### Clean-up and finalize
+
+FINALLY works. Going to do a few more things:
+
+1. Move the docker data dir to arkk
+2. Make a clean venv for the project
+3. Load secrets via environment variables from the venv
+4. Build a GPU production image
+5. Push it to a public repo on dockerhub
+6. Run it local for the live discord instance
