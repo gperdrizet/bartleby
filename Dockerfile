@@ -1,8 +1,15 @@
 FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
 
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
+
 # Set location of Google service account credentials
 ENV GOOGLE_APPLICATION_CREDENTIALS="/bartleby/bartleby/credentials/service_key.json"
 
+# Set working directory
 WORKDIR /
 
 # Install python 3.8 & pip
@@ -10,12 +17,14 @@ RUN apt-get update
 RUN apt-get install -y python3 python3-pip
 RUN python3 -m pip install --upgrade pip
 
-# Move the bartleby and bitsandbytes source code in
+# Move the bartleby source code in
 WORKDIR /bartleby
 COPY . /bartleby
 
+# Make an empty credentials folder for mounting inside of bartleby
+RUN mkdir /bartleby/bartleby/credentials
+
 # Install dependencies
-WORKDIR /bartleby
 RUN pip install torch==1.13.1
 RUN pip install transformers==4.37.2
 RUN pip install discord.py==2.3.2

@@ -862,6 +862,12 @@ Holy crap, this is frustrating. Still doesn't work via the dockerfile. I really 
 ```text
 FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
 
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
+
 # Set location of Google service account credentials
 ENV GOOGLE_APPLICATION_CREDENTIALS="/bartleby/bartleby/credentials/service_key.json"
 
@@ -907,4 +913,48 @@ FINALLY works. Going to do a few more things:
 3. Load secrets via environment variables from the venv
 4. Build a GPU production image
 5. Push it to a public repo on dockerhub
-6. Run it local for the live discord instance
+6. Run it locally for the live discord instance
+
+##### Secrets
+
+Google Cloud is the tricky one - you can either provide the path to a credential file via an environment variable, but I don't want to put the credential file inside of the container. So, for now instead of setting up workload identity federation (whatever that is) the plan is to bind mount bartleby's host machine credentials folder into the container. Then folks who want to do the same can put their own credentials there and we should be good to go. This also doesn't require any changes to bartleby's code itself, just the way we run the container.
+
+Here are the setup instructions:
+
+1. Add the host machine's credentials directory to .dockerignore
+2. Make an empty credentials directory inside the container via the Dockerfile
+3. Set the Google application credentials environment var via the Dockerfile
+4. Bind mount the host machine's credentials directory onto the container's at runtime:
+
+```text
+docker run --gpus all --mount type=bind,source="$(pwd)"/bartleby/credentials,target=/bartleby/bartleby/credentials --name bartleby -d bartleby:latest
+```
+
+OK, cool works great.
+
+##### Data location
+
+Add the data-root parameter with the new target to */etc/docker/daemon.json' on the host machine:
+
+```json
+{
+    "data-root": "/mnt/arkk/docker",
+    "log-driver": "json-file",
+    "log-opts": {
+        "max-file": "3",
+        "max-size": "10m"
+    },
+    "runtimes": {
+        "nvidia": {
+            "args": [],
+            "path": "nvidia-container-runtime"
+        }
+    }
+}
+```
+
+And restart docker:
+
+```text
+sudo systemctl docker restart
+```
