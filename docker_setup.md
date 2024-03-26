@@ -150,10 +150,6 @@ Tue Mar 12 21:50:44 2024
 | N/A   33C    P8    29W / 149W |      0MiB / 11441MiB |      0%      Default |
 |                               |                      |                  N/A |
 +-------------------------------+----------------------+----------------------+
-|   2  NVIDIA GeForce ...  On   | 00000000:07:00.0 Off |                  N/A |
-|  0%   47C    P8    10W / 151W |      1MiB /  8118MiB |      0%      Default |
-|                               |                      |                  N/A |
-+-------------------------------+----------------------+----------------------+
                                                                                
 +-----------------------------------------------------------------------------+
 | Processes:                                                                  |
@@ -200,6 +196,7 @@ RUN pip install google-api-core==2.17.0
 RUN pip install python-docx==1.1.0
 RUN pip install google-api-python-client==2.116.0
 RUN pip install sentencepiece==0.2.0
+RUN pip install Jinja2==3.1.3
 RUN pip install accelerate==0.26.1
 RUN pip install scipy==1.10.1
 
@@ -215,8 +212,8 @@ CMD ["python3", "-m", "bartleby"]
 Added the following to .dockerignore:
 
 ```text
-README.md
-architecture.md
+bartleby.service
+docker_hub_info.md
 docker_setup_notes.md
 docker_setup.md
 bartleby/hf_cache
