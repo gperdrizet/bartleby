@@ -173,9 +173,6 @@ Dockerfile:
 ```text
 FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
 
-# Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
-
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
@@ -218,32 +215,31 @@ CMD ["python3", "-m", "bartleby"]
 Added the following to .dockerignore:
 
 ```text
-LICENSE
 README.md
-NOTES.md
 architecture.md
 docker_setup_notes.md
+docker_setup.md
 bartleby/hf_cache
 bartleby/logs
 bartleby/credentials
 ```
 
+Log and hf_cache dirs will be created as needed at runtime by bartleby. The dockerfile will make and empty credentials dir for mounting at container runtime.
+
 Build the image and push to Docker Hub, then remove the local copy and clean up.
 
 ```text
-docker build -t gperdrizet/bartleby:latest .
-docker push gperdrizet/bartleby:latest
-docker rmi gperdrizet/bartleby:latest
+docker build -t gperdrizet/bartleby:backdrop_launch .
+docker push gperdrizet/bartleby:backdrop_launch
+docker rmi gperdrizet/bartleby:backdrop_launch
 docker system prune
 ```
 
 Then pull the image and run it:
 
 ```text
-docker pull gperdrizet/bartleby:latest
-docker run --restart always --gpus all --mount type=bind,source="$(pwd)"/bartleby/credentials,target=/bartleby/bartleby/credentials --name bartleby -d gperdrizet/bartleby:latest
+docker pull gperdrizet/bartleby:backdrop_launch
+docker run --gpus all --mount type=bind,source="$(pwd)"/bartleby/credentials,target=/bartleby/bartleby/credentials --name bartleby -d gperdrizet/bartleby:backdrop_launch
 ```
-
-Include the *--restart always* flag to restart the container on reboot or crash or daemon restart.
 
 Successful round trip. Done!

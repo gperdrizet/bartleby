@@ -1,8 +1,5 @@
 FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
 
-# Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
-
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
