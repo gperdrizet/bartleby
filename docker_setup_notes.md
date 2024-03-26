@@ -1161,7 +1161,7 @@ And finally:
 (test-venv)$ python -m bitsandbytes
 ```
 
-Still fails. Let's try setting those enviroment vars again.
+Still fails. Let's try setting those environment vars again.
 
 ```text
 (test-venv)$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-11.4
@@ -1174,3 +1174,74 @@ Nope, and this one:
 (test-venv)$ export BNB_CUDA_VERSION=118
 (test-venv)$ python -m bitsandbytes
 ```
+
+Still no - now I'm not sure as to the build flag that actually worked - was it 118 or 117. This is a nightmare.
+
+After doing are reboot and:
+
+```text
+CUDA_VERSION=118 make cuda11x_nomatmul_kepler
+python setup.py install
+```
+
+Without LD_LIBRARY_PATH or BNB_CUDA_VERSION set, we are now getting complaints about missing scipy when trying to run the bitsandbytes test. I think this is father than we were getting a moment ago. Let's add scipy to the venv and try again:
+
+```text
+(test-venv)$ pip install scipy
+(test-venv)$ python -m bitsandbytes
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++ BUG REPORT INFORMATION ++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+++++++++++++++++++ /usr/local CUDA PATHS +++++++++++++++++++
+/usr/local/cuda-11.4/targets/x86_64-linux/lib/stubs/libcuda.so
+/usr/local/cuda-11.4/targets/x86_64-linux/lib/libcudart.so
+
++++++++++++++++ WORKING DIRECTORY CUDA PATHS +++++++++++++++
+/mnt/arkk/bartleby/.venv/lib/python3.8/site-packages/torch/lib/libtorch_cuda_linalg.so
+/mnt/arkk/bartleby/.venv/lib/python3.8/site-packages/torch/lib/libtorch_cuda_cu.so
+/mnt/arkk/bartleby/.venv/lib/python3.8/site-packages/torch/lib/libtorch_cuda_cpp.so
+/mnt/arkk/bartleby/.venv/lib/python3.8/site-packages/torch/lib/libtorch_cuda.so
+/mnt/arkk/bartleby/.venv/lib/python3.8/site-packages/torch/lib/libc10_cuda.so
+/mnt/arkk/bartleby/.venv/lib/python3.8/site-packages/bitsandbytes-0.41.2-py3.8.egg/bitsandbytes/libbitsandbytes_cuda114.so
+/mnt/arkk/bartleby/.venv/lib/python3.8/site-packages/bitsandbytes-0.41.2-py3.8.egg/bitsandbytes/libbitsandbytes_cuda114_nocublaslt.so
+/mnt/arkk/bartleby/.venv/lib/python3.8/site-packages/bitsandbytes-0.41.2-py3.8.egg/bitsandbytes/libbitsandbytes_cuda117.so
+/mnt/arkk/bartleby/.venv/lib/python3.8/site-packages/bitsandbytes-0.41.2-py3.8.egg/bitsandbytes/libbitsandbytes_cuda117_nocublaslt.so
+/mnt/arkk/bartleby/.venv/lib/python3.8/site-packages/bitsandbytes-0.41.2-py3.8.egg/bitsandbytes/libbitsandbytes_cuda118.so
+/mnt/arkk/bartleby/.venv/lib/python3.8/site-packages/bitsandbytes-0.41.2-py3.8.egg/bitsandbytes/libbitsandbytes_cuda118_nocublaslt.so
+/mnt/arkk/bartleby/bitsandbytes/bitsandbytes/libbitsandbytes_cuda118_nocublaslt.so
+/mnt/arkk/bartleby/bitsandbytes/bitsandbytes/libbitsandbytes_cuda117_nocublaslt.so
+/mnt/arkk/bartleby/bitsandbytes/build/lib/bitsandbytes/libbitsandbytes_cuda118_nocublaslt.so
+/mnt/arkk/bartleby/bitsandbytes/build/lib/bitsandbytes/libbitsandbytes_cuda117_nocublaslt.so
+/mnt/arkk/bartleby/test-venv/lib/python3.8/site-packages/torch/lib/libtorch_cuda_linalg.so
+/mnt/arkk/bartleby/test-venv/lib/python3.8/site-packages/torch/lib/libtorch_cuda_cu.so
+/mnt/arkk/bartleby/test-venv/lib/python3.8/site-packages/torch/lib/libtorch_cuda_cpp.so
+/mnt/arkk/bartleby/test-venv/lib/python3.8/site-packages/torch/lib/libtorch_cuda.so
+/mnt/arkk/bartleby/test-venv/lib/python3.8/site-packages/torch/lib/libc10_cuda.so
+/mnt/arkk/bartleby/test-venv/lib/python3.8/site-packages/bitsandbytes-0.41.2-py3.8.egg/bitsandbytes/libbitsandbytes_cuda117_nocublaslt.so
+/mnt/arkk/bartleby/test-venv/lib/python3.8/site-packages/bitsandbytes-0.41.2-py3.8.egg/bitsandbytes/libbitsandbytes_cuda118_nocublaslt.so
+
+++++++++++++++++++ LD_LIBRARY CUDA PATHS +++++++++++++++++++
+
+++++++++++++++++++++++++++ OTHER +++++++++++++++++++++++++++
+COMPILED_WITH_CUDA = True
+COMPUTE_CAPABILITIES_PER_GPU = ['6.1', '3.7', '3.7']
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++ DEBUG INFO END ++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Running a quick check that:
+    + library is importable
+    + CUDA function is callable
+
+
+WARNING: Please be sure to sanitize sensible info from any such env vars!
+
+SUCCESS!
+Installation was successful!
+```
+
+Well holy Hall Effect folks, I think we did it. Not sure what we did, but we did it. Let's make sure that bartleby runs from this venv and then wipe it and start over so that we are sure that we know exactly what steps worked.
+
+So, bartleby works, but we get a warning about serializing 4 bit models and that we should upgrade bitsandbytes to >=0.41.3. Most recent release is 0.43.0. Guess we should upgrade. Reboot for a clean slate and here we go:
