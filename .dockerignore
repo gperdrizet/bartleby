@@ -31,3 +31,4 @@ docker_setup.md
 bartleby/hf_cache
 bartleby/logs
 bartleby/credentials
+test-venv
