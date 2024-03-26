@@ -954,3 +954,62 @@ And restart docker:
 ```text
 sudo systemctl docker restart
 ```
+
+#### 2024-03-26: More problems
+
+OK, so we are back here again:
+
+```text
+False
+
+===================================BUG REPORT===================================
+/usr/local/lib/python3.8/dist-packages/bitsandbytes-0.41.2-py3.8.egg/bitsandbytes/cuda_setup/main.py:166: UserWarning: Welcome to bitsandbytes. For bug reports, please run
+
+python -m bitsandbytes
+
+================================================================================
+The following directories listed in your path were found to be non-existent: {PosixPath('/usr/local/nvidia/lib64'), PosixPath('/usr/local/nvidia/lib')}
+The following directories listed in your path were found to be non-existent: {PosixPath('PATH=/usr/local/nvidia/bin'), PosixPath('/usr/local/cuda-11.4/bin'), PosixPath('/usr/local/cuda/bin')}
+CUDA_SETUP: WARNING! libcudart.so not found in any environmental path. Searching in backup paths...
+DEBUG: Possible options found for libcudart.so: {PosixPath('/usr/local/cuda/lib64/libcudart.so.11.0')}
+CUDA SETUP: PyTorch settings found: CUDA_VERSION=117, Highest Compute Capability: 3.7.
+CUDA SETUP: To manually override the PyTorch CUDA version please see:https://github.com/TimDettmers/bitsandbytes/blob/main/how_to_use_nonpytorch_cuda.md
+
+  warn(msg)
+CUDA SETUP: Required library version not found: libbitsandbytes_cuda117_nocublaslt.so. Maybe you need to compile it from source?
+CUDA SETUP: Defaulting to libbitsandbytes_cpu.so...
+
+================================================ERROR=====================================
+CUDA SETUP: CUDA detection failed! Possible reasons:
+1. You need to manually override the PyTorch CUDA version. Please see: "https://github.com/TimDettmers/bitsandbytes/blob/main/how_to_use_nonpytorch_cuda.md
+2. CUDA driver not installed
+3. CUDA not installed
+4. You have multiple conflicting CUDA libraries
+/usr/local/lib/python3.8/dist-packages/bitsandbytes-0.41.2-py3.8.egg/bitsandbytes/cuda_setup/main.py:166: UserWarning: /usr/local/nvidia/lib:/usr/local/nvidia/lib64 did not contain ['libcudart.so', 'libcudart.so.11.0', 'libcudart.so.12.0'] as expected! Searching further paths...
+  warn(msg)
+5. Required library not pre-compiled for this bitsandbytes release!
+/usr/local/lib/python3.8/dist-packages/bitsandbytes-0.41.2-py3.8.egg/bitsandbytes/cuda_setup/main.py:166: UserWarning: WARNING: Compute capability < 7.5 detected! Only slow 8-bit matmul is supported for your GPU!                     If you run into issues with 8-bit matmul, you can try 4-bit quantization: https://huggingface.co/blog/4bit-transformers-bitsandbytes
+  warn(msg)
+CUDA SETUP: If you compiled from source, try again with `make CUDA_VERSION=DETECTED_CUDA_VERSION` for example, `make CUDA_VERSION=113`.
+CUDA SETUP: The CUDA version for the compile might depend on your conda install. Inspect CUDA version via `conda list | grep cuda`.
+================================================================================
+
+CUDA SETUP: Something unexpected happened. Please compile from source:
+git clone https://github.com/TimDettmers/bitsandbytes.git
+cd bitsandbytes
+CUDA_VERSION=117 make cuda11x_nomatmul
+python setup.py install
+CUDA SETUP: Setup Failed!
+```
+
+Only real changes to my knowledge were:
+
+1. Rebuilding fresh host system venv (following the dependency pins used in the container)
+2. Adding Jinja2==3.1.3
+
+Had a moment where I thought that the problem was due to using the GTX1070 vs K80s, but that does not seem to be the case. Also, works fine from the host system.
+
+1. Last time we were stuck in a 'works fine from the host system' situation, we manualy rebuilt a working minimal venv and then used explicitly used the versions of those dependencies selected by pip in the docker file. We should try that again.
+2. Maybe something changed and we need to rebuild bitsandbytes?
+3. We should probably have a local copy of the base image incase something changes upstream.
+4. It would also be cool to have a CUDA/torch/transformers/bitsandbytes image to fall back on.

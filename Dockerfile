@@ -1,5 +1,8 @@
 FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
 
+# Add path to cuda 11.4 to path
+ENV ENV PATH="${PATH}:/usr/local/cuda-11.4/bin"
+
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
@@ -21,18 +24,20 @@ COPY . /bartleby
 # Make an empty credentials folder for mounting inside of bartleby
 RUN mkdir /bartleby/bartleby/credentials
 
+# REDO ME
+
 # Install dependencies
-RUN pip install torch==1.13.1
-RUN pip install transformers==4.37.2
-RUN pip install discord.py==2.3.2
-RUN pip install matrix-nio==0.24.0
-RUN pip install google-api-core==2.17.0
-RUN pip install python-docx==1.1.0
-RUN pip install google-api-python-client==2.116.0
-RUN pip install sentencepiece==0.2.0
-RUN pip install accelerate==0.26.1
-RUN pip install scipy==1.10.1
-RUN pip install Jinja2==3.1.3
+# RUN pip install torch==1.13.1
+# RUN pip install transformers==4.37.2
+# RUN pip install discord.py==2.3.2
+# RUN pip install matrix-nio==0.24.0
+# RUN pip install google-api-core==2.17.0
+# RUN pip install python-docx==1.1.0
+# RUN pip install google-api-python-client==2.116.0
+# RUN pip install sentencepiece==0.2.0
+# RUN pip install accelerate==0.26.1
+# RUN pip install scipy==1.10.1
+# RUN pip install Jinja2==3.1.3
 
 # Install bitsandbytes
 WORKDIR /bartleby/bitsandbytes
