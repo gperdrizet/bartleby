@@ -104,6 +104,7 @@ pip install google-api-core
 pip install python-docx
 pip install google-api-python-client
 pip install sentencepiece
+pip install jinja2
 pip install accelerate
 pip install scipy
 pip install bitsandbytes
