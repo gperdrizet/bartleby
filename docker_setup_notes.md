@@ -1013,3 +1013,48 @@ Had a moment where I thought that the problem was due to using the GTX1070 vs K8
 2. Maybe something changed and we need to rebuild bitsandbytes?
 3. We should probably have a local copy of the base image incase something changes upstream.
 4. It would also be cool to have a CUDA/torch/transformers/bitsandbytes image to fall back on.
+
+#### Fresh test venv
+
+Right off the bat, installing pip installing torch on the host system (which has 470 driver CUDA 11.4/11.4) pulls the wrong version and puts the wrong CUDA stuff in the venv. Let's do a little work to document how and why I know what torch version to use.
+
+##### PyTorch version
+
+Seems like 1.13.1 is the correct version - this is the only version that exists in the working host machine venv. Looking on the [PyTorch website](https://pytorch.org/get-started/previous-versions/) it seems like it only supports CUDA 11.7 and 11.8, but I believe we did a trial and error version regression to determine the most recent version which would work the first time we got all of this figured out. The instructions say to install it like this:
+
+```text
+# CUDA 11.7
+pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu117
+```
+
+But we don't need vision and audio, also I am worried that explicitly installing pytorch-cuda 11.7 will break things. Let's try it this way and see what happened:
+
+```text
+pip install torch==1.13.1
+```
+
+OK, we get torch 1.13.1 and a couple of Nvidia CUDA cuDNN things all versions 11.7 or 11.10. Now let's just iteratively try and run bartleby and then install whatever it complains about. Version number after the comment is what pip chose.
+
+```text
+pip install transformers #4.39.1
+pip install discord.py #2.3.2
+pip install matrix-nio #0.24.0
+pip install google-api-core #2.18.0
+pip install python-docx #1.1.0
+pip install google-api-python-client #2.123.0
+```
+
+At this point, need to set:
+
+```text
+export GOOGLE_APPLICATION_CREDENTIALS="bartleby/credentials/service_key.json"
+```
+
+to keep running bartleby. More installs:
+
+```text
+pip install SentencePiece #0.2.0
+pip install accelerate #0.28.0
+```
+
+OK, at this point, we are getting a 'importlib.metadata.PackageNotFoundError: bitsandbytes' error from the discord logger inside of bartleby.
