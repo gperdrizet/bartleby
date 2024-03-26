@@ -12,7 +12,7 @@ Images in this repository require the [Nvidia Container Toolkit](https://docs.nv
 
 First, add the repo:
 
-```bash
+```text
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
   && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
@@ -21,14 +21,14 @@ curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dear
 
 Then update and install the toolkit:
 
-```bash
+```text
 sudo apt update
 sudo apt install nvidia-container-toolkit
 ```
 
 Finally, configure docker and restart the daemon:
 
-```bash
+```text
 sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 ```
@@ -48,7 +48,7 @@ This will make changes to */etc/docker/daemon.json*, adding the *runtimes* stanz
 
 Test with:
 
-```bash
+```text
 $ sudo docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
 
 Unable to find image 'ubuntu:latest' locally
@@ -90,14 +90,14 @@ Make a directory for your credentials somewhere safe that the container can moun
 
 Pull the image:
 
-```bash
+```text
 docker pull gperdrizet/bartleby:backdrop_launch
 ```
 
 Run the image. Replace \<CREDENTIALS\> with the path to your credentials directory:
 
-```bash
-docker run --restart always --gpus all --mount type=bind,source=/<CREDENTIALS/>,target=/bartleby/bartleby/credentials --name bartleby -d gperdrizet/bartleby:backdrop_launch
+```text
+docker run --restart always --gpus all --mount type=bind,source=<CREDENTIALS>,target=/bartleby/bartleby/credentials --name bartleby -d gperdrizet/bartleby:backdrop_launch
 ```
 
 That's it! The first response from bartleby may be slow because the model(s) are pulled from HuggingFace the first time they are used.
