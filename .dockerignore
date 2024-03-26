@@ -23,6 +23,7 @@
 **/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
+requirements.txt
 bartleby.service
 docker_hub_info.md
 docker_setup_notes.md
