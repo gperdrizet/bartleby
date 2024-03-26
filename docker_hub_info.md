@@ -97,7 +97,7 @@ docker pull gperdrizet/bartleby:backdrop_launch
 Run the image. Replace \<CREDENTIALS\> with the path to your credentials directory:
 
 ```text
-docker run --restart always --gpus all --mount type=bind,source=<CREDENTIALS>,target=/bartleby/bartleby/credentials --name bartleby -d gperdrizet/bartleby:backdrop_launch
+docker run --gpus all --mount type=bind,source=<CREDENTIALS>,target=/bartleby/bartleby/credentials --name bartleby -d gperdrizet/bartleby:backdrop_launch
 ```
 
 That's it! The first response from bartleby may be slow because the model(s) are pulled from HuggingFace the first time they are used.
