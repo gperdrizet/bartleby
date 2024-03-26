@@ -5,6 +5,8 @@ bitsandbytes/__init__.py
 bitsandbytes/__main__.py
 bitsandbytes/cextension.py
 bitsandbytes/functional.py
+bitsandbytes/libbitsandbytes_cuda117_nocublaslt.so
+bitsandbytes/libbitsandbytes_cuda118_nocublaslt.so
 bitsandbytes/utils.py
 bitsandbytes.egg-info/PKG-INFO
 bitsandbytes.egg-info/SOURCES.txt

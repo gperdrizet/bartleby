@@ -1149,3 +1149,28 @@ OK, same error. Won't past it again, it's identical. Let's follow the advice to 
 ```
 
 Still no. Same fail. Another possibility is that we have moved the bitsandbytes directory into the bartelby repo and so maybe it needs to be rebuilt in place? I kind of doubt this, since it definitely worked before, but I wonder if some env vars were set or something from the original build which didn't survive the new venv or a reboot or something? Let's reboot now. See what happens. If it's still a no-go we will rebuild and reinstall bitsandbytes from the copy inside of bartleby.
+
+```text
+CUDA_VERSION=118 make cuda11x_nomatmul_kepler
+python setup.py install
+```
+
+And finally:
+
+```text
+(test-venv)$ python -m bitsandbytes
+```
+
+Still fails. Let's try setting those enviroment vars again.
+
+```text
+(test-venv)$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-11.4
+(test-venv)$ python -m bitsandbytes
+```
+
+Nope, and this one:
+
+```text
+(test-venv)$ export BNB_CUDA_VERSION=118
+(test-venv)$ python -m bitsandbytes
+```
