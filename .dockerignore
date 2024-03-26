@@ -31,4 +31,5 @@ docker_setup.md
 bartleby/hf_cache
 bartleby/logs
 bartleby/credentials
-test-venv
+venv-test
+bitsandbytes-0.42.0.tar.gz

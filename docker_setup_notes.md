@@ -1177,7 +1177,7 @@ Nope, and this one:
 
 Still no - now I'm not sure as to the build flag that actually worked - was it 118 or 117. This is a nightmare.
 
-After doing are reboot and:
+After doing a reboot and:
 
 ```text
 CUDA_VERSION=118 make cuda11x_nomatmul_kepler
@@ -1245,3 +1245,260 @@ Installation was successful!
 Well holy Hall Effect folks, I think we did it. Not sure what we did, but we did it. Let's make sure that bartleby runs from this venv and then wipe it and start over so that we are sure that we know exactly what steps worked.
 
 So, bartleby works, but we get a warning about serializing 4 bit models and that we should upgrade bitsandbytes to >=0.41.3. Most recent release is 0.43.0. Guess we should upgrade. Reboot for a clean slate and here we go:
+
+```text
+git clone https://github.com/TimDettmers/bitsandbytes.git
+```
+
+And restart the install with a fresh venv. This time, let's try starting with a specific torch version and then just installing everything else however pip wants. First, set the google credentials path:
+
+```text
+export GOOGLE_APPLICATION_CREDENTIALS="bartleby/credentials/service_key.json"
+pip install torch==1.13.1
+pip install transformers
+pip install discord.py
+pip install matrix-nio
+pip install google-api-core
+pip install python-docx
+pip install google-api-python-client
+pip install SentencePiece
+pip install accelerate
+pip install scipy
+```
+
+Now bitsandbytes. First, let's make a build venv - looks like we need cmake and some other stuff for to build the newer version of bitsandbytes:
+
+```text
+python3 -m venv bnb-build-venv
+cd bitsandbytes
+pip install --upgrade pip
+pip install cmake --upgrade
+pip install -r requirements-dev.txt
+```
+
+Pip fails when installing scipy - looks like the most recent version it can find is 1.10.1, while bitsandbytes asks for 1.11.4. Weird, that looks to the the current version on the scipy site. Does that need a source build too? Gosh. Let's try just removing that version pin from the requirements-dev.txt.
+
+```text
+pip install -r requirements-dev.txt
+```
+
+Ok, same thing for pandas - are these all like pre-release versions or something?
+
+Removing the version pins for scipy, pandas and matplotlib allowed pip to finish, but I'm not hopeful that this will work - saw a bunch of nvidia cu12 stuff getting pulled in. We might have to stick to an earlier version of bitsandbytes. Let's at least try and see it through.
+
+```text
+cmake -DCOMPUTE_BACKEND=cuda -S .
+CUDA_VERSION=118 make
+```
+
+Again, not confident. Repo documentation mentions using the cuda11x_nomatmul_kepler make target, but it's not found... Let's see what happens.
+
+Now switch to the test-venv to install
+
+```text
+pip install .
+python -m bitsandbytes
+```
+
+Nope.
+
+OK, but wait, when installing I got: Successfully installed bitsandbytes-0.44.0.dev0 - I think we cloned the wrong thing. Let's try that again with the 0.43.0 release.
+
+First, switch to the 0.43.0 tag on github and clone again. In a fresh venv:
+
+```text
+git clone https://github.com/TimDettmers/bitsandbytes.git
+mv bitsandbytes bitsandbytes-43
+pip install --upgrade pip
+pip install cmake --upgrade
+pip install -r requirements-dev.txt
+```
+
+OK, F-this, still getting issues with not found versions of common packages. Looks like it needs python 3.13. Let's step back to version 42 - that seems to be the last one before they changed the install and started using cmake.
+
+Nuke the venv-bnb-build environment and try this from the 0.42.0 tag in the bitsandbytes github repo:
+
+```text
+(test-venv)$ git clone https://github.com/TimDettmers/bitsandbytes.git
+(test-venv)$ mv bitsandbytes bitsandbytes-42
+(test-venv)$ cd bitsandbytes-42
+(test-venv)$ CUDA_VERSION=118 make cuda11x_nomatmul_kepler
+
+make: *** No rule to make target 'cuda11x_nomatmul_kepler'.  Stop.
+```
+
+Arrgghhh, same problem. Frustrating because the documentation says to use that flag for kepler cards. Looks like maybe they removed it and didn't update to docs. Let's step back another version to 0.41.0 and try again.
+
+OK - wait, I think I have been downloading the same wrong thing the whole time. The clone URL is always the same and points to that 44-dev version. Dummy. Let's download the latest release as a tarball and see what happens.
+
+```text
+wget https://github.com/TimDettmers/bitsandbytes/archive/refs/tags/0.43.0.tar.gz
+cd bitsandbytes-0.43.0
+```
+
+Make, activate and update a dev environment:
+
+```text
+python3 -m venv venv-bnb-build
+pip install --upgrade pip
+```
+
+Install build dependencies:
+
+```text
+pip install cmake --upgrade
+pip install -r requirements-dev.txt
+```
+
+Ok, still having issues with scipy 1.11.1 for python 3.13. Let's try the tarball for version 42. Build env is still clean except for pip upgrade and cmake, so let's just reuse it:
+
+```text
+wget https://github.com/TimDettmers/bitsandbytes/archive/refs/tags/0.42.0.tar.gz
+tar -xf 0.42.0.tar.gz
+cd bitsandbytes-0.42.0
+CUDA_VERSION=118 make cuda11x_nomatmul_kepler
+python setup.py install
+```
+
+OK, at this point running the bitsandbytes test starts complaining about missing modules, starting with torch. I think that's actually a good sign. This thing is a mess, so let's start over one more time. Reboot, nuke the venvs and, install the 42 version fresh in a bartleby test venv.
+
+```text
+(venv-test)$ pip install --upgrade pip
+export GOOGLE_APPLICATION_CREDENTIALS="bartleby/credentials/service_key.json"
+pip install torch==1.13.1
+pip install transformers
+pip install discord.py
+pip install matrix-nio
+pip install google-api-core
+pip install python-docx
+pip install google-api-python-client
+pip install SentencePiece
+pip install accelerate
+pip install scipy
+pip install Jinja2
+```
+
+Now bitsandbytes 0.42.0:
+
+```text
+cd bitsandbytes-0.42.0
+CUDA_VERSION=118 make cuda11x_nomatmul_kepler
+python setup.py install
+```
+
+Not working, I dunno. Running out of ideas. Let's try:
+
+```text
+CUDA_VERSION=117 make cuda11x_nomatmul_kepler
+python setup.py install
+python -m bitsandbytes
+```
+
+My gosh, it worked!
+
+```text
+++++++++++++++++++ BUG REPORT INFORMATION ++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+++++++++++++++++++ /usr/local CUDA PATHS +++++++++++++++++++
+/usr/local/cuda-11.4/targets/x86_64-linux/lib/stubs/libcuda.so
+/usr/local/cuda-11.4/targets/x86_64-linux/lib/libcudart.so
+
++++++++++++++++ WORKING DIRECTORY CUDA PATHS +++++++++++++++
+/mnt/arkk/bartleby/bitsandbytes-0.42.0/bitsandbytes/libbitsandbytes_cuda118_nocublaslt.so
+/mnt/arkk/bartleby/bitsandbytes-0.42.0/bitsandbytes/libbitsandbytes_cuda117_nocublaslt.so
+/mnt/arkk/bartleby/bitsandbytes-0.42.0/build/lib/bitsandbytes/libbitsandbytes_cuda118_nocublaslt.so
+
+++++++++++++++++++ LD_LIBRARY CUDA PATHS +++++++++++++++++++
+
+++++++++++++++++++++++++++ OTHER +++++++++++++++++++++++++++
+COMPILED_WITH_CUDA = True
+COMPUTE_CAPABILITIES_PER_GPU = ['6.1', '3.7', '3.7']
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++ DEBUG INFO END ++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Running a quick check that:
+    + library is importable
+    + CUDA function is callable
+
+
+WARNING: Please be sure to sanitize sensible info from any such env vars!
+
+SUCCESS!
+Installation was successful!
+```
+
+Argh, I'm almost mad that it worked and I have no idea why. Do we need to make twice or something? Let's nuke everything one more time and do it again from scratch after a reboot.
+
+#### One last time
+
+New venv:
+
+```text
+python3 -m venv venv-test
+source venv-test/bin/activate
+pip install --upgrade pip
+```
+
+Dependencies:
+
+```text
+pip install torch==1.13.1
+pip install transformers
+pip install discord.py
+pip install matrix-nio
+pip install google-api-core
+pip install python-docx
+pip install google-api-python-client
+pip install SentencePiece
+pip install accelerate
+pip install scipy
+pip install Jinja2
+```
+
+Bitsandbytes
+
+```text
+wget https://github.com/TimDettmers/bitsandbytes/archive/refs/tags/0.42.0.tar.gz
+tar -xf 0.42.0.tar.gz
+cd bitsandbytes-0.42.0
+CUDA_VERSION=117 make cuda11x_nomatmul_kepler
+python setup.py install
+python -m bitsandbytes
+```
+
+Hay, whatdaya know?! It still works!
+
+```text
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++ BUG REPORT INFORMATION ++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+++++++++++++++++++ /usr/local CUDA PATHS +++++++++++++++++++
+/usr/local/cuda-11.4/targets/x86_64-linux/lib/stubs/libcuda.so
+/usr/local/cuda-11.4/targets/x86_64-linux/lib/libcudart.so
+
++++++++++++++++ WORKING DIRECTORY CUDA PATHS +++++++++++++++
+/mnt/arkk/bartleby/bitsandbytes-0.42.0/bitsandbytes/libbitsandbytes_cuda117_nocublaslt.so
+/mnt/arkk/bartleby/bitsandbytes-0.42.0/build/lib/bitsandbytes/libbitsandbytes_cuda117_nocublaslt.so
+
+++++++++++++++++++ LD_LIBRARY CUDA PATHS +++++++++++++++++++
+
+++++++++++++++++++++++++++ OTHER +++++++++++++++++++++++++++
+COMPILED_WITH_CUDA = True
+COMPUTE_CAPABILITIES_PER_GPU = ['6.1', '3.7', '3.7']
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++ DEBUG INFO END ++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Running a quick check that:
+    + library is importable
+    + CUDA function is callable
+
+
+WARNING: Please be sure to sanitize sensible info from any such env vars!
+
+SUCCESS!
+Installation was successful!
+```
