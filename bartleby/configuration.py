@@ -5,7 +5,7 @@ import pathlib
 os.environ['HF_HOME']=f'{pathlib.Path(__file__).parent.resolve()}/hf_cache'
 
 # Set visible GPUs
-os.environ['CUDA_VISIBLE_DEVICES']='0'
+os.environ['CUDA_VISIBLE_DEVICES']='2'
 
 import bartleby.credentials.matrix as matrix
 import bartleby.credentials.discord_credentials as discord
