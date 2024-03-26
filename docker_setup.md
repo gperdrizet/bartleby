@@ -196,9 +196,9 @@ RUN pip install google-api-core==2.17.0
 RUN pip install python-docx==1.1.0
 RUN pip install google-api-python-client==2.116.0
 RUN pip install sentencepiece==0.2.0
-RUN pip install Jinja2==3.1.3
 RUN pip install accelerate==0.26.1
 RUN pip install scipy==1.10.1
+RUN pip install Jinja2==3.1.3
 
 # Install bitsandbytes
 WORKDIR /bartleby/bitsandbytes
@@ -212,6 +212,7 @@ CMD ["python3", "-m", "bartleby"]
 Added the following to .dockerignore:
 
 ```text
+requirements.txt
 bartleby.service
 docker_hub_info.md
 docker_setup_notes.md
