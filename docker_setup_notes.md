@@ -1057,4 +1057,95 @@ pip install SentencePiece #0.2.0
 pip install accelerate #0.28.0
 ```
 
-OK, at this point, we are getting a 'importlib.metadata.PackageNotFoundError: bitsandbytes' error from the discord logger inside of bartleby.
+OK, at this point, we are getting a 'importlib.metadata.PackageNotFoundError: bitsandbytes' error from the discord logger inside of bartleby. Let's try just installing it via setup.py in the venv, rather than rebuilding.
+
+```text
+(test-venv)$ cd bitsandbytes
+(test-venv)$ python setup.py install
+(test-venv)$ python -m bitsandbytes
+
+False
+
+===================================BUG REPORT===================================
+/mnt/arkk/bartleby/bitsandbytes/bitsandbytes/cuda_setup/main.py:166: UserWarning: Welcome to bitsandbytes. For bug reports, please run
+
+python -m bitsandbytes
+
+
+  warn(msg)
+================================================================================
+CUDA_SETUP: WARNING! libcudart.so not found in any environmental path. Searching in backup paths...
+/mnt/arkk/bartleby/bitsandbytes/bitsandbytes/cuda_setup/main.py:166: UserWarning: Found duplicate ['libcudart.so', 'libcudart.so.11.0', 'libcudart.so.12.0'] files: {PosixPath('/usr/local/cuda/lib64/libcudart.so.11.0'), PosixPath('/usr/local/cuda/lib64/libcudart.so')}.. We select the PyTorch default libcudart.so, which is {torch.version.cuda},but this might missmatch with the CUDA version that is needed for bitsandbytes.To override this behavior set the BNB_CUDA_VERSION=<version string, e.g. 122> environmental variableFor example, if you want to use the CUDA version 122BNB_CUDA_VERSION=122 python ...OR set the environmental variable in your .bashrc: export BNB_CUDA_VERSION=122In the case of a manual override, make sure you set the LD_LIBRARY_PATH, e.g.export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-11.2
+  warn(msg)
+DEBUG: Possible options found for libcudart.so: {PosixPath('/usr/local/cuda/lib64/libcudart.so.11.0'), PosixPath('/usr/local/cuda/lib64/libcudart.so')}
+CUDA SETUP: PyTorch settings found: CUDA_VERSION=117, Highest Compute Capability: 6.1.
+CUDA SETUP: To manually override the PyTorch CUDA version please see:https://github.com/TimDettmers/bitsandbytes/blob/main/how_to_use_nonpytorch_cuda.md
+/mnt/arkk/bartleby/bitsandbytes/bitsandbytes/cuda_setup/main.py:166: UserWarning: WARNING: Compute capability < 7.5 detected! Only slow 8-bit matmul is supported for your GPU!                     If you run into issues with 8-bit matmul, you can try 4-bit quantization: https://huggingface.co/blog/4bit-transformers-bitsandbytes
+  warn(msg)
+CUDA SETUP: Required library version not found: libbitsandbytes_cuda117_nocublaslt.so. Maybe you need to compile it from source?
+CUDA SETUP: Defaulting to libbitsandbytes_cpu.so...
+
+================================================ERROR=====================================
+CUDA SETUP: CUDA detection failed! Possible reasons:
+1. You need to manually override the PyTorch CUDA version. Please see: "https://github.com/TimDettmers/bitsandbytes/blob/main/how_to_use_nonpytorch_cuda.md
+2. CUDA driver not installed
+3. CUDA not installed
+4. You have multiple conflicting CUDA libraries
+5. Required library not pre-compiled for this bitsandbytes release!
+CUDA SETUP: If you compiled from source, try again with `make CUDA_VERSION=DETECTED_CUDA_VERSION` for example, `make CUDA_VERSION=113`.
+CUDA SETUP: The CUDA version for the compile might depend on your conda install. Inspect CUDA version via `conda list | grep cuda`.
+================================================================================
+
+CUDA SETUP: Something unexpected happened. Please compile from source:
+git clone https://github.com/TimDettmers/bitsandbytes.git
+cd bitsandbytes
+CUDA_VERSION=117 make cuda11x_nomatmul
+python setup.py install
+CUDA SETUP: Setup Failed!
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/runpy.py", line 185, in _run_module_as_main
+    mod_name, mod_spec, code = _get_module_details(mod_name, _Error)
+  File "/usr/lib/python3.8/runpy.py", line 144, in _get_module_details
+    return _get_module_details(pkg_main_name, error)
+  File "/usr/lib/python3.8/runpy.py", line 111, in _get_module_details
+    __import__(pkg_name)
+  File "/mnt/arkk/bartleby/bitsandbytes/bitsandbytes/__init__.py", line 6, in <module>
+    from . import cuda_setup, utils, research
+  File "/mnt/arkk/bartleby/bitsandbytes/bitsandbytes/research/__init__.py", line 1, in <module>
+    from . import nn
+  File "/mnt/arkk/bartleby/bitsandbytes/bitsandbytes/research/nn/__init__.py", line 1, in <module>
+    from .modules import LinearFP8Mixed, LinearFP8Global
+  File "/mnt/arkk/bartleby/bitsandbytes/bitsandbytes/research/nn/modules.py", line 8, in <module>
+    from bitsandbytes.optim import GlobalOptimManager
+  File "/mnt/arkk/bartleby/bitsandbytes/bitsandbytes/optim/__init__.py", line 6, in <module>
+    from bitsandbytes.cextension import COMPILED_WITH_CUDA
+  File "/mnt/arkk/bartleby/bitsandbytes/bitsandbytes/cextension.py", line 20, in <module>
+    raise RuntimeError('''
+RuntimeError: 
+        CUDA Setup failed despite GPU being available. Please run the following command to get more information:
+
+        python -m bitsandbytes
+
+        Inspect the output of the command and see if you can locate CUDA libraries. You might need to add them
+        to your LD_LIBRARY_PATH. If you suspect a bug, please take the information from python -m bitsandbytes
+        and open an issue at: https://github.com/TimDettmers/bitsandbytes/issues
+```
+
+OK, fail. Good news (!?) is that it looks like the same fail from inside of the docker container. I think it can't find the system CUDA 11.4. Maybe I was setting LD_LIBRARY_PATH in the original venv that I replaced with the clean one?. Let's try setting it:
+
+```text
+(test-venv)$ ls /usr/local
+bin  cuda  cuda-11  cuda-11.4  etc  games  include  lib  man  sbin  share  src
+
+(test-venv)$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-11.4
+(test-venv)$ python -m bitsandbytes
+```
+
+OK, same error. Won't past it again, it's identical. Let's follow the advice to override the PyTorch CUDA version, question is, do we override it to 114 (the actual system CUDA version or 117, the version bitsandbytes was built for). Let's try 11.7 first, since this is also matches our torch compatibility.
+
+```text
+(test-venv)$ export BNB_CUDA_VERSION=117
+(test-venv)$ python -m bitsandbytes
+```
+
+Still no. Same fail. Another possibility is that we have moved the bitsandbytes directory into the bartelby repo and so maybe it needs to be rebuilt in place? I kind of doubt this, since it definitely worked before, but I wonder if some env vars were set or something from the original build which didn't survive the new venv or a reboot or something? Let's reboot now. See what happens. If it's still a no-go we will rebuild and reinstall bitsandbytes from the copy inside of bartleby.
