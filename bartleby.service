@@ -1,0 +1,19 @@
+# Systemd service unit to start bartleby in a Docker container on boot.
+# Need to do it this way rather then via the docker run --restart always
+# flag because the latter often results in the container trying to start
+# before the mounts have finished.
+
+[Unit]
+Description=bartleby
+RequiresMountsFor=/mnt/arkk
+RequiresMountsFor=/mnt/fast_scratch
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/docker start -a bartleby
+ExecStop=/usr/bin/docker stop -t 2 bartleby
+
+[Install]
+WantedBy=default.target
