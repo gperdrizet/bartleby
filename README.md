@@ -2,9 +2,11 @@
 
 ## Bartleby is live on Discord! Use [this invite link](https://discord.com/oauth2/authorize?client_id=1217547475615744015&permissions=0&scope=bot) to add bartleby to your server
 
+## Bartleby Docker image now available! See [gperdrizet/bartleby on Docker Hub](https://hub.docker.com/repository/docker/gperdrizet/bartleby/general)
+
 ![Bartleby](https://github.com/gperdrizet/bartleby/blob/logging/bartleby/data/bartleby.jpg)
 
-Bartleby is a LLM based conversational collaborator written in Python using [HuggingFace](https://huggingface.co/). The project goal is to create a conversational writing assistant which interacts naturally via a chat interface and creates documents in docx format. A 'universal' interface was achieved using Discord (i.e. the user can interact with the Bartleby via any Discord client application using any device: phone, laptop or tablet running: macOS, Windows, Linux, android, IOS etc,). Documents are created and accessed via Google Drive using Google Cloud Platform APIs.
+Bartleby is a LLM based conversational collaborator written in Python using [HuggingFace](https://huggingface.co/). The project goal is to create a conversational writing assistant which interacts naturally via a chat interface and creates documents in docx format. A 'universal' interface was achieved using Discord (i.e. the user can interact with the Bartleby via any Discord client application using any device: phone, laptop or tablet running: macOS, Windows, Linux, android, IOS etc,). Bartleby can also interact via a Matrix server. Documents are created and accessed via Google Drive using Google Cloud Platform APIs.
 
 Bartleby exposes a number of system control commands via the chat interface. System control commands allow the user to manipulate generation parameters, alter prompting behavior and make and save documents on the fly from any device.
 
@@ -13,7 +15,8 @@ Bartleby exposes a number of system control commands via the chat interface. Sys
 1. Features
 2. Where to find bartleby
 3. Usage
-4. Command reference
+4. How to run bartleby
+5. Command reference
 
 ## 1. Features
 
@@ -55,7 +58,109 @@ Bartleby is intended to be a LLM based writing and thinking collaborator and as 
 2. Set a title, if desired. Use /set_document_title YOUR_TITLE in chat to set the title. Spaces are fine, and no need to quote. This title will be used as the file name and document title of all subsequent uploads until a new title is set.
 3. Generate the document. /make_docx or something like ‘@bartleby save that output to gdrive’ will upload the last message in chat. Or if you want to capture an earlier message, right click on it and select ‘apps’ > ‘Save to gdrive’ from the context menu.
 
-## 4. Command reference
+## 4. How to run bartleby
+
+### 4.1. Prerequisites
+
+1. Nvidia GPU with >= 6 GB memory
+2. 30 GB disk space for models
+3. Nvidia driver, CUDA and the CUDA toolkit
+
+### 4.2. Via Docker
+
+The easiest way to run bartleby is by pulling the gperdrizet/bartleby:backdrop_launch image from Docker Hub. Follow the instructions in the repository overview to get it up and running.
+
+### 4.3. Via Python venv
+
+If you prefer to run bartleby on bare metal, without a container, you can clone this repo use the included requirements.txt. The version pins in requirements.txt produce a venv which works for a Nvidia Kepler GPU running the 470 driver and CUDA 11.4/11.4 with compute capability 3.7. If you are using a newer card, pip installing requierments.txt may still work, but will not take advantage of later CUDA compute capabilities. If you have a more modern graphics card, consider installing the following minimal dependencies manualy. They will pull in everything else that is needed.
+
+#### Setup instructions
+
+Clone the repo:
+
+```text
+git clone https://github.com/gperdrizet/bartleby.git
+cd bartleby
+```
+
+Make a fresh virtual environment with python 3.8.
+
+```text
+python3.8 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+```
+
+#### Dependencies: 'modern' GPUs (CUDA >=12)
+
+Install the following via pip in the virtual environment:
+
+```text
+pip install torch
+pip install transformers
+pip install discord.py
+pip install matrix-nio
+pip install google-api-core
+pip install python-docx
+pip install google-api-python-client
+pip install sentencepiece
+pip install jinja2
+pip install accelerate
+pip install scipy
+pip install bitsandbytes
+```
+
+#### Dependencies: Kepler GPUs (CUDA 11.4)
+
+Main difference here is that we need to be careful about versioning - some newer versions of things like torch will cause problems for the older card. We also need to build bits and bytes from source.
+
+First, install requierments.txt in the virtual environment created above:
+
+```text
+pip install -r requirements.txt
+```
+
+Then, clone, build and install the bitsandbytes repo. It does not matter where you put the bitsandbytes directory, as long as you run the install command from the activated virtual environment.
+
+Yes, CUDA_VERSION=118 is correct.
+
+```text
+git clone https://github.com/TimDettmers/bitsandbytes.git
+cd bitsandbytes
+CUDA_VERSION=118 make cuda11x_nomatmul_kepler
+python setup.py install
+```
+
+#### Credentials/secrets
+
+Take a look at the credentials directory under bartleby. It contains several SAMPLE files describing what credentials are needed for the various accounts associated with bartleby.
+
+The client_secret_apps file and the service_key file are required - they contain the credentials for Google Cloud. Once you have those in place, set the path to your service key via an the environment variable:
+
+```text
+export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/bartleby/credentials/service_key.json"
+```
+
+To make this persistent within the venv, add it a the end of .venv/bin/activate
+
+You additionally need either Matrix or Discord credentials depending on where you will run the bot. See the respective SAMPLE files for descriptions of what exactly each file needs to contain.
+
+#### Configuration
+
+Have a look and configuration.py. It may need two changes depending on your system:
+
+1. CUDA_VISIBLE_DEVICES: If you have only one GPU set this to 0 or comment out the whole line, if you have multiple GPUs set it to whichever you want bartleby to use.
+2. CPU threads: Set this to the number of physical cores you have (or less).
+
+#### Run
+
+From the repo. root directory:
+
+```text
+python -m bartleby
+```
+
+## 5. Command reference
 
 ### 4.1. System commands
 
