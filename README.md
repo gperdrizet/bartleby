@@ -6,7 +6,7 @@
 
 ![Bartleby](https://github.com/gperdrizet/bartleby/blob/logging/bartleby/data/bartleby.jpg)
 
-Bartleby is a LLM based conversational collaborator written in Python using [HuggingFace](https://huggingface.co/) transformers. The project goal is to create an open source, conversational writing assistant which interacts naturally via a chat interface and can documents in docx format. A 'universal' interface was achieved using Discord (i.e. the user can interact with the Bartleby via any Discord client application using any device: phone, laptop or tablet running: macOS, Windows, Linux, Android, IOS etc,). Bartleby can also interact via a Matrix server. Documents are created and accessed via Google Drive using Google Cloud Platform APIs.
+Bartleby is a LLM based conversational collaborator written in Python using [HuggingFace](https://huggingface.co/) transformers. The project goal is to create an open source, conversational writing assistant which interacts naturally via a chat interface and can generate documents in docx format. A 'universal' interface was achieved using Discord (i.e. the user can interact with the Bartleby via any Discord client application using any device: phone, laptop or tablet running: macOS, Windows, Linux, Android, IOS etc,). Bartleby can also interact via a Matrix server. Documents are created and accessed via Google Drive using Google Cloud Platform APIs.
 
 Bartleby exposes a number of system control commands via the chat interface. System control commands allow the user to manipulate generation parameters, alter prompting behavior and make and save documents on the fly from any device.
 
@@ -20,8 +20,8 @@ Bartleby exposes a number of system control commands via the chat interface. Sys
 
 ## 1. Features
 
-- **Easily accessible** on Discord or Matrix - you can interact with bartleby via apps many people already use for communication and collaboration.
-- **Configurable/tweak-able** - bartleby exposes many system commands though agent-like functionality and a set of chat commands. For example you can set individual parameters in the underlying [transformers GenerationConfig class](transformers GenerationConfiguration class) via Discord slash commands or just tell bartleby in plain english what model you want to use.
+- **Easily accessible** - Discord or Matrix - you can interact with bartleby via apps many people already use for communication and collaboration.
+- **Configurable/tweak-able** - bartleby exposes many system commands though agent-like functionality and a set of chat commands. For example you can set individual parameters in the underlying [transformers GenerationConfig class]([transformers GenerationConfiguration class](https://github.com/huggingface/transformers/blob/v4.39.1/src/transformers/generation/configuration_utils.py#L62)) via Discord slash commands or just tell bartleby in plain english what model you want to use.
 - **Generates Google Docs** - from chat and saves them to user specified shared folder.
 - **Open source models** - bartleby is not beholden to closed source models and can take advantage of the many new models constantly being released by the open source community on HuggingFace.
 - **Open source codebase** - bartleby is an open source project. Clone it, fork it, extend it, modify it, host it yourself and use it the way you want to use it.
@@ -29,6 +29,8 @@ Bartleby exposes a number of system control commands via the chat interface. Sys
 ## 2. Where to find bartleby
 
 Bartleby is most feature-complete and publicly available on Discord. If you are interested in trying it out, I recommend doing so there. You can add it to your server [here](https://discord.com/oauth2/authorize?client_id=1217547475615744015&permissions=0&scope=bot).
+
+There is also a Docker image available on [Docker Hub](https://hub.docker.com/repository/docker/gperdrizet/bartleby/general).
 
 Bartleby is also compatible with the Matrix protocol. If you would like to run it on Matrix, you will need to host the bot yourself and add it to a Matrix server which you have admin access to (see below).
 
@@ -46,7 +48,7 @@ Bartleby has a bunch of control commands that are accessible via the chat. These
 
 1. **Natural language text**: bartleby has some agent-like functionality built in. It uses a ‘helper’ T5 model fine-tuned to recognize user intent for a subset of available commands. Try ‘@bartleby What models do you support?’ or ‘@bartleby Use the last 10 messages as input.’
 2. **Discord slash commands**: bartleby’s complete set of commands are registered to the Discord app command system. Start typing ‘/’ in the chat to bring up a context menu of the available commands.
-3. **Chat commands**: the same set of commands are also available using the ‘--’ flag in chat, e.g. ‘--set-config max_new_tokens 128’. This modality is not necessary for discord - it's redundant to the slash commands and only exists for compatablity with other chat applications.
+3. **Chat commands**: the same set of commands are also available using the ‘--’ flag in chat, e.g. ‘--set-config max_new_tokens 128’. This modality is not necessary for discord - it's redundant to the slash commands and only exists for compatibility with other chat applications.
 
 See the command reference below for a complete list of commands and their functions.
 
