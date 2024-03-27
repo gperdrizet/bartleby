@@ -65,7 +65,7 @@ sudo systemctl enable docker.service
 sudo systemctl enable containerd.service
 ```
 
-Finally, set up log rotation. Add the following to */etc/docker/daemon.json*, creating the file if it doesn't exist. The data-root parameter is not necessary, omit it to accept the system default or set is to an alternative location.
+Finally, set up log rotation and set the data location. Add the following to */etc/docker/daemon.json*, creating the file if it doesn't exist. The data-root parameter is not necessary, omit it to accept the system default or set is to an alternative location. We are using a 'fast_scratch' NVMe SSD for our images and containers.
 
 ```json
 {
@@ -252,4 +252,6 @@ Successful round trip. Done!
 2. Set-up docker-compose? (see above)
 3. Build some base images for archival purposes
 
-It'd be nice to have some images to start with if we have to rebuild/extend this (or even for other projects) For example, a nvidia/cuda:11.4.3-runtime-ubuntu20.04 image, in case it changes/becomes unavailable on Docker Hub. Maybe a base kepler transformers+bitsandbytes+CUDA image (see the set-up notes to understand what a pain it was the first time) also, maybe an image for newer cards? (Our GTX1070 has plenty of memory to run one model and is compatible up to driver 550). You get the idea.
+It'd be nice to have some images to start with if we have to rebuild/extend this (or even for other projects) For example, a nvidia/cuda:11.4.3-runtime-ubuntu20.04 image, in case it changes/becomes unavailable on Docker Hub. Maybe a base kepler transformers+bitsandbytes+CUDA image (see the set-up notes to understand what a pain it was the first time). Also, maybe an image for newer cards? (Our GTX1070 has plenty of memory to run one model and is compatible up to driver 550). You get the idea.
+
+Docker is cool, I hate is so much.

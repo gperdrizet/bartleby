@@ -1,4 +1,4 @@
-# Docker contanerization notes
+# Docker containerization notes
 
 ## 1. Docker
 
@@ -250,7 +250,7 @@ docker build -t bartleby .
 docker run --gpus all --name bartleby -d bartleby:latest
 ```
 
-OK, having issues with CUDA, CUDA toolkit version and bits and bytes. Maybe we don't need to install the CUDA toolkit and build bitsandbytes in the container. Let's take a look and the Nvidia container images and see how they differ.
+OK, having issues with CUDA, CUDA toolkit version and bitsandbytes. Maybe we don't need to install the CUDA toolkit and build bitsandbytes in the container. Let's take a look and the Nvidia container images and see how they differ.
 
 ### 3. Nvidia images
 
@@ -326,9 +326,11 @@ $ nvcc --version
 bash: nvcc: command not found
 ```
 
-OK, what have we learned - still not really sure exactly what the difference between the base and runtime images are, but the devel image looks just like my host system install from inside the container. Nvidia-smi reports 470 driver and CUDA 11.4 and nvcc reports 11.4/11.4. However, although building and installing bitsandbytes from the Dockerfile appears to work python3 -m bitsandbytes inside the container fails with what looks like a bunch of path issues. Coulden't figure it out. Let's try building and installing from inside the running container.
+OK, what have we learned - still not really sure exactly what the difference between the base and runtime images are, but the devel image looks just like my host system install from inside the container. Nvidia-smi reports 470 driver and CUDA 11.4 and nvcc reports 11.4/11.4. However, although, building and installing bitsandbytes from the Dockerfile appears to work, running the bitsandbytes test inside the container fails with what looks like a bunch of path issues. Coulden't figure it out. Let's try building and installing from inside the running container.
 
 ### 4. CUDA+bitsandbytes troubleshooting
+
+#### 4.1. Install bitsandbytes manualy inside running container
 
 Let's first try installing from a copy of the host system's bitsandbytes directory:
 
@@ -419,6 +421,8 @@ WARNING: Please be sure to sanitize sensible info from any such env vars!
 SUCCESS!
 Installation was successful!
 ```
+
+#### 4.2. Install bitsandbytes from Dockerfile
 
 Cool! Worked - no idea if it will actually import and run, but let's try reproducing that result from our Dockerfile:
 
@@ -637,8 +641,6 @@ Here is the setup for a CPU only image:
 2. Comment out the individual installs of torch and scipy
 3. Edit config and set quantization to none and device map to cpu
 
-#### Clean requirements+bitsandbytes for docker success
-
 OK - Here is what we actually need to run (at least on discord). Note: it's around half the size of the main venv:
 
 ```text
@@ -795,7 +797,7 @@ python setup.py install
 CUDA SETUP: Setup Failed!
 ```
 
-### 6. Bitsandbytes+CUDA troubleshooting: install from inside container
+### 6. Bitsandbytes+CUDA troubleshooting: install from inside container (again)
 
 Plan now is to try starting with a 'nude' container, i.e. updated nvidia/cuda:11.4.3-runtime-ubuntu20.04 with just python & pip installed. Then do the set-up manually from inside the container and see what, if anything goes wrong. Here is the dockerfile:
 
@@ -857,7 +859,9 @@ WARNING: Running pip as the 'root' user can result in broken permissions and con
 
 Sweet, it works! Let's add everything back to the dockerfile, except the adduser stuff and try building the image again.
 
-Holy crap, this is frustrating. Still doesn't work via the dockerfile. I really don't understand why. My only thought it that installing via requirements doesn't work and it's not docker's problem. It is true that I have never tested just cloning the repo fresh and setting it up with pip. I think, for now, to avoid going down that rabbit hole and to just get the container working, I am going to add the exact commands in the exact order it takes to get the nude container running into the dockerfile.
+### 7. Bitsandbytes+CUDA troubleshooting: install from Dockerfile (again)
+
+Holy crap, this is frustrating. Still doesn't work via the dockerfile. I really don't understand why. My only thought it that installing via requirements doesn't work and it's not docker's problem. It is true that I have never tested just cloning the repo fresh and setting it up with pip. I think, for now, to avoid going down that rabbit hole and to just get the container working, I am going to add the exact commands in the exact order it takes to get a clean venv working into the dockerfile.
 
 ```text
 FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
@@ -915,7 +919,7 @@ FINALLY works. Going to do a few more things:
 5. Push it to a public repo on dockerhub
 6. Run it locally for the live discord instance
 
-#### Secrets
+#### 7.1. Secrets
 
 Google Cloud is the tricky one - you can either provide the path to a credential file via an environment variable, but I don't want to put the credential file inside of the container. So, for now instead of setting up workload identity federation (whatever that is) the plan is to bind mount bartleby's host machine credentials folder into the container. Then folks who want to do the same can put their own credentials there and we should be good to go. This also doesn't require any changes to bartleby's code itself, just the way we run the container.
 
@@ -932,7 +936,7 @@ docker run --gpus all --mount type=bind,source="$(pwd)"/bartleby/credentials,tar
 
 OK, cool works great.
 
-#### Data location
+#### 7.2. Data location
 
 Add the data-root parameter with the new target to */etc/docker/daemon.json' on the host machine:
 
@@ -1188,7 +1192,7 @@ CUDA_VERSION=118 make cuda11x_nomatmul_kepler
 python setup.py install
 ```
 
-Without LD_LIBRARY_PATH or BNB_CUDA_VERSION set, we are now getting complaints about missing scipy when trying to run the bitsandbytes test. I think this is father than we were getting a moment ago. Let's add scipy to the venv and try again:
+Without LD_LIBRARY_PATH or BNB_CUDA_VERSION set, we are now getting complaints about missing scipy when trying to run the bitsandbytes test. I think this is farther than we were getting a moment ago. Let's add scipy to the venv and try again:
 
 ```text
 (test-venv)$ pip install scipy
@@ -1282,7 +1286,7 @@ pip install cmake --upgrade
 pip install -r requirements-dev.txt
 ```
 
-Pip fails when installing scipy - looks like the most recent version it can find is 1.10.1, while bitsandbytes asks for 1.11.4. Weird, that looks to the the current version on the scipy site. Does that need a source build too? Gosh. Let's try just removing that version pin from the requirements-dev.txt.
+Pip fails when installing scipy - looks like the most recent version it can find is 1.10.1, while bitsandbytes asks for 1.11.4. Weird, 1.10.1 looks to the the current version on the scipy site. Does that need a source build too? Gosh. Let's try just removing that version pin from the requirements-dev.txt.
 
 ```text
 pip install -r requirements-dev.txt
@@ -1297,7 +1301,7 @@ cmake -DCOMPUTE_BACKEND=cuda -S .
 CUDA_VERSION=118 make
 ```
 
-Again, not confident. Repo documentation mentions using the cuda11x_nomatmul_kepler make target, but it's not found... Let's see what happens.
+Again, not confident. Repo documentation mentions using the cuda11x_nomatmul_kepler make target, but make complains it's not found... Let's see what happens.
 
 Now switch to the test-venv to install
 
@@ -1347,6 +1351,7 @@ Make, activate and update a dev environment:
 ```text
 python3 -m venv venv-bnb-build
 pip install --upgrade pip
+source /venv-bnb-build/bin/activate
 ```
 
 Install build dependencies:
@@ -1356,7 +1361,7 @@ pip install cmake --upgrade
 pip install -r requirements-dev.txt
 ```
 
-Ok, still having issues with scipy 1.11.1 for python 3.13. Let's try the tarball for version 42. Build env is still clean except for pip upgrade and cmake, so let's just reuse it:
+Ok, still having issues with scipy 1.11.1 for python 3.13. Let's try the tarball for version 42. Our build venv is still clean except for the pip upgrade and cmake, so let's just reuse it:
 
 ```text
 wget https://github.com/TimDettmers/bitsandbytes/archive/refs/tags/0.42.0.tar.gz
@@ -1366,10 +1371,11 @@ CUDA_VERSION=118 make cuda11x_nomatmul_kepler
 python setup.py install
 ```
 
-OK, at this point running the bitsandbytes test starts complaining about missing modules, starting with torch. I think that's actually a good sign. This thing is a mess, so let's start over one more time. Reboot, nuke the venvs and, install the 42 version fresh in a bartleby test venv.
+OK, at this point running the bitsandbytes test starts complaining about missing modules, starting with torch. I think that's actually a good sign. This thing is a mess, so let's start over one more time. Reboot, nuke the venvs and, install the 42 version fresh in a  new bartleby test venv.
 
 ```text
-(venv-test)$ pip install --upgrade pip
+python3 -m venv venv-test
+pip install --upgrade pip
 export GOOGLE_APPLICATION_CREDENTIALS="bartleby/credentials/service_key.json"
 pip install torch==1.13.1
 pip install transformers
@@ -1435,7 +1441,7 @@ SUCCESS!
 Installation was successful!
 ```
 
-Argh, I'm almost mad that it worked and I have no idea why. Do we need to make twice or something? Let's nuke everything one more time and do it again from scratch after a reboot.
+Argh, I'm almost mad that it worked and I have no idea why, that 118 vs 117 in the make target flag is killing me. Seems like sometimes one works and not the other and sometimes it's the other way around. Do we need to make twice or something? Let's nuke everything one more time and do it again from scratch after a reboot.
 
 ### 10. Verify solution end to end
 
@@ -1509,9 +1515,11 @@ SUCCESS!
 Installation was successful!
 ```
 
+OK, I think we got it. Let's button this thing up.
+
 ### 11. Finalize and containerize
 
-OK, I think this is the home streach. Here is what we need to do:
+This is the home stretch. Here is what we need to do:
 
 1. Set-up our real venv
 2. Update the docker file
@@ -1624,7 +1632,7 @@ export GOOGLE_APPLICATION_CREDENTIALS="bartleby/credentials/service_key.json"
 python -m bartleby
 ```
 
-Works great. Check .dockerignore. Here are our additons:
+Works great. Check .dockerignore. Here are our additions:
 
 ```text
 .venv
@@ -1644,7 +1652,7 @@ Dockerfile
 requirements-bak.txt
 ```
 
-Make the Dockerfile:
+Here is the Dockerfile:
 
 ```text
 FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
@@ -1690,4 +1698,12 @@ docker build -t gperdrizet/bartleby:backdrop_launch .
 docker run --gpus all --mount type=bind,source="$(pwd)"/bartleby/credentials,target=/bartleby/bartleby/credentials --name bartleby -d gperdrizet/bartleby:backdrop_launch
 ```
 
-Works!
+Works! Pus it to Docker Hub:
+
+```text
+docker push gperdrizet/bartleby:backdrop_launch
+```
+
+Now just build a new image with GPU 2 set in configuration.py so it runs localy on one of the K80s.
+
+Victory!

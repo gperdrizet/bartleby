@@ -6,7 +6,7 @@ LLM collaborator on Discord and Matrix. Running HuggingFace: zephyr, falcon or D
 
 ## Repository overview
 
-Images in this repository require the [Nvidia Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) to run and were designed for Kepler GPUs. The images may run on more modern hardware, but may not take full advantage of later CUDA compute capabilities. The models are loaded with 4 bit quantization via [BitsandBytes](https://github.com/TimDettmers/bitsandbytes) and require ~6 GB of GPU memory. Containers must also mount a 'credentials' directory which contains keys, tokens etc. for the relevant accounts. The instructions below assume Ubuntu 20.04 and a working Docker (tested with 26.0.0).
+Images in this repository require the [Nvidia Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) to run and were designed for Kepler GPUs. The images may run on more modern hardware, but may not take full advantage of later CUDA compute capabilities. The model(s) are loaded with 4 bit quantization via [BitsandBytes](https://github.com/TimDettmers/bitsandbytes) and require max ~5 GB of GPU memory depending on the specific model used. Containers must also mount a 'credentials' directory which contains keys, tokens etc. for the relevant accounts. The instructions below assume Ubuntu 20.04 and a working Docker (tested with 26.0.0).
 
 ### 1. Nvidia Container Toolkit set-up
 
