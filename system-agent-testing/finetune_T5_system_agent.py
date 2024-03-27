@@ -38,7 +38,7 @@ if __name__ == '__main__':
     os.environ['HF_HOME'] = '/mnt/fast_scratch/huggingface_transformers_cache'
 
     # Set visible GPUs
-    os.environ['CUDA_VISIBLE_DEVICES']='0'
+    os.environ['CUDA_VISIBLE_DEVICES']='1'
 
     # Load dataset from csv
     dataset_df = pd.read_csv('NL_commands_dataset.complete.csv', keep_default_na=False)
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     print(dataset["train"][0])
 
     # Tokenize the dataset
-    checkpoint = "google-t5/t5-small"
+    checkpoint = "google-t5/t5-base"
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
     tokenized_dataset = dataset.map(preprocess_function, batched=True)
 
@@ -67,11 +67,11 @@ if __name__ == '__main__':
     rouge = evaluate.load("rouge")
 
     # Load model
-    model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint, device_map='auto')
+    model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint, device_map='cpu')
 
     # Set training args
     training_args = Seq2SeqTrainingArguments(
-        output_dir="../bartleby/hf_cache/T5-small-system-agent",
+        output_dir="../bartleby/hf_cache/2024-03-26_T5-base-system-agent",
         evaluation_strategy="epoch",
         learning_rate=1e-5,
         per_device_train_batch_size=16,
@@ -80,7 +80,7 @@ if __name__ == '__main__':
         save_total_limit=3,
         num_train_epochs=1600,
         predict_with_generate=True,
-        fp16=True,
+        #fp16=True,
         #push_to_hub=True,
     )
 
@@ -97,4 +97,4 @@ if __name__ == '__main__':
 
     trainer.train()
 
-    model.save_pretrained('../bartleby/hf_cache/T5-small-system-agent')
+    model.save_pretrained('../bartleby/hf_cache/2024-03-26_T5-base-system-agent')

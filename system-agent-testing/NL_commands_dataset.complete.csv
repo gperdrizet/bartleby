@@ -213,6 +213,23 @@ make docx,Create document.
 make docx,Generate a document.
 make docx,Save document.
 make docx,Save the document.
+None,"Ok, quick edit to some of your code and you're back!"
+None,"Can you write the recipe again, but with more detail?"
+None,Let's try something else. Describe the steps in eukaryotic cell division.
+None,"I'm sorry, you were cut off. Can you explain what Docker is again?"
+None,"Morning check in, how are you running today?"
+None,"You just rebooted, are you OK?"
+None,"Daily check-in, are you still running?"
+None,Are you still running?
+None,I'm writing a resume and need help with my personal summary statement.
+None,Can you write a personal summary statement for a data scientist resume?
+None,Can you write a personal summary statement for data scientist job application?
+None,Write a cover letter for an application to a data science position.
+None,Can you give me a coverletter for a job application?
+None,Write a recipe for scrambled eggs.
+None,"Sure, what types of legal documents are you looking for?"
+None,"Ok, what type of document are you trying to find?"
+None,What exactly is the current issue?
 None,Why are your responses so long?
 None,Tell me a longer story about a bird and include more detail about the setting.
 None,Tell me a longer story about a bird and include more detail about the surroundings.
@@ -764,6 +781,11 @@ document title,Show working title
 document title,Please provide a title for the work in progress.
 document title,Print title.
 document title,What is the saved title?
+swap model zephyr-7b-beta,Switch to the zephyr model
+swap model zephyr-7b-beta,Change models to zephyr-7b-beta
+swap model zephyr-7b-beta,Switch to zephyr-7b
+swap model zephyr-7b-beta,Use the zephyr model please
+swap model zephyr-7b-beta,Switch to the zephyr model
 swap model zephyr-7b-beta,Switch to zephyr
 swap model zephyr-7b-beta,Switch to the zephyr.
 swap model zephyr-7b-beta,Switch to zephyr.
