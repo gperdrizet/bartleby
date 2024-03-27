@@ -1,8 +1,6 @@
-# Docker setup
+# Docker contanerization notes
 
-Plan is to containerize bartleby for deployment using following the Docker [instructions for containerizing python apps](https://docs.docker.com/language/python/containerize/).
-
-## 1. Docker setup
+## 1. Docker
 
 Start with a fresh, up-to-date docker install if needed. From the [Ubuntu install instructions](https://docs.docker.com/engine/install/ubuntu/)
 
@@ -195,24 +193,24 @@ RUN python3 -m pip install --upgrade pip
 WORKDIR /bartleby
 COPY . /bartleby
 
-# # Set-up CUDA and the CUDA toolkit
-# RUN apt-get install -y wget
-# RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
-# RUN mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
-# RUN wget https://developer.download.nvidia.com/compute/cuda/11.4.0/local_installers/cuda-repo-ubuntu2004-11-4-local_11.4.0-470.42.01-1_amd64.deb
-# RUN dpkg -i cuda-repo-ubuntu2004-11-4-local_11.4.0-470.42.01-1_amd64.deb
-# RUN apt-key add /var/cuda-repo-ubuntu2004-11-4-local/7fa2af80.pub
-# RUN apt-get update -y
-# RUN apt-get install -y cuda
-# RUN apt-get install -y nvidia-cuda-toolkit
+# Set-up CUDA and the CUDA toolkit
+RUN apt-get install -y wget
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
+RUN mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
+RUN wget https://developer.download.nvidia.com/compute/cuda/11.4.0/local_installers/cuda-repo-ubuntu2004-11-4-local_11.4.0-470.42.01-1_amd64.deb
+RUN dpkg -i cuda-repo-ubuntu2004-11-4-local_11.4.0-470.42.01-1_amd64.deb
+RUN apt-key add /var/cuda-repo-ubuntu2004-11-4-local/7fa2af80.pub
+RUN apt-get update -y
+RUN apt-get install -y cuda
+RUN apt-get install -y nvidia-cuda-toolkit
 
-# # Set path to correct CUDA version
-# ENV export PATH=/usr/local/cuda-11.4/bin${PATH:+:${PATH}}
+# Set path to correct CUDA version
+ENV export PATH=/usr/local/cuda-11.4/bin${PATH:+:${PATH}}
 
-# # Build and install bitsandbytes
-# WORKDIR /bartleby/bitsandbytes
-# RUN CUDA_VERSION=118 make cuda11x_nomatmul_kepler
-# RUN python3 setup.py install
+# Build and install bitsandbytes
+WORKDIR /bartleby/bitsandbytes
+RUN CUDA_VERSION=118 make cuda11x_nomatmul_kepler
+RUN python3 setup.py install
 
 # Install pip requirements
 WORKDIR /bartleby
@@ -252,7 +250,7 @@ docker build -t bartleby .
 docker run --gpus all --name bartleby -d bartleby:latest
 ```
 
-Done!
+OK, having issues with CUDA, CUDA toolkit version and bits and bytes. Maybe we don't need to install the CUDA toolkit and build bitsandbytes in the container. Let's take a look and the Nvidia container images and see how they differ.
 
 ### 3. Nvidia images
 
@@ -329,6 +327,8 @@ bash: nvcc: command not found
 ```
 
 OK, what have we learned - still not really sure exactly what the difference between the base and runtime images are, but the devel image looks just like my host system install from inside the container. Nvidia-smi reports 470 driver and CUDA 11.4 and nvcc reports 11.4/11.4. However, although building and installing bitsandbytes from the Dockerfile appears to work python3 -m bitsandbytes inside the container fails with what looks like a bunch of path issues. Coulden't figure it out. Let's try building and installing from inside the running container.
+
+### 4. CUDA+bitsandbytes troubleshooting
 
 Let's first try installing from a copy of the host system's bitsandbytes directory:
 
@@ -629,6 +629,8 @@ OK, didn't work - either something we added to the dockerfile changed how things
 
 Here is the plan for tomorrow. I think we should try and make a fresh, minimal and uncluttered env. My bet is something is pulling a dependency or something that breaks cuda. This might not have been a problem in the host system due to the order of operations? I dunno - somewhat grasping at straws here. So, let's put the production version of bartleby in a docker container running on CPU only, then if someone tries it, at least it works. Then we can have more freedom to screw around on the host system and figure out how to reliably install everything we need to get up and running.
 
+### 5. Temporary backup plan: CPU only container
+
 Here is the setup for a CPU only image:
 
 1. Uncomment everything in requirements except bitsandbytes
@@ -793,6 +795,8 @@ python setup.py install
 CUDA SETUP: Setup Failed!
 ```
 
+### 6. Bitsandbytes+CUDA troubleshooting: install from inside container
+
 Plan now is to try starting with a 'nude' container, i.e. updated nvidia/cuda:11.4.3-runtime-ubuntu20.04 with just python & pip installed. Then do the set-up manually from inside the container and see what, if anything goes wrong. Here is the dockerfile:
 
 ```text
@@ -900,7 +904,7 @@ WORKDIR /bartleby
 CMD ["python3", "-m", "bartleby"]
 ```
 
-#### Clean-up and finalize
+### 7. Clean-up and finalize
 
 FINALLY works. Going to do a few more things:
 
@@ -911,7 +915,7 @@ FINALLY works. Going to do a few more things:
 5. Push it to a public repo on dockerhub
 6. Run it locally for the live discord instance
 
-##### Secrets
+#### Secrets
 
 Google Cloud is the tricky one - you can either provide the path to a credential file via an environment variable, but I don't want to put the credential file inside of the container. So, for now instead of setting up workload identity federation (whatever that is) the plan is to bind mount bartleby's host machine credentials folder into the container. Then folks who want to do the same can put their own credentials there and we should be good to go. This also doesn't require any changes to bartleby's code itself, just the way we run the container.
 
@@ -928,7 +932,7 @@ docker run --gpus all --mount type=bind,source="$(pwd)"/bartleby/credentials,tar
 
 OK, cool works great.
 
-##### Data location
+#### Data location
 
 Add the data-root parameter with the new target to */etc/docker/daemon.json' on the host machine:
 
@@ -955,7 +959,7 @@ And restart docker:
 sudo systemctl docker restart
 ```
 
-#### 2024-03-26: More problems
+### 8. 2024-03-26: More problems
 
 OK, so we are back here again:
 
@@ -1018,7 +1022,7 @@ Had a moment where I thought that the problem was due to using the GTX1070 vs K8
 
 Right off the bat, installing pip installing torch on the host system (which has 470 driver CUDA 11.4/11.4) pulls the wrong version and puts the wrong CUDA stuff in the venv. Let's do a little work to document how and why I know what torch version to use.
 
-##### PyTorch version
+#### PyTorch version
 
 Seems like 1.13.1 is the correct version - this is the only version that exists in the working host machine venv. Looking on the [PyTorch website](https://pytorch.org/get-started/previous-versions/) it seems like it only supports CUDA 11.7 and 11.8, but I believe we did a trial and error version regression to determine the most recent version which would work the first time we got all of this figured out. The instructions say to install it like this:
 
@@ -1246,6 +1250,8 @@ Well holy Hall Effect folks, I think we did it. Not sure what we did, but we did
 
 So, bartleby works, but we get a warning about serializing 4 bit models and that we should upgrade bitsandbytes to >=0.41.3. Most recent release is 0.43.0. Guess we should upgrade. Reboot for a clean slate and here we go:
 
+### 9. Bitsandbytes upgrade
+
 ```text
 git clone https://github.com/TimDettmers/bitsandbytes.git
 ```
@@ -1431,7 +1437,7 @@ Installation was successful!
 
 Argh, I'm almost mad that it worked and I have no idea why. Do we need to make twice or something? Let's nuke everything one more time and do it again from scratch after a reboot.
 
-#### One last time
+### 10. Verify solution end to end
 
 New venv:
 
@@ -1502,3 +1508,186 @@ WARNING: Please be sure to sanitize sensible info from any such env vars!
 SUCCESS!
 Installation was successful!
 ```
+
+### 11. Finalize and containerize
+
+OK, I think this is the home streach. Here is what we need to do:
+
+1. Set-up our real venv
+2. Update the docker file
+3. Build the image with default GPU 0
+4. Run and test
+5. Push to docker hub
+6. Update install instructions and docker hub documentation
+7. Re-build the image with GPU 2 for local production run
+8. Profit?
+
+#### Final Dockerfile
+
+Going to try using requierments.txt to make the image instead of a bunch of individual pip installs. Also, will want a known good, updated & clean venv to use throughout the project. So, let's make one.
+
+Back up the old venv:
+
+```text
+source .venv/bin/activate
+pip freeze > requirements-bak.txt
+deactivate
+mv .venv .venv-bak
+```
+
+Make, activate and update a new venv:
+
+```text
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+```
+
+Install dependencies:
+
+```text
+pip install torch==1.13.1
+pip install transformers
+pip install discord.py
+pip install matrix-nio
+pip install google-api-core
+pip install python-docx
+pip install google-api-python-client
+pip install SentencePiece
+pip install accelerate
+pip install scipy
+pip install Jinja2
+```
+
+Then, freeze the venv before installing bitsandbytes, because we want to build that from source and install it manually.
+
+```text
+pip freeze > requirements.txt
+```
+
+Now, get and unpack the bitsandbytes 0.42.0 source:
+
+```text
+wget https://github.com/TimDettmers/bitsandbytes/archive/refs/tags/0.42.0.tar.gz
+tar -xf 0.42.0.tar.gz
+cd bitsandbytes-0.42.0
+```
+
+Build and install:
+
+```text
+CUDA_VERSION=117 make cuda11x_nomatmul_kepler
+python setup.py install
+python -m bitsandbytes
+```
+
+Works!
+
+```text
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++ BUG REPORT INFORMATION ++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+++++++++++++++++++ /usr/local CUDA PATHS +++++++++++++++++++
+/usr/local/cuda-11.4/targets/x86_64-linux/lib/stubs/libcuda.so
+/usr/local/cuda-11.4/targets/x86_64-linux/lib/libcudart.so
+
++++++++++++++++ WORKING DIRECTORY CUDA PATHS +++++++++++++++
+/mnt/arkk/bartleby/bitsandbytes-0.42.0/bitsandbytes/libbitsandbytes_cuda117_nocublaslt.so
+/mnt/arkk/bartleby/bitsandbytes-0.42.0/build/lib/bitsandbytes/libbitsandbytes_cuda117_nocublaslt.so
+
+++++++++++++++++++ LD_LIBRARY CUDA PATHS +++++++++++++++++++
+
+++++++++++++++++++++++++++ OTHER +++++++++++++++++++++++++++
+COMPILED_WITH_CUDA = True
+COMPUTE_CAPABILITIES_PER_GPU = ['6.1', '3.7', '3.7']
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++ DEBUG INFO END ++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Running a quick check that:
+    + library is importable
+    + CUDA function is callable
+
+
+WARNING: Please be sure to sanitize sensible info from any such env vars!
+
+SUCCESS!
+Installation was successful!
+```
+
+Test bartleby:
+
+```text
+cd ../
+export GOOGLE_APPLICATION_CREDENTIALS="bartleby/credentials/service_key.json"
+python -m bartleby
+```
+
+Works great. Check .dockerignore. Here are our additons:
+
+```text
+.venv
+.venv-bak
+.vscode
+.dockerignore
+.gitignore
+bartleby.service
+bitsandbytes-0.42.0.tar.gz
+docker_hub_info.md
+docker_setup_notes.md
+docker_setup.md
+bartleby/hf_cache
+bartleby/logs
+bartleby/credentials
+Dockerfile
+requirements-bak.txt
+```
+
+Make the Dockerfile:
+
+```text
+FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04
+
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
+
+# Set location of Google service account credentials
+ENV GOOGLE_APPLICATION_CREDENTIALS="/bartleby/bartleby/credentials/service_key.json"
+
+# Set working directory
+WORKDIR /
+
+# Install python 3.8 & pip
+RUN apt-get update
+RUN apt-get install -y python3 python3-pip
+RUN python3 -m pip install --upgrade pip
+
+# Move the bartleby source code in
+WORKDIR /bartleby
+COPY . /bartleby
+
+# Make an empty credentials folder for mounting inside of bartleby
+RUN mkdir /bartleby/bartleby/credentials
+
+# Install dependencies
+RUN pip install -r requirements.txt
+
+# Install bitsandbytes
+WORKDIR /bartleby/bitsandbytes-0.42.0 
+RUN python3 setup.py install
+
+# Run bartleby
+WORKDIR /bartleby
+CMD ["python3", "-m", "bartleby"]
+```
+
+Clean up docker, build the image and start the container:
+
+```text
+docker system prune
+docker build -t gperdrizet/bartleby:backdrop_launch .
+docker run --gpus all --mount type=bind,source="$(pwd)"/bartleby/credentials,target=/bartleby/bartleby/credentials --name bartleby -d gperdrizet/bartleby:backdrop_launch
+```
+
+Works!
