@@ -11,14 +11,16 @@ import bartleby.classes.docx_class as docx
 def run():
     '''Run bartleby'''
 
+    # Check for existence of logs and hf_cache directories
+    helper_funcs.check_directory_structure()
+
     # Fire up a logger
     logger = helper_funcs.start_logger()
+
+    logger.info('Directory structure OK')
     logger.info(f'Running in {config.MODE} mode')
     logger.info(f'Using {config.CPU_threads} CPU threads')
     logger.info(f'Device map is: {config.device_map}')
-
-    helper_funcs.check_directory_structure()
-    logger.info('Directory structure OK')
 
     # Make empty dictionaries to hold user and llm class instances
     users, llms = {}, {}
