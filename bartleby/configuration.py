@@ -1,14 +1,10 @@
 import os
 import pathlib
-
-# Set HuggingFace home to ./hf_cache
-os.environ['HF_HOME']=f'{pathlib.Path(__file__).parent.resolve()}/hf_cache'
-
-# Set visible GPUs
-os.environ['CUDA_VISIBLE_DEVICES']='2'
-
 import bartleby.credentials.matrix as matrix
 import bartleby.credentials.discord_credentials as discord
+
+# Chat application to use
+MODE='discord' #'matrix'
 
 # Specify encoding here. This is needed because some phones
 # have a tendency to autocorrect '--' to '–', which is not an
@@ -17,19 +13,32 @@ import bartleby.credentials.discord_credentials as discord
 
 #-*- coding: utf-8 -*-
 
-MODE='discord' #'matrix'
-
-LOG_LEVEL='DEBUG'
-LOG_PREFIX='%(levelname)s - %(message)s' # '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-CLEAR_LOGS=True
-
-# Paths
+# Set project paths based on location of this file
 PROJECT_ROOT_PATH=os.path.dirname(os.path.realpath(__file__))
 HF_CACHE=f'{PROJECT_ROOT_PATH}/hf_cache'
 DATA_PATH=f'{PROJECT_ROOT_PATH}/data'
 NEXT_BATCH_TOKEN_FILE=f'{DATA_PATH}/next_batch'
 DOCUMENTS_PATH=f'{PROJECT_ROOT_PATH}/documents'
 LOG_PATH=f'{PROJECT_ROOT_PATH}/logs'
+
+# Deal with some environment vars - set the to default values
+# only if they have not already been set some other way
+
+# HuggingFace cache/home
+if 'HF_HOME' not in os.environ:
+    os.environ['HF_HOME']=f'{pathlib.Path(__file__).parent.resolve()}/hf_cache'
+
+# Visible GPUs
+if 'CUDA_VISIBLE_DEVICES' not in os.environ:
+    os.environ['CUDA_VISIBLE_DEVICES']='0'
+
+if 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = f'{PROJECT_ROOT_PATH}/bartleby/credentials/service_key.json'
+
+# Logging stuff
+LOG_LEVEL='DEBUG'
+LOG_PREFIX='%(levelname)s - %(message)s' # '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+CLEAR_LOGS=True
 
 # Matrix room parameters
 matrix_room_id=matrix.matrix_room_id
@@ -48,28 +57,6 @@ default_title='Bartleby Text'
 default_model_type='tiiuae/falcon-7b-instruct'
 initial_prompt='You are a friendly chatbot who always responds in the style of Bartleby the scrivener; a depressed and beleaguered legal clerk from the mid 1800s.'
 
-supported_models=[
-    'HuggingFaceH4/zephyr-7b-beta',
-    'tiiuae/falcon-7b-instruct',
-    'microsoft/DialoGPT-small',
-    'microsoft/DialoGPT-medium',
-    'microsoft/DialoGPT-large',
-]
-
-mistral_family_models=[
-    'HuggingFaceH4/zephyr-7b-beta'
-]
-
-falcon_family_models=[
-    'tiiuae/falcon-7b-instruct'
-]
-
-dialo_family_models=[
-    'microsoft/DialoGPT-small',
-    'microsoft/DialoGPT-medium',
-    'microsoft/DialoGPT-large'
-]
-
 # Some system settings for generation
 device_map='cuda:0' #'cuda:0'
 model_quantization='four bit'
@@ -78,9 +65,7 @@ model_input_buffer_size=5
 max_new_tokens=64
 
 # Length penalty defaults for short and long outputs
-# These are selected at run time by the agent based
-# on if it determines the user's message wants a short
-# or long response
+# These are selected at run time by the agent
 long_start_index=int(max_new_tokens) * 0.75
 short_start_index=16
 long_decay_factor=10
@@ -91,7 +76,6 @@ short_length_penalty=-0.1
 # Decoding modes, used to set groups of generation 
 # config parameters to non-model default values
 # corresponding to common decoding methods
-
 default_decoding_mode='top_kp'
 
 decoding_mode={
@@ -129,9 +113,31 @@ decoding_mode={
     }
 }
 
+# Supported models and model families
+supported_models=[
+    'HuggingFaceH4/zephyr-7b-beta',
+    'tiiuae/falcon-7b-instruct',
+    'microsoft/DialoGPT-small',
+    'microsoft/DialoGPT-medium',
+    'microsoft/DialoGPT-large',
+]
+
+mistral_family_models=[
+    'HuggingFaceH4/zephyr-7b-beta'
+]
+
+falcon_family_models=[
+    'tiiuae/falcon-7b-instruct'
+]
+
+dialo_family_models=[
+    'microsoft/DialoGPT-small',
+    'microsoft/DialoGPT-medium',
+    'microsoft/DialoGPT-large'
+]
+
 
 # Command documentation to post in chat when asked
-
 commands = '''\n<b>Available commands:</b>\n\n
 <b>--commands</b>                Posts this message to chat.
 <b>--input-buffer-size</b>       Post size of LLM input buffer.
