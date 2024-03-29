@@ -16,10 +16,7 @@ def run():
 
     # Fire up a logger
     logger = helper_funcs.start_logger()
-<<<<<<< HEAD
-=======
-
->>>>>>> main
+    
     logger.info('Directory structure OK')
     logger.info(f'Running in {config.MODE} mode')
     logger.info(f'Using {config.CPU_threads} CPU threads')
