@@ -210,7 +210,6 @@ Added the following to .dockerignore:
 
 ```text
 .venv
-.venv-bak
 .vscode
 .dockerignore
 .gitignore

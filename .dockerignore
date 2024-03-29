@@ -22,7 +22,6 @@
 **/values.dev.yaml
 
 .venv
-.venv-bak
 .vscode
 .dockerignore
 .gitignore
