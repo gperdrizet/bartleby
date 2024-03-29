@@ -11,11 +11,15 @@ import bartleby.classes.docx_class as docx
 def run():
     '''Run bartleby'''
 
-    # Make sure we have log and hf_cache directories
+    # Check for existence of logs and hf_cache directories
     helper_funcs.check_directory_structure()
 
     # Fire up a logger
     logger = helper_funcs.start_logger()
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
     logger.info('Directory structure OK')
     logger.info(f'Running in {config.MODE} mode')
     logger.info(f'Using {config.CPU_threads} CPU threads')
