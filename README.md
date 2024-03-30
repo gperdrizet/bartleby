@@ -144,13 +144,7 @@ python -m bitsandbytes
 
 Take a look at the credentials directory under bartleby. It contains several SAMPLE files describing what credentials are needed for the various accounts associated with bartleby.
 
-The client_secret_apps file and the service_key file are required - they contain the credentials for Google Cloud. Once you have those in place, set the path to your service key via the environment variable:
-
-```text
-export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/bartleby/credentials/service_key.json"
-```
-
-To make this persistent within the venv, add it a the end of .venv/bin/activate
+The client_secret_apps file and the service_key file are required - they contain the credentials for Google Cloud.
 
 You additionally need either Matrix or Discord credentials depending on where you will run the bot. See the respective SAMPLE files for descriptions of what exactly each file needs to contain.
 
