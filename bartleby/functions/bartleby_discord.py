@@ -58,7 +58,7 @@ def discord_listener(
     intents.members=True
     intents.typing=False
     intents.presences=True
-    client=discord_class.LLMbot(logger, response_queue, users, command_prefix='/', intents=intents)
+    client=discord_class.LLMbot(logger, response_queue, users, docx_instance, command_prefix='/', intents=intents)
 
     @client.event
     async def on_ready():

@@ -5,6 +5,7 @@ import bartleby.configuration as config
 import bartleby.functions.helper_functions as helper_funcs
 import bartleby.functions.IO_functions as io_funcs
 import bartleby.functions.bartleby_discord as discord_funcs
+import bartleby.functions.bartleby_matrix as matrix_funcs
 import bartleby.classes.matrix_class as matrix
 import bartleby.classes.docx_class as docx
 
@@ -49,7 +50,7 @@ def run():
         logger.info('Matrix chat client started successfully')
 
         # Start the matrix listener
-        matrix_listener_thread = Thread(target=io_funcs.matrix_listener, args=[
+        matrix_listener_thread = Thread(target=matrix_funcs.matrix_listener, args=[
             docx_instance,
             matrix_instance, 
             users, 

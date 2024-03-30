@@ -8,7 +8,7 @@ class LLMbot(commands.Bot):
     check the LLM response queue and post any new generated 
     responses'''
 
-    def __init__(self, logger, response_queue, users, *args, **kwargs):
+    def __init__(self, logger, response_queue, users, docx_instance, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Add logger and LLM's response queue
@@ -17,6 +17,9 @@ class LLMbot(commands.Bot):
 
         # Add users list
         self.bartleby_users = users
+
+        # Add docx_instance
+        self.docx_instance = docx_instance
 
     async def setup_hook(self) -> None:
         
