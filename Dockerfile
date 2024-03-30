@@ -18,8 +18,12 @@ RUN python3 -m pip install --upgrade pip
 WORKDIR /bartleby
 COPY . /bartleby
 
-# Make an empty credentials folder for mounting inside of bartleby
+# Make an empty credentials folder for bindmount
 RUN mkdir /bartleby/bartleby/credentials
+
+# Make a volumme for models so we don't have to
+# pull them from HuggingFace every time
+VOLUME bartleby/hf_cache
 
 # Install dependencies
 RUN pip install -r requirements.txt
