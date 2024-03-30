@@ -30,20 +30,20 @@ class System_commands(commands.Cog):
         await interaction.response.send_message(f'```{result}```')
         self.logger.debug(f'Show commands from: {user_name}')
 
-    # @client.tree.command()
-    # async def input_buffer_size(interaction: discord.Interaction):
-    #     """Posts the current LLM input buffer size."""
+    @app_commands.command()
+    async def input_buffer_size(self, interaction: discord.Interaction):
+        """Posts the current LLM input buffer size."""
 
-    #     # Get the user name
-    #     user_name = interaction.user
+        # Get the user name
+        user_name = interaction.user
 
-    #     # If this is the first interaction from this user, onboard them
-    #     if user_name not in users.keys():
-    #         users[user_name] = user.User(user_name)
+        # If this is the first interaction from this user, onboard them
+        if user_name not in self.bot.bartleby_users.keys():
+            self.bot.bartleby_users[user_name] = self.user.User(user_name)
 
-    #     # Post the reply and log the interaction
-    #     await interaction.response.send_message(f'```LLM using last {conf.model_input_buffer_size} messages as input```')
-    #     logger.debug(f'Show input buffer size command from: {user_name}')
+        # Post the reply and log the interaction
+        await interaction.response.send_message(f'```LLM using last {conf.model_input_buffer_size} messages as input```')
+        self.logger.debug(f'Show input buffer size command from: {user_name}')
 
     # @client.tree.command()
     # @app_commands.describe(buffer_size='New input buffer size')
