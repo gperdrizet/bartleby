@@ -1,10 +1,10 @@
 import discord
 import time
 import textwrap
-from discord.ext import tasks
-from discord import app_commands
-class LLMClient(discord.Client):
-    '''Custom discord client class with background task to 
+from discord.ext import tasks, commands
+
+class LLMbot(commands.Bot):
+    '''Custom discord bot class with background task to 
     check the LLM response queue and post any new generated 
     responses'''
 
@@ -15,16 +15,18 @@ class LLMClient(discord.Client):
         self.logger = logger
         self.response_queue = response_queue
 
-        # Add command tree
-        self.tree = app_commands.CommandTree(self)
-
     async def setup_hook(self) -> None:
+        
+        await self.load_extension(f'bartleby.classes.discord_commands_cog')
 
-        # Sync global command tree to guild
+        # # Sync global command tree
+        # await self.tree.sync()
+
+        # Copy global tree to guild and sync (syncs faster)
         MY_GUILD = discord.Object(id=755533103065333911)
-        await self.tree.sync()
-        #self.tree.copy_global_to(guild=MY_GUILD)
-        #await self.tree.sync(guild=MY_GUILD)
+        self.tree.copy_global_to(guild=MY_GUILD)
+
+        await self.tree.sync(guild=MY_GUILD)
 
         # Start the task to run in the background
         self.check_response_queue.start()
