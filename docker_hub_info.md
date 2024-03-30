@@ -100,4 +100,10 @@ Run the image. Replace \<CREDENTIALS\> with the path to your credentials directo
 docker run --gpus all --mount type=bind,source=<CREDENTIALS>,target=/bartleby/bartleby/credentials --name bartleby -d gperdrizet/bartleby:backdrop_launch
 ```
 
-That's it! The first response from bartleby may be slow because the model(s) are pulled from HuggingFace the first time they are used.
+That's it! The first response from bartleby may be slow because the model(s) are pulled from HuggingFace the first time they are used. Any models used are stored persistently via a Docker volume and so will be faster to load the second time.
+
+The container will default to using GPU 0 - if you would like to change this on a multi-GPU system you can do so by setting the 'CUDA_VISIBLE_DEVICES' environment variable at container runtime:
+
+```text
+docker run --gpus all --mount type=bind,source=<CREDENTIALS>,target=/bartleby/bartleby/credentials -e CUDA_VISIBLE_DEVICES=1 --name bartleby -d gperdrizet/bartleby:backdrop_launch
+```
