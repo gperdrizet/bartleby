@@ -3,7 +3,6 @@ from threading import Thread
 
 import bartleby.configuration as config
 import bartleby.functions.helper_functions as helper_funcs
-import bartleby.functions.IO_functions as io_funcs
 import bartleby.functions.bartleby_discord as discord_funcs
 import bartleby.functions.bartleby_matrix as matrix_funcs
 import bartleby.classes.matrix_class as matrix
@@ -38,7 +37,7 @@ def run():
     logger.info('Docx instance started successfully')
 
     # Start generator thread for LLMs
-    generator_thread = Thread(target=io_funcs.generator, args=[llms, generation_queue, response_queue, logger])
+    generator_thread = Thread(target=helper_funcs.generator, args=[llms, generation_queue, response_queue])
     generator_thread.start()
     logger.info('Started LLM generator thread')
 

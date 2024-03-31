@@ -80,3 +80,20 @@ def setup_user(logger, user_name, users, llms):
         logger.info(f'+{round(time.time() - message_time, 2)}s: Set generation configuration for {user_name} with {users[user_name].decoding_mode} defaults')
 
     return message_time
+
+def generator(llms, generation_queue, response_queue):
+    '''Takes a user from the listener and generates a reply.
+    Sends the reply to the responder.'''
+
+    # Do this forever
+    while True:
+        
+        # Get the next user from the generation input queue
+        queued_user = generation_queue.get()
+
+        # Send the user for generation
+        _ = llms[queued_user.model_type].prompt_model(queued_user)
+        generation_queue.task_done()
+
+        # Send the user to responder to post the LLM's response
+        response_queue.put(queued_user)
