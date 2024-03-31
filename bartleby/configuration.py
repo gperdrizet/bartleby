@@ -33,7 +33,7 @@ if 'CUDA_VISIBLE_DEVICES' not in os.environ:
     os.environ['CUDA_VISIBLE_DEVICES']='2'
 
 if 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = f'{PROJECT_ROOT_PATH}/bartleby/credentials/service_key.json'
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = f'{PROJECT_ROOT_PATH}/credentials/service_key.json'
 
 # Logging stuff
 LOG_LEVEL='DEBUG'
