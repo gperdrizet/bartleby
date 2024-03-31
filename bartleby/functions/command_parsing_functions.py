@@ -138,8 +138,11 @@ def parse_command_message(docx_instance, user, command_message):
     # Sets Google Drive folder ID for document upload
     elif command[0] == '--set-gdrive-folder':
         if len(command) == 2:
-            user.gdrive_folder_id = command[1]
-            result = 'Gdrive folder updated'
+            # Parse the share link
+            gdrive_link = command[1]
+            gdrive_id = gdrive_link.split('/')[-1].split('?')[0]
+            user.gdrive_folder_id = gdrive_id 
+            result = f'Gdrive folder set to {gdrive_id}'
 
         else:
             result = 'Failed to parse Google Drive folder ID update command'

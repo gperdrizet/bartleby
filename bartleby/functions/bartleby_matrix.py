@@ -57,8 +57,7 @@ async def matrix_listener_loop(
                     # Get the username
                     user_name = event.sender.split(':')[0][1:]
 
-                    # Get the username and deal with initializing them or their LLM
-                    # as needed
+                    # Deal with initializing the user and/or their LLM as needed
                     message_time=helper_funcs.setup_user(logger, user_name, users, llms)
 
                     # Get body of user message
