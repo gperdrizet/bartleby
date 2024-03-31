@@ -24,10 +24,10 @@ Bartleby exposes a number of system control commands via the chat interface. Sys
 
 ## 1. Features
 
-- **Easily accessible** - Discord or Matrix - you can interact with bartleby via apps many people already use for communication and collaboration.
-- **Configurable/tweak-able** - bartleby exposes many system commands though agent-like functionality and a set of chat commands. For example you can set individual parameters in the underlying [transformers GenerationConfig class]([transformers GenerationConfiguration class](https://github.com/huggingface/transformers/blob/v4.39.1/src/transformers/generation/configuration_utils.py#L62)) via Discord slash commands or just tell bartleby in plain english what model you want to use.
-- **Generates Google Docs** - from chat and saves them to user specified shared folder.
-- **Open source models** - bartleby is not beholden to closed source models and can take advantage of the many new models constantly being released by the open source community on HuggingFace.
+- **Easily accessible** on Discord or Matrix - you can interact with bartleby via apps many people already use for communication and collaboration.
+- **Configurable/tweak-able** - bartleby exposes system commands though agent-like functionality and chat commands. For example, you can set individual parameters in the underlying [transformers GenerationConfig class]([transformers GenerationConfiguration class](https://github.com/huggingface/transformers/blob/v4.39.1/src/transformers/generation/configuration_utils.py#L62)) via Discord slash commands or just tell bartleby in plain english what model you want to use.
+- **Generates Google Docs** from chat and saves to user specified shared folder.
+- **Open source models** - bartleby is not beholden to proprietary APIs and can take advantage of the many new models constantly being released by the open source community on HuggingFace.
 - **Open source codebase** - bartleby is an open source project. Clone it, fork it, extend it, modify it, host it yourself and use it the way you want to use it.
 
 ## 2. Where to find bartleby
@@ -36,15 +36,15 @@ Bartleby is most feature-complete and publicly available on Discord. If you are 
 
 There is also a Docker image available on [Docker Hub](https://hub.docker.com/repository/docker/gperdrizet/bartleby/general).
 
-Bartleby is also compatible with the Matrix protocol. If you would like to run it on Matrix, you will need to host the bot yourself and add it to a Matrix server which you have admin access to (see below).
+Bartleby is also compatible with the Matrix protocol. If you would like to run it on Matrix, you will need to host the bot yourself and add it to a Matrix server to which you have admin access (see below).
 
 ## 3. Usage
 
-These instructions are to get you started interacting with some of bartleby’s features in a discord server. For more details about configuring and running it yourself see ‘How to run bartleby’ below.
+The goal of the following instructions is to provide a quick jump-start to interacting with some of bartleby's features in a discord server. For more details about configuring and running it yourself see ‘How to run bartleby’ below. For a complete list of commands see 'Command reference' below.
 
 ### 3.1. Talking to bartleby
 
-Bartleby is aware of how many people are in a given discord channel and interacts accordingly. If you are in a channel alone with it, you can just start posting. Bartleby assumes any messages are meant for him and will respond to anything posted. If you are in a channel with multiple other users, bartleby will only respond if he is mentioned or replied too. The first time you message, use a mention (@bartleby) to get the bots attention. Bartleby will post a response in the form of a reply to your message. After that, you can mention or reply as you like to keep the conversation going. Bartleby will also work if you take it into a thread - in that context you do not need to use mentions or replies, it will respond as if the conversation were happening in a channel with no other users.
+Bartleby is aware of the active user count in a discord channel and interacts accordingly. If you are in a channel alone with it, just start posting. Bartleby will reply to any messages in the channel. In a channel with multiple other users, bartleby will only respond to mentions or direct replies. The first time you message, use a mention (@bartleby) to get the bot's attention. After that, you can mention or reply as you like to keep the conversation going. Bartleby can also use threads - in a private thread, you do not need to use mentions or replies, bartleby will respond as if the conversation were happening in a channel with no other users.
 
 ### 3.2. The command interface
 
@@ -54,31 +54,31 @@ Bartleby has a bunch of control commands that are accessible via the chat. These
 2. **Discord slash commands**: bartleby’s complete set of commands are registered to the Discord app command system. Start typing ‘/’ in the chat to bring up a context menu of the available commands.
 3. **Chat commands**: the same set of commands are also available using the ‘--’ flag in chat, e.g. ‘--set-config max_new_tokens 128’. This modality is not necessary for discord - it's redundant to the slash commands and only exists for compatibility with other chat applications.
 
-See the command reference below for a complete list of commands and their functions.
+See the command reference below for a complete list of commands.
 
 ### 3.3. Saving documents
 
-Bartleby is intended to be a LLM based writing and thinking collaborator and as such can interact with Google Drive. Documents are saved from the chat to a shared Google Drive folder in docx format. Here are the steps to generate and save a document to Google Drive:
+Bartleby is intended to be a LLM writing and thinking collaborator and as such, can interact with Google Drive. Documents are saved from the chat to a shared Google Drive folder in docx format. The steps to generate and save a document to Google Drive are as follows:
 
-1. **Set a shared folder**. Create a folder on gdrive for bartleby to save documents in and copy its share link. Then submit  /set_gdrive_folder YOUR_SHARE_LINK command in chat. You only need to do this once per session with bartleby.
+1. **Set a shared folder**. Create a folder on gdrive for bartleby to save documents in and copy its share link. Then submit  /set_gdrive_folder YOUR_SHARE_LINK command in chat. You only need to do this once per session.
 2. **Set a title**, if desired. Use /set_document_title YOUR_TITLE in chat or try something like, '@bartleby call the document War and Peace' to set the title. Spaces are fine, and no need to quote. This title will be used as the file name and document title of all subsequent uploads until a new title is set. If no title is set, documents will be uploaded as 'bartleby_text.docx'.
-3. **Generate the document**. /make_docx or something like ‘@bartleby save that output to gdrive’ will upload the last message in chat. Or if you want to capture an earlier message, right click on it and select ‘apps’ > ‘Save to gdrive’ from the context menu.
+3. **Generate the document**. /make_docx or something like ‘@bartleby save that output to gdrive’ will upload the last message in chat. Or, if you want to capture an earlier message, right click on it and select ‘apps’ > ‘Save to gdrive’ from the context menu (Discord only).
 
 ## 4. How to run bartleby
 
 ### 4.1. Prerequisites
 
-1. Nvidia GPU with >= 5 GB memory (depending on which model you pick to run)
-2. ~30 GB disk space for models
-3. Nvidia driver, CUDA and the CUDA toolkit (Build/tested with Kepler card on 470 driver with CUDA runtime/driver 11.4/11.4)
+1. Nvidia GPU with >=~ 5 GB memory (depending on which model you pick to run).
+2. ~30 GB disk space for models, assuming you want to try all of those currently available. Or ~15 GB for just the current default falcon-7b.
+3. Nvidia driver, CUDA and the CUDA toolkit (Build/tested with Kepler card on 470 driver with CUDA runtime/driver 11.4/11.4).
 
 ### 4.2. Via Docker
 
-The easiest way to run bartleby is by pulling the gperdrizet/bartleby:backdrop_launch image from Docker Hub. Follow the instructions in the repository overview to get it up and running.
+The easiest way to run bartleby is by pulling the *gperdrizet/bartleby:backdrop_launch* image from Docker Hub. Follow the instructions in the repository overview to get it up and running.
 
 ### 4.3. Via Python venv
 
-If you prefer to run bartleby on bare metal, without a container, you can use this repo and the included requirements.txt. The version pins in requirements.txt produce a venv which works for a Nvidia Kepler GPU running the 470 driver and CUDA 11.4/11.4 with compute capability 3.7. If you are using a newer card, pip installing requierments.txt may still work, but will not take advantage of later CUDA compute capabilities. If you have a more modern graphics card, consider installing the following minimal dependencies manualy. They should pull in everything else that is needed. The trickiest part of the install is getting bitsandbytes to play nice with older cards. If you are working with modern hardware this may not be an issue at all for you. Otherwise you may have to build bitsandbytes from source.
+If you prefer to run bartleby on bare metal, without a container, you can use this repo and the included *requirements.txt*. The version pins in *requirements.txt* produce a venv which works for a Nvidia Kepler GPU running the 470 driver and CUDA 11.4/11.4 with compute capability 3.7. If you are using a newer card, pip installing *requierments.txt* may still work, but will not take advantage of later CUDA compute capabilities. If you have a more modern graphics card, consider installing the following minimal dependencies manualy. They should pull in everything else that is needed. The trickiest part of the install is getting bitsandbytes to play nice with older cards. If you are working with modern hardware this may not be an issue. Otherwise, you may have to build bitsandbytes from source.
 
 #### Setup instructions
 
@@ -97,7 +97,7 @@ source .venv/bin/activate
 pip install --upgrade pip
 ```
 
-#### Dependencies: 'modern' GPUs (CUDA >=12)
+#### Dependencies option A: 'modern' GPUs (CUDA >=12)
 
 Install the following via pip in the virtual environment:
 
@@ -116,17 +116,17 @@ pip install scipy
 pip install bitsandbytes
 ```
 
-#### Dependencies: Kepler GPUs (CUDA 11.4)
+#### Dependencies, option B: Kepler GPUs (CUDA 11.4)
 
-Main difference here is that we need to be very careful about versioning - some newer versions of things like torch will cause problems for the older card. We also need to build bitsandbytes from source correctly so that it plays nice with everything else.
+Main difference here is extreme caution in regard to versioning versioning - newer versions of things like torch will cause problems for older cards. The correct version of bitsandbytes must be built from source correctly so that it plays nice with everything else.
 
-First, install requierments.txt in the virtual environment created above:
+First, install *requierments.txt* in the virtual environment created above:
 
 ```text
 pip install -r requirements.txt
 ```
 
-Then, clone, build and install bitsandbytes 0.42.0 It does not matter where you put the bitsandbytes directory, as long as you run the install command from bartleby's activated virtual environment.
+Then, clone, build and install bitsandbytes 0.42.0. It does not matter where you put the bitsandbytes directory, so long as you run the install command from bartleby's activated virtual environment.
 
 Yes, CUDA_VERSION=117 is correct.
 
@@ -136,7 +136,7 @@ tar -xf 0.42.0.tar.gz
 cd bitsandbytes-0.42.0
 ```
 
-Build install and test:
+Build, install and test:
 
 ```text
 CUDA_VERSION=117 make cuda11x_nomatmul_kepler
@@ -146,23 +146,23 @@ python -m bitsandbytes
 
 #### Credentials/secrets
 
-Take a look at the credentials directory under bartleby. It contains several SAMPLE files describing what credentials are needed for the various accounts associated with bartleby.
+Take a look at the credentials directory under *bartleby/*. It contains several 'SAMPLE' files describing what credentials are needed for the various accounts associated with bartleby.
 
-The client_secret_apps file and the service_key file are required - they contain the credentials for Google Cloud.
+The *client_secret_apps...* file and the *service_key* file are required - they contain the credentials for Google Cloud.
 
-You additionally need either Matrix or Discord credentials depending on where you will run the bot. See the respective SAMPLE files for descriptions of what exactly each file needs to contain.
+You additionally need either Matrix or Discord credentials depending on where you will run the bot. See the respective 'SAMPLE' files for descriptions of what exactly each file needs to contain.
 
 #### Configuration
 
-Have a look and configuration.py. It may need two changes depending on your system and intent:
+Have a look and configuration.py. It may need some changes depending on your system and intent:
 
 1. **MODE**: default to 'discord', set to 'matrix' if that's what you want.
-2. **CUDA_VISIBLE_DEVICES**: If you have only one GPU, set this to 0 or comment out the whole line, if you have multiple GPUs set it to whichever you want bartleby to use. If you are using a multi-GPU system you can also play *device_map*, setting sequential or auto, but in my experience generation is fastest when the model is pinned to a specific GPU (e.g. 'cuda:0'). Also, if you have a ton of VRAM you can set *quantization* to none for a speed boost at the price of a larger memory footprint.
+2. **CUDA_VISIBLE_DEVICES**: If you have only one GPU, set this to 0 or comment out the whole line, if you have multiple GPUs, set it to whichever you want bartleby to use. If you are using a multi-GPU system you can also play with *device_map*, setting sequential or auto, but in my experience generation is fastest when the model is pinned to a specific GPU (e.g. 'cuda:0'). Also, if you have a ton of VRAM you can set *quantization* to none for a speed boost at the price of a larger memory footprint.
 3. **CPU_threads**: Set this to the number of physical cores you have (or less).
 
 #### Run
 
-From the repo. root directory:
+From your clone's root directory:
 
 ```text
 python -m bartleby
@@ -210,4 +210,4 @@ python -m bartleby
 1. [zephyr-7b-beta](https://huggingface.co/HuggingFaceH4/zephyr-7b-beta)
 2. [falcon-7b-instruct](https://huggingface.co/tiiuae/falcon-7b-instruct)
 
-Bartleby is easily extensible to new models and should work out-of-the-box with any Mistral or Falcon family models available via HuggingFace - especially those which come with a chat template.
+If you want to add a new model from HuggingFace, take a look at *model_prompting_functions.py* in *bartleby/functions*. Add a prompting function and a cognate *elif* stanza to the LLM class's *prompt_model* method. Then submit a pull request!
