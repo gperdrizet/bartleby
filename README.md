@@ -1,8 +1,12 @@
 # Bartleby
 
-## Bartleby is live on Discord! Use [this invite link](https://discord.com/oauth2/authorize?client_id=1217547475615744015&permissions=0&scope=bot) to add bartleby to your server
+## News
 
-## Bartleby Docker image now available! See [gperdrizet/bartleby on Docker Hub](https://hub.docker.com/repository/docker/gperdrizet/bartleby/general)
+- **Bartleby named finalist** in Backdrop Build V3 build challenge! See [bartleby's build page](https://backdropbuild.com/builds/v3/bartleby) on Backdrop.
+
+- **Bartleby live on Discord!** Use [this invite link](https://discord.com/oauth2/authorize?client_id=1217547475615744015&permissions=0&scope=bot) to add bartleby to your server.
+
+- **Bartleby Docker image available!** See [gperdrizet/bartleby on Docker Hub](https://hub.docker.com/repository/docker/gperdrizet/bartleby/general).
 
 ![Bartleby](https://github.com/gperdrizet/bartleby/blob/logging/bartleby/data/bartleby.jpg)
 
