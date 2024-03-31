@@ -15,7 +15,7 @@ class LLMbot(commands.Bot):
         self.logger = logger
         self.response_queue = response_queue
 
-        # Add users list
+        # Add list of user class instances
         self.bartleby_users = users
 
         # Add docx_instance
@@ -23,7 +23,11 @@ class LLMbot(commands.Bot):
 
     async def setup_hook(self) -> None:
         
-        await self.load_extension(f'bartleby.classes.discord_commands_cog')
+        # Load the command cogs
+        cog_import_path = 'bartleby.classes.discord_cogs'
+        await self.load_extension(f'{cog_import_path}.system_commands')
+        await self.load_extension(f'{cog_import_path}.generation_commands')
+        await self.load_extension(f'{cog_import_path}.document_commands')
 
         # # Sync global command tree
         # await self.tree.sync()
@@ -34,7 +38,7 @@ class LLMbot(commands.Bot):
 
         await self.tree.sync(guild=MY_GUILD)
 
-        # Start the task to run in the background
+        # Start the LLM response queue check task to run in the background
         self.check_response_queue.start()
 
     @tasks.loop(seconds=5)  # Frequency with which to run the task
@@ -59,14 +63,16 @@ class LLMbot(commands.Bot):
             # Get the number of not offline users in the channel - this is better than
             # getting it from the guild because in a server of x members a channel can have
             # x - n members if it is private
-
             online_channel_members = 0
 
+            # Loop on channel members checking status and counting 
+            # members which are not offline
             for member in channel.members:
                 self.logger.debug(f'{member}: {member.status}')
                 if str(member.status) != 'offline':
                     online_channel_members += 1
 
+            # Log result
             self.logger.debug(f'Not-offline count {online_channel_members}')
 
             # If it is just bartleby and one other user, forgo replies and mentions
@@ -100,9 +106,10 @@ class LLMbot(commands.Bot):
                     for chunk in chunks:
                         await queued_user.message_object.reply(chunk)
             
+            # Log response time
             self.logger.info(f'+{round(time.time() - queued_user.message_time, 2)}s: Posted reply to {queued_user.user_name} in chat')
 
-    # Wait until the bot is logged in to start the task
+    # Wait until the bot is logged in to start the LLM response queue check task
     @check_response_queue.before_loop
     async def before_my_task(self):
         
