@@ -224,4 +224,36 @@ def discord_listener(
                         generation_queue.put(users[user_name])
                         logger.info(f'+{round(time.time() - message_time, 2)}s: Added {user_name} to generation queue')
     
+    # Context menu command to generate document via left click on message
+    @client.tree.context_menu(name='Save to gdrive')
+    async def save_message(interaction: discord.Interaction, message: discord.Message):
+
+        # Get the user name
+        user_name = interaction.user
+
+        # Get the message text
+        text = message.content
+
+        # If this is the first interaction from this user, onboard them
+        if user_name not in users.keys():
+            users[user_name] = user.User(user_name)
+
+        # Check to see that the user has set a gdrive folder id
+        # If they have, make the document
+        if users[user_name].gdrive_folder_id != None:
+            
+            # Make the document
+            docx_instance.generate_from_text(users[user_name], text)
+            
+            # Post the reply and log the interaction
+            await interaction.response.send_message(f'```Document generated```')
+            logger.debug(f'Got make docx command from: {user_name}')
+
+        # If they have not set a gdrive folder id, ask them to set one
+        # before generating a document
+        elif users[user_name].gdrive_folder_id == None:
+
+            await interaction.response.send_message(f'```Please set a gdrive folder generating a document```')
+            logger.debug(f'Got make docx command without gdrive folder id from: {user_name}')
+
     client.run(bot_token, log_handler=None)

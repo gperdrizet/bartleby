@@ -4,7 +4,7 @@ import bartleby.credentials.matrix as matrix
 import bartleby.credentials.discord_credentials as discord
 
 # Chat application to use
-MODE='discord' #'matrix'
+MODE='matrix'
 
 # Specify encoding here. This is needed because some phones
 # have a tendency to autocorrect '--' to '–', which is not an

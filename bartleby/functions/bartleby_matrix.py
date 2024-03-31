@@ -57,39 +57,9 @@ async def matrix_listener_loop(
                     # Get the username
                     user_name = event.sender.split(':')[0][1:]
 
-                    message_time = time.time()
-                    logger.info(f'0.00 s: Caught message from {user_name} mentioning bartleby')
-
-                    # If we have not heard from this user before, add them to users
-                    # and populate some defaults from configuration.py
-                    if user_name not in users.keys():
-
-                        users[user_name] = user.User(user_name)
-                        logger.info(f't = {round(time.time() - message_time, 2)}: New user: {user_name}')
-
-                    # Then check to see if we have a running instance of the user's model type,
-                    # if we don't spin one up
-                    if users[user_name].model_type not in llms.keys():
-
-                        # Instantiate the llm class instance and initialize the model, then
-                        # add it to the list of running llms
-                        llms[users[user_name].model_type] = llm.Llm(logger)
-                        llms[users[user_name].model_type].initialize_model(users[user_name].model_type)
-                        logger.info(f"+{round(time.time() - message_time, 2)} s: Initialized {users[user_name].model_type} model for {user_name}")
-
-                    else:
-                        logger.info(f"+{round(time.time() - message_time, 2)} s: Already have {users[user_name].model_type} running for {user_name}")
-
-                    # Check if the user has a configuration set for this type of model
-                    if users[user_name].model_type not in users[user_name].generation_configurations.keys():
-
-                        # If not, get the default generation configuration that came from 
-                        # the model's initialization and give it to the user so they can have their
-                        # own copy to modify at will
-                        model_default_generation_configuration = llms[users[user_name].model_type].default_generation_configuration
-                        users[user_name].generation_configurations[users[user_name].model_type] = model_default_generation_configuration
-                        users[user_name].set_generation_mode()
-                        logger.info(f'+{round(time.time() - message_time, 2)} s: Set generation configuration for {user_name} with {users[user_name].generation_mode} defaults')
+                    # Get the username and deal with initializing them or their LLM
+                    # as needed
+                    message_time=helper_funcs.setup_user(logger, user_name, users, llms)
 
                     # Get body of user message
                     user_message = await matrix_instance.catch_message(event)
