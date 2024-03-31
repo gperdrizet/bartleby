@@ -9,7 +9,7 @@
 - **Bartleby Docker image available!** See [gperdrizet/bartleby on Docker Hub](https://hub.docker.com/repository/docker/gperdrizet/bartleby/general).
 
 <p align="center">
-![Bartleby](https://github.com/gperdrizet/bartleby/blob/logging/bartleby/data/bartleby.jpg)
+    <img width="512" src=https://github.com/gperdrizet/bartleby/blob/logging/bartleby/data/bartleby.jpg>
 </p>
 
 Bartleby is a LLM based conversational collaborator written in Python using [HuggingFace](https://huggingface.co/) transformers. The project goal is to create an open source, conversational writing assistant which interacts naturally via a chat interface and can generate documents in docx format. A 'universal' interface was achieved using Discord (i.e. the user can interact with the Bartleby via any Discord client application using any device: phone, laptop or tablet running: macOS, Windows, Linux, Android, IOS etc,). Bartleby can also interact via a Matrix server. Documents are created and accessed via Google Drive using Google Cloud Platform APIs.
