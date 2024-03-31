@@ -37,26 +37,6 @@ def start_logger():
 
     return logger
 
-def start_discord_logger():
-    '''Sets up logging for discord.py'''
-
-    logger = logging.getLogger('discord')
-    logger.setLevel(conf.LOG_LEVEL)
-    logging.getLogger('discord.http').setLevel(logging.INFO)
-
-    handler = RotatingFileHandler(
-        f'{conf.LOG_PATH}/discord.log',
-        encoding='utf-8',
-        maxBytes=32 * 1024 * 1024,  # 32 MiB
-        backupCount=5,  # Rotate through 5 files
-    )
-    dt_fmt = '%Y-%m-%d %H:%M:%S'
-    formatter = logging.Formatter('[{asctime}] [{levelname:<8}] {name}: {message}', dt_fmt, style='{')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
-    return logger
-
 def check_directory_structure():
     '''Check to make sure we have directories that were not tracked by git'''
 
@@ -100,3 +80,20 @@ def setup_user(logger, user_name, users, llms):
         logger.info(f'+{round(time.time() - message_time, 2)}s: Set generation configuration for {user_name} with {users[user_name].decoding_mode} defaults')
 
     return message_time
+
+def generator(llms, generation_queue, response_queue):
+    '''Takes a user from the listener and generates a reply.
+    Sends the reply to the responder.'''
+
+    # Do this forever
+    while True:
+        
+        # Get the next user from the generation input queue
+        queued_user = generation_queue.get()
+
+        # Send the user for generation
+        _ = llms[queued_user.model_type].prompt_model(queued_user)
+        generation_queue.task_done()
+
+        # Send the user to responder to post the LLM's response
+        response_queue.put(queued_user)

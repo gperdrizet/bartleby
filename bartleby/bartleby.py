@@ -1,10 +1,10 @@
-#import torch
 import queue
 from threading import Thread
 
 import bartleby.configuration as config
 import bartleby.functions.helper_functions as helper_funcs
-import bartleby.functions.IO_functions as io_funcs
+import bartleby.functions.bartleby_discord as discord_funcs
+import bartleby.functions.bartleby_matrix as matrix_funcs
 import bartleby.classes.matrix_class as matrix
 import bartleby.classes.docx_class as docx
 
@@ -37,7 +37,7 @@ def run():
     logger.info('Docx instance started successfully')
 
     # Start generator thread for LLMs
-    generator_thread = Thread(target=io_funcs.generator, args=[llms, generation_queue, response_queue, logger])
+    generator_thread = Thread(target=helper_funcs.generator, args=[llms, generation_queue, response_queue])
     generator_thread.start()
     logger.info('Started LLM generator thread')
 
@@ -49,7 +49,7 @@ def run():
         logger.info('Matrix chat client started successfully')
 
         # Start the matrix listener
-        matrix_listener_thread = Thread(target=io_funcs.matrix_listener, args=[
+        matrix_listener_thread = Thread(target=matrix_funcs.matrix_listener, args=[
             docx_instance,
             matrix_instance, 
             users, 
@@ -65,7 +65,7 @@ def run():
     elif config.MODE == 'discord':
         
         # Start the discord listener
-        discord_listener_thread = Thread(target=io_funcs.discord_listener, args=[
+        discord_listener_thread = Thread(target=discord_funcs.discord_listener, args=[
             config.bot_token,
             docx_instance, 
             users, 
